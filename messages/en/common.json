@@ -1,0 +1,14 @@
+{
+	"welcome": "Welcome",
+	"welcomeBFSC": "Welcome to BFSC!",
+	"startLesson": "Start Lesson",
+	"continue": "Continue",
+	"settings": "Settings",
+	"switchLanguage": "Switch Language",
+	"construction": "This site is under construction",
+	"register": "Create an account",
+	"login": "Login",
+	"guest": "Continue as a Guest",
+	"viewCourses": "View Courses",
+	"createCourse": "Create a Course"
+}

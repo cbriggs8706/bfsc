@@ -1,0 +1,76 @@
+{
+	"main": {
+		"courses": "Cursos",
+		"vocabulary": "Vocabulário",
+		"grammar": "Gramática",
+		"alphabet": "Alfabeto",
+		"numbers": "Números",
+		"freeForever": "Grátis para sempre",
+		"language": "Idioma",
+		"chooseLanguage": "Escolher idioma",
+		"bfsc": "BFSC"
+	},
+	"courses": {
+		"bh": "Hebraico Bíblico",
+		"bg": "Grego Bíblico",
+		"mh": "Hebraico Moderno",
+		"me": "Inglês Moderno",
+		"ms": "Espanhol Moderno",
+		"bookclub": "Clube do Livro"
+	},
+	"vocabulary": {
+		"flashcards": "Flashcards",
+		"dictionary": "Dicionário",
+		"learn": "Aprender",
+		"matching": "Combinar",
+		"spelling": "Ortografia"
+	},
+	"grammar": {
+		"verbs": "Verbos",
+		"scramble": "Frases Embaralhadas",
+		"builder": "Construtor de Frases",
+		"memorizer": "Memorizador"
+	},
+	"alphabet": {
+		"names": "Nomes",
+		"sounds": "Sons",
+		"syllables": "Sílabas",
+		"niqqud": "Niqqud"
+	},
+	"numbers": {
+		"cardinal": "Cardinal",
+		"ordinal": "Ordinal",
+		"construct": "Construto"
+	},
+	"secondary": {
+		"leaderboard": "Classificação",
+		"calendar": "Calendário",
+		"help": "Ajuda",
+		"feedback": "Feedback"
+	},
+	"input": {
+		"songs": "Canções",
+		"stories": "Histórias",
+		"scriptures": "Escrituras",
+		"prayers": "Orações",
+		"comprehensible": "Entrada compreensível"
+	},
+	"lesson": {
+		"scripts": "Roteiros de Aula",
+		"grammarLessons": "Lições de Gramática",
+		"lessonContent": "Conteúdo da lição"
+	},
+	"teacher": {
+		"title": "Professor",
+		"myCourses": "Meus Cursos",
+		"createCourse": "Criar Curso"
+	},
+	"user": {
+		"account": "Conta",
+		"notifications": "Notificações",
+		"logout": "Sair",
+		"login": "Entrar",
+		"register": "Criar uma conta",
+		"dashboard": "Painel de controle"
+	}
+}

@@ -1,0 +1,76 @@
+{
+	"main": {
+		"courses": "Courses",
+		"vocabulary": "Vocabulary",
+		"grammar": "Grammar",
+		"alphabet": "Alphabet",
+		"numbers": "Numbers",
+		"freeForever": "Free Forever",
+		"language": "Language",
+		"chooseLanguage": "Choose Language",
+		"bfsc": "Burley FamilySearch Center"
+	},
+	"courses": {
+		"bh": "Biblical Hebrew",
+		"bg": "Biblical Greek",
+		"mh": "Modern Hebrew",
+		"me": "Modern English",
+		"ms": "Modern Spanish",
+		"bookclub": "Bookclub"
+	},
+	"vocabulary": {
+		"flashcards": "Flashcards",
+		"dictionary": "Dictionary",
+		"learn": "Learn",
+		"matching": "Matching",
+		"spelling": "Spelling"
+	},
+	"grammar": {
+		"verbs": "Verbs",
+		"scramble": "Sentence Scramble",
+		"builder": "Sentence Builder",
+		"memorizer": "Memorizer"
+	},
+	"alphabet": {
+		"names": "Names",
+		"sounds": "Sounds",
+		"syllables": "Syllables",
+		"niqqud": "Niqqud"
+	},
+	"numbers": {
+		"cardinal": "Cardinal",
+		"ordinal": "Ordinal",
+		"construct": "Construct"
+	},
+	"secondary": {
+		"leaderboard": "Leaderboard",
+		"calendar": "Calendar",
+		"help": "Help",
+		"feedback": "Feedback"
+	},
+	"input": {
+		"songs": "Songs",
+		"stories": "Stories",
+		"scriptures": "Scriptures",
+		"prayers": "Prayers",
+		"comprehensible": "Comprehensible Input"
+	},
+	"lesson": {
+		"scripts": "Lesson Scripts",
+		"grammarLessons": "Grammar Lessons",
+		"lessonContent": "Lesson Content"
+	},
+	"teacher": {
+		"title": "Teacher",
+		"myCourses": "My Created Courses",
+		"createCourse": "Create a Course"
+	},
+	"user": {
+		"account": "Account",
+		"notifications": "Notifications",
+		"logout": "Log out",
+		"login": "Log in",
+		"register": "Create an Account",
+		"dashboard": "Dashboard"
+	}
+}
