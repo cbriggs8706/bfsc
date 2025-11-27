@@ -1,46 +1,40 @@
 {
 	"main": {
-		"courses": "Courses",
-		"vocabulary": "Vocabulary",
-		"grammar": "Grammar",
-		"alphabet": "Alphabet",
-		"numbers": "Numbers",
+		"groups": "Groups",
+		"projects": "Projects",
+		"digitization": "Digitization",
+		"calendar": "Calendar",
 		"freeForever": "Free Forever",
 		"language": "Language",
 		"chooseLanguage": "Choose Language",
 		"bfsc": "Burley FamilySearch Center"
 	},
-	"courses": {
-		"bh": "Biblical Hebrew",
-		"bg": "Biblical Greek",
-		"mh": "Modern Hebrew",
-		"me": "Modern English",
-		"ms": "Modern Spanish",
-		"bookclub": "Bookclub"
+	"groups": {
+		"schedule": "Schedule a visit"
 	},
-	"vocabulary": {
-		"flashcards": "Flashcards",
-		"dictionary": "Dictionary",
-		"learn": "Learn",
-		"matching": "Matching",
-		"spelling": "Spelling"
+	"projects": {
+		"cassiaphotos": "Cassia Museum Photos",
+		"cassianegatives": "Cassia Museum Negatives",
+		"findagrave": "FindAGrave",
+		"mccemeteries": "MiniCassia Cemeteries",
+		"censuses": "Censuses",
+		"mvwwii": "Magic Valley WWII Newspaper",
+		"naturalization": "Naturalization",
+		"numident": "Numident",
+		"obituaries": "Obituaries",
+		"oral": "Oral Histories"
 	},
-	"grammar": {
+	"digitization": {
 		"verbs": "Verbs",
 		"scramble": "Sentence Scramble",
 		"builder": "Sentence Builder",
 		"memorizer": "Memorizer"
 	},
-	"alphabet": {
-		"names": "Names",
-		"sounds": "Sounds",
-		"syllables": "Syllables",
+	"calendar": {
+		"expo": "Expo",
+		"memorylane": "Memory Lane",
+		"classes": "Class Schedule",
 		"niqqud": "Niqqud"
-	},
-	"numbers": {
-		"cardinal": "Cardinal",
-		"ordinal": "Ordinal",
-		"construct": "Construct"
 	},
 	"secondary": {
 		"leaderboard": "Leaderboard",
@@ -49,7 +43,7 @@
 		"feedback": "Feedback"
 	},
 	"input": {
-		"songs": "Songs",
+		"specialists": "Research Specialists",
 		"stories": "Stories",
 		"scriptures": "Scriptures",
 		"prayers": "Prayers",
@@ -57,7 +51,6 @@
 	},
 	"lesson": {
 		"scripts": "Lesson Scripts",
-		"grammarLessons": "Grammar Lessons",
 		"lessonContent": "Lesson Content"
 	},
 	"teacher": {

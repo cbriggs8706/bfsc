@@ -23,7 +23,7 @@ export default async function Page({
 			</div>
 
 			<div className="flex flex-col gap-4 mt-8 items-center">
-				<Link href={`/${locale}/register`}>
+				{/* <Link href={`/${locale}/register`}>
 					<Button variant="outline">{t('register')}</Button>
 				</Link>
 				<Link href={`/${locale}/login`}>
@@ -31,7 +31,7 @@ export default async function Page({
 				</Link>
 				<Link href={`/${locale}/course`}>
 					<Button variant="outline">{t('guest')}</Button>
-				</Link>
+				</Link> */}
 			</div>
 		</div>
 	)

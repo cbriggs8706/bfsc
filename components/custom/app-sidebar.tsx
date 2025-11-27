@@ -68,15 +68,15 @@ export function AppSidebar({
 					</>
 				)}
 				<NavMain items={data.navMain} />
-				<NavLesson
+				{/* <NavLesson
 					lesson={data.lesson}
 					content={t('sidebar.lesson.lessonContent')}
-				/>
+				/> */}
 				<NavInput
 					input={data.input}
 					label={t('sidebar.input.comprehensible')}
 				/>
-				<NavSecondary items={data.navSecondary} className="mt-auto" />
+				{/* <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
 			</SidebarContent>
 			<SidebarFooter>
 				<SidebarLanguageSwitcher

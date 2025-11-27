@@ -14,6 +14,11 @@ import {
 	HandHeart,
 	LetterText,
 	Text,
+	Group,
+	Users,
+	Dog,
+	Camera,
+	Search,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
 
@@ -21,60 +26,49 @@ export function buildSidebarData(t: TFunction, locale: string) {
 	return {
 		navMain: [
 			{
-				title: t('sidebar.main.courses'),
-				url: `/${locale}/courses`,
-				icon: GraduationCap,
+				title: t('sidebar.main.groups'),
+				url: `/${locale}/groups`,
+				icon: Users,
+				items: [{ title: t('sidebar.groups.schedule'), url: '#' }],
+			},
+			{
+				title: t('sidebar.main.projects'),
+				url: '#',
+				icon: Dog,
 				items: [
-					{ title: t('sidebar.courses.bh'), url: '#' },
-					{ title: t('sidebar.courses.bg'), url: '#' },
-					{ title: t('sidebar.courses.mh'), url: '#' },
-					{ title: t('sidebar.courses.me'), url: '#' },
-					{ title: t('sidebar.courses.ms'), url: '#' },
-					{ title: t('sidebar.courses.bookclub'), url: '#' },
+					{ title: t('sidebar.projects.cassiaphotos'), url: '#' },
+					{ title: t('sidebar.projects.cassianegatives'), url: '#' },
+					{ title: t('sidebar.projects.findagrave'), url: '#' },
+					{ title: t('sidebar.projects.mccemeteries'), url: '#' },
+					{ title: t('sidebar.projects.censuses'), url: '#' },
+					{ title: t('sidebar.projects.mvwwii'), url: '#' },
+					{ title: t('sidebar.projects.naturalization'), url: '#' },
+					{ title: t('sidebar.projects.numident'), url: '#' },
+					{ title: t('sidebar.projects.obituaries'), url: '#' },
+					{ title: t('sidebar.projects.oral'), url: '#' },
 				],
 			},
 			{
-				title: t('sidebar.main.vocabulary'),
+				title: t('sidebar.main.digitization'),
 				url: '#',
-				icon: Apple,
+				icon: Camera,
 				items: [
-					{ title: t('sidebar.vocabulary.flashcards'), url: '#' },
-					{ title: t('sidebar.vocabulary.dictionary'), url: '#' },
-					{ title: t('sidebar.vocabulary.learn'), url: '#' },
-					{ title: t('sidebar.vocabulary.matching'), url: '#' },
-					{ title: t('sidebar.vocabulary.spelling'), url: '#' },
+					// { title: t('sidebar.digitization.verbs'), url: '#' },
+					// { title: t('sidebar.digitization.scramble'), url: '#' },
+					// { title: t('sidebar.digitization.builder'), url: '#' },
+					// { title: t('sidebar.digitization.memorizer'), url: '#' },
 				],
 			},
 			{
-				title: t('sidebar.main.grammar'),
+				title: t('sidebar.main.calendar'),
 				url: '#',
-				icon: Bot,
+				icon: Calendar,
 				items: [
-					{ title: t('sidebar.grammar.verbs'), url: '#' },
-					{ title: t('sidebar.grammar.scramble'), url: '#' },
-					{ title: t('sidebar.grammar.builder'), url: '#' },
-					{ title: t('sidebar.grammar.memorizer'), url: '#' },
-				],
-			},
-			{
-				title: t('sidebar.main.alphabet'),
-				url: '#',
-				icon: Pencil,
-				items: [
-					{ title: t('sidebar.alphabet.names'), url: '#' },
-					{ title: t('sidebar.alphabet.sounds'), url: '#' },
-					{ title: t('sidebar.alphabet.syllables'), url: '#' },
-					{ title: t('sidebar.alphabet.niqqud'), url: '#' },
-				],
-			},
-			{
-				title: t('sidebar.main.numbers'),
-				url: '#',
-				icon: Tally5,
-				items: [
-					{ title: t('sidebar.numbers.cardinal'), url: '#' },
-					{ title: t('sidebar.numbers.ordinal'), url: '#' },
-					{ title: t('sidebar.numbers.construct'), url: '#' },
+					{ title: t('sidebar.calendar.expo'), url: '#' },
+					{ title: t('sidebar.calendar.memorylane'), url: '#' },
+					{ title: t('sidebar.calendar.classes'), url: '#' },
+					// { title: t('sidebar.calendar.syllables'), url: '#' },
+					// { title: t('sidebar.calendar.niqqud'), url: '#' },
 				],
 			},
 		],
@@ -87,16 +81,17 @@ export function buildSidebarData(t: TFunction, locale: string) {
 		],
 
 		input: [
-			{ name: t('sidebar.input.songs'), url: '#', icon: Music },
-			{ name: t('sidebar.input.stories'), url: '#', icon: BookOpen },
-			{ name: t('sidebar.input.scriptures'), url: '#', icon: BookKey },
-			{ name: t('sidebar.input.prayers'), url: '#', icon: HandHeart },
+			{
+				name: t('sidebar.input.specialists'),
+				url: `/${locale}/specialists`,
+				icon: Search,
+			},
+			// { name: t('sidebar.input.stories'), url: '#', icon: BookOpen },
+			// { name: t('sidebar.input.scriptures'), url: '#', icon: BookKey },
+			// { name: t('sidebar.input.prayers'), url: '#', icon: HandHeart },
 		],
 
-		lesson: [
-			{ name: t('sidebar.lesson.scripts'), url: '#', icon: LetterText },
-			{ name: t('sidebar.lesson.grammarLessons'), url: '#', icon: Text },
-		],
+		lesson: [{ name: t('sidebar.lesson.scripts'), url: '#', icon: LetterText }],
 	}
 }
 
