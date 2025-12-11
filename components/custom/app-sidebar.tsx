@@ -1,3 +1,5 @@
+// components/custom/app-sidebar.tsx
+
 'use client'
 
 import * as React from 'react'
@@ -14,6 +16,7 @@ import {
 } from '@/components/ui/sidebar'
 import { NavMain } from './nav-main'
 import { NavInput } from './nav-input'
+import { NavAdmin } from './nav-admin'
 import { NavSecondary } from './nav-secondary'
 import { NavUser } from './nav-user'
 import { Session } from 'next-auth'
@@ -35,7 +38,6 @@ export function AppSidebar({
 	const { locale } = useParams()
 	const t = useTranslations()
 	const data = buildSidebarData(t, locale as string)
-
 	const teacherNav = getTeacherNav(t, locale as string)
 	return (
 		<Sidebar variant="inset" {...props}>
@@ -61,9 +63,9 @@ export function AppSidebar({
 				</SidebarMenu>
 			</SidebarHeader>
 			<SidebarContent>
-				{role === 'admin' && (
+				{['Admin', 'Director', 'Assistant Director'].includes(role) && (
 					<>
-						<NavMain items={teacherNav} label={t('sidebar.teacher.title')} />
+						<NavAdmin admin={data.admin} label={t('sidebar.admin.title')} />
 						<Separator className="my-4" />
 					</>
 				)}

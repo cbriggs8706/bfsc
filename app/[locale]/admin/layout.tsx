@@ -1,4 +1,4 @@
-// app/[locale]/(app)/dashboard/layout.tsx
+// app/[locale]/admin/layout.tsx
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -24,7 +24,6 @@ export default async function Layout({
 	children: React.ReactNode
 }) {
 	const session = await getServerSession(authOptions)
-	console.log('Here3>>>>>>', session?.user.role)
 	// if (!session) redirect(`/`)
 	return (
 		// <SidebarProvider>

@@ -13,7 +13,7 @@ import {
 
 // --- User table ---
 export const user = pgTable(
-	'user',
+	'public.user',
 	{
 		id: uuid().defaultRandom().primaryKey().notNull(),
 		name: varchar({ length: 255 }),
@@ -22,14 +22,14 @@ export const user = pgTable(
 		image: text(),
 		username: varchar({ length: 100 }),
 		passwordHash: text('password_hash'),
-		role: varchar({ length: 50 }).default('user').notNull(),
+		role: varchar({ length: 50 }).default('Patron').notNull(),
 	},
 	(table) => [unique('user_email_unique').on(table.email)]
 )
 
 // --- Account table ---
 export const account = pgTable(
-	'account',
+	'public.account',
 	{
 		userId: uuid().notNull(),
 		type: varchar({ length: 255 }).notNull(),
@@ -37,7 +37,7 @@ export const account = pgTable(
 		providerAccountId: varchar({ length: 255 }).notNull(),
 		refresh_token: text(),
 		access_token: text(),
-		expires_at: integer().notNull().default(0),
+		expires_at: integer(),
 		token_type: varchar({ length: 255 }),
 		scope: text(),
 		id_token: text(),
@@ -58,7 +58,7 @@ export const account = pgTable(
 
 // --- Session table ---
 export const session = pgTable(
-	'session',
+	'public.session',
 	{
 		sessionToken: text().primaryKey().notNull(),
 		userId: uuid().notNull(),
@@ -75,7 +75,7 @@ export const session = pgTable(
 
 // --- Verification Token ---
 export const verificationToken = pgTable(
-	'verificationToken',
+	'public.verificationToken',
 	{
 		identifier: varchar({ length: 255 }).notNull(),
 		token: text().notNull(),

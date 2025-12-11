@@ -1,5 +1,5 @@
 // lib/auth.ts
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import type { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import CredentialsProvider from 'next-auth/providers/credentials'
@@ -8,7 +8,7 @@ import { DrizzleAdapter } from '@auth/drizzle-adapter'
 import { db } from '@/db/client'
 
 import {
-	user,
+	user as userTable,
 	account,
 	session,
 	verificationToken,
@@ -23,7 +23,7 @@ export const authOptions: NextAuthOptions = {
 	},
 
 	adapter: DrizzleAdapter(db, {
-		usersTable: user,
+		usersTable: userTable,
 		accountsTable: account,
 		sessionsTable: session,
 		verificationTokensTable: verificationToken,
@@ -33,6 +33,7 @@ export const authOptions: NextAuthOptions = {
 		GoogleProvider({
 			clientId: process.env.GOOGLE_CLIENT_ID!,
 			clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+			allowDangerousEmailAccountLinking: true,
 		}),
 
 		CredentialsProvider({
@@ -47,8 +48,8 @@ export const authOptions: NextAuthOptions = {
 
 				const dbUser = await db.query.user.findFirst({
 					where: or(
-						eq(user.username, credentials.username),
-						eq(user.email, credentials.username)
+						eq(userTable.username, credentials.username),
+						eq(userTable.email, credentials.username)
 					),
 				})
 
@@ -64,7 +65,7 @@ export const authOptions: NextAuthOptions = {
 					id: dbUser.id,
 					email: dbUser.email,
 					name: dbUser.name ?? dbUser.username,
-					role: dbUser.role ?? 'user',
+					role: dbUser.role ?? 'Patron',
 					username: dbUser.username ?? 'dummy',
 					image: dbUser.image ?? null,
 					authProvider: 'credentials',
@@ -74,20 +75,38 @@ export const authOptions: NextAuthOptions = {
 	],
 
 	callbacks: {
-		async jwt({ token, user, account }) {
-			if (user) {
-				token.id = user.id
-				token.role = user.role
-				token.username = user.username
-				token.email = user.email
-				token.name = user.name
-				token.image = user.image
-			}
-			if (account?.provider) {
-				token.authProvider = account.provider // "google", "credentials"
-			}
-			if (user?.image) token.image = user.image
+		// You don't really need signIn logic if you always return true
+		async signIn({ user, account }) {
+			// You *could* add rules here later, but for now:
+			return true
+		},
 
+		async jwt({ token, user, account }) {
+			// console.log('💠 JWT CALLBACK — user:', user)
+			// console.log('💠 JWT CALLBACK — token BEFORE:', token)
+			// console.log('💠 JWT CALLBACK — account:', account)
+
+			// On first login (credentials OR google), user is defined
+			if (user) {
+				const u = user as any // adapter user with extra fields
+
+				token.id = u.id
+				token.email = u.email
+				token.name = u.name
+				token.username = u.username ?? token.username ?? null
+				token.role = u.role ?? token.role ?? 'Patron'
+				token.image = u.image ?? token.image
+
+				if (account?.provider) {
+					token.authProvider = account.provider
+				}
+
+				// console.log('💠 JWT CALLBACK — token AFTER (with user):', token)
+				return token
+			}
+
+			// Subsequent calls (no `user`) → just keep token as-is
+			// console.log('💠 JWT CALLBACK — token AFTER (no user):', token)
 			return token
 		},
 
@@ -105,14 +124,11 @@ export const authOptions: NextAuthOptions = {
 		},
 
 		async redirect({ url, baseUrl }) {
-			// Redirect after Google or Credentials login
-			if (url.includes('/api/auth/callback')) {
-				const localeMatch = url.match(/\/([a-z]{2})\//)
-				const locale = localeMatch ? localeMatch[1] : 'en'
-				return `${baseUrl}/${locale}/dashboard`
-			}
+			// Let provider callback URLs go unmodified
+			if (url.includes('/api/auth/callback')) return url
 
-			return url
+			// After successful login, just go to /en/dashboard for now
+			return `${baseUrl}/en/dashboard`
 		},
 	},
 }

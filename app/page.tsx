@@ -1,3 +1,4 @@
+// app/page.tsx
 import { headers, cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 

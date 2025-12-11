@@ -65,5 +65,9 @@
 		"login": "Log in",
 		"register": "Create an Account",
 		"dashboard": "Dashboard"
+	},
+	"admin": {
+		"title": "Admin",
+		"users": "User Management"
 	}
 }

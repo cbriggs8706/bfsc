@@ -66,7 +66,7 @@ export function LoginForm() {
 			const session = await getSession()
 			const role = session?.user?.role
 
-			if (role === 'admin') {
+			if (role === 'Admin') {
 				router.push(`/${locale}/admin-dashboard`)
 			} else {
 				router.push(`/${locale}/dashboard`)

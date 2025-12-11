@@ -1,49 +1,179 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--font-sans: var(--font-geist-sans);
+	--font-mono: var(--font-geist-mono);
+	--color-sidebar-ring: var(--sidebar-ring);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar: var(--sidebar);
+	--color-chart-5: var(--chart-5);
+	--color-chart-4: var(--chart-4);
+	--color-chart-3: var(--chart-3);
+	--color-chart-2: var(--chart-2);
+	--color-chart-1: var(--chart-1);
+	--color-ring: var(--ring);
+	--color-input: var(--input);
+	--color-border: var(--border);
+	--color-destructive: var(--destructive);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-accent: var(--accent);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-muted: var(--muted);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-secondary: var(--secondary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-primary: var(--primary);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-popover: var(--popover);
+	--color-card-foreground: var(--card-foreground);
+	--color-card: var(--card);
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
 }
 
 :root {
+	--radius: 0.625rem;
+
+	/* Brand palette — direct from your HEX list */
+	--green-logo: #87b940;
+	--green-logo-light: #a1cb67;
+	--green-logo-soft: #e8f2d9;
+
+	--green-accent: #bfd730;
+	--green-accent-soft: #f2f7d4;
+
+	--blue-accent: #27c4f4;
+	--blue-accent-soft: #e7f8fe;
+
+	--red-accent: #f16458;
+	--red-accent-soft: #fde9e7;
+
+	--gray-accent: #9c947a;
+	--gray-accent-light: #dedcd3;
+	--gray-accent-soft: #f4f3f0;
+
+	--light-gray: #bab7b1;
+	--light-gray-soft: #f3f3f1;
+
+	--purple-accent: #996799;
+	--purple-accent-soft: #f5f0f5;
+
+	--orange-accent: #fcb34b;
+	--orange-accent-soft: #fff4e6;
+
+	/* Base surfaces + text */
+	--background: var(--gray-accent-soft); /* warm off-white */
+	--foreground: #1f2933; /* dark neutral text */
+
+	--card: #ffffff;
+	--card-foreground: var(--foreground);
+
+	--popover: #ffffff;
+	--popover-foreground: var(--foreground);
+
+	/* Primary actions = green logo */
+	--primary: var(--green-logo);
+	--primary-foreground: #ffffff;
+
+	/* Secondary surfaces = soft gray */
+	--secondary: var(--light-gray-soft);
+	--secondary-foreground: var(--foreground);
+
+	/* Muted / skeleton / subtle UI */
+	--muted: var(--light-gray-soft);
+	--muted-foreground: var(--gray-accent);
+
+	/* Accent surfaces (chips, hover, etc.) = pale blue/orange */
+	--accent: var(--blue-accent-soft);
+	--accent-foreground: #07445a;
+
+	/* Destructive */
+	--destructive: var(--red-accent);
+	/* you can add --destructive-foreground if you start using it */
+
+	/* Borders / inputs / focus ring */
+	--border: var(--gray-accent-light);
+	--input: var(--gray-accent-light);
+	--ring: var(--green-accent);
+
+	/* Charts — pull from all your accent colors */
+	--chart-1: var(--blue-accent);
+	--chart-2: var(--green-logo);
+	--chart-3: var(--purple-accent);
+	--chart-4: var(--orange-accent);
+	--chart-5: var(--red-accent);
+
+	/* Sidebar colors */
+	--sidebar: #ffffff;
+	--sidebar-foreground: var(--foreground);
+	--sidebar-primary: var(--green-logo);
+	--sidebar-primary-foreground: #ffffff;
+	--sidebar-accent: var(--green-logo-soft);
+	--sidebar-accent-foreground: #1a2b10;
+	--sidebar-border: var(--gray-accent-light);
+	--sidebar-ring: var(--green-accent);
+}
+
+.dark {
+	/* Dark mode keeps brand, but makes surfaces dark & accents glow */
+	--background: #020617; /* near-black slate */
+	--foreground: #f9fafb;
+
+	--card: #020617;
+	--card-foreground: #e5e7eb;
+
+	--popover: #020617;
+	--popover-foreground: #e5e7eb;
+
+	--primary: var(--green-logo-light);
+	--primary-foreground: #021006;
+
+	--secondary: #0b1120;
+	--secondary-foreground: #e5e7eb;
+
+	--muted: #020617;
+	--muted-foreground: #9ca3af;
+
+	--accent: rgba(39, 196, 244, 0.18);
+	--accent-foreground: #e7f8fe;
+
+	--destructive: #f59289;
+
+	--border: rgba(148, 163, 184, 0.35);
+	--input: rgba(148, 163, 184, 0.35);
+	--ring: var(--blue-accent);
+
+	--chart-1: var(--blue-accent);
+	--chart-2: var(--green-accent);
+	--chart-3: var(--purple-accent);
+	--chart-4: var(--orange-accent);
+	--chart-5: var(--red-accent);
+
+	--sidebar: #020617;
+	--sidebar-foreground: #e5e7eb;
+	--sidebar-primary: var(--green-logo-light);
+	--sidebar-primary-foreground: #020617;
+	--sidebar-accent: rgba(135, 185, 64, 0.18);
+	--sidebar-accent-foreground: #e5f4cf;
+	--sidebar-border: rgba(148, 163, 184, 0.35);
+	--sidebar-ring: var(--green-accent);
+}
+
+/* https://www.familysearch.org/en/wiki/Selection_of_Colors_for_FamilySearch.org */
+
+/* :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -110,13 +240,13 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-}
+} */
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply bg-background text-foreground;
+	}
 }

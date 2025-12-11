@@ -19,6 +19,7 @@ import {
 	Dog,
 	Camera,
 	Search,
+	User,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
 
@@ -85,6 +86,16 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				name: t('sidebar.input.specialists'),
 				url: `/${locale}/specialists`,
 				icon: Search,
+			},
+			// { name: t('sidebar.input.stories'), url: '#', icon: BookOpen },
+			// { name: t('sidebar.input.scriptures'), url: '#', icon: BookKey },
+			// { name: t('sidebar.input.prayers'), url: '#', icon: HandHeart },
+		],
+		admin: [
+			{
+				name: t('sidebar.admin.users'),
+				url: `/${locale}/admin/users`,
+				icon: User,
 			},
 			// { name: t('sidebar.input.stories'), url: '#', icon: BookOpen },
 			// { name: t('sidebar.input.scriptures'), url: '#', icon: BookKey },
