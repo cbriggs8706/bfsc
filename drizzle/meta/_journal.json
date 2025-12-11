@@ -50,6 +50,27 @@
       "when": 1765417208545,
       "tag": "0006_mixed_shadowcat",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1765477497986,
+      "tag": "0007_bored_iron_patriot",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1765478203653,
+      "tag": "0008_organic_scarlet_witch",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1765482085931,
+      "tag": "0009_tough_bromley",
+      "breakpoints": true
     }
   ]
 }

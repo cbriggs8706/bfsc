@@ -1,0 +1,1 @@
+ALTER TABLE "kiosk_special_hours" ADD COLUMN "reason" text;

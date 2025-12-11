@@ -62,7 +62,7 @@ export function buildSidebarData(t: TFunction, locale: string) {
 			},
 			{
 				title: t('sidebar.main.calendar'),
-				url: '#',
+				url: `/${locale}/calendar`,
 				icon: Calendar,
 				items: [
 					{ title: t('sidebar.calendar.expo'), url: '#' },
@@ -76,7 +76,11 @@ export function buildSidebarData(t: TFunction, locale: string) {
 
 		navSecondary: [
 			{ title: t('sidebar.secondary.leaderboard'), url: '#', icon: Trophy },
-			{ title: t('sidebar.secondary.calendar'), url: '#', icon: Calendar },
+			{
+				title: t('sidebar.secondary.calendar'),
+				url: `/${locale}/calendar`,
+				icon: Calendar,
+			},
 			{ title: t('sidebar.secondary.help'), url: '#', icon: LifeBuoy },
 			{ title: t('sidebar.secondary.feedback'), url: '#', icon: Send },
 		],

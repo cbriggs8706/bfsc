@@ -1,7 +1,7 @@
 // app/[locale]/kiosk/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +13,9 @@ import {
 	SelectValue,
 	SelectItem,
 } from '@/components/ui/select'
-import { useRouter } from 'next/navigation'
+import type { IdentifyResponse } from '@/app/api/kiosk/identify/route'
+
+type PersonSource = 'kiosk' | 'user'
 
 type PersonSummary = {
 	id: string
@@ -21,6 +23,7 @@ type PersonSummary = {
 	userId: string | null
 	isConsultant: boolean
 	hasPasscode: boolean
+	source?: PersonSource
 }
 
 type Purpose = {
@@ -47,15 +50,112 @@ export default function KioskPage() {
 	const [wantsPasscode, setWantsPasscode] = useState(true)
 	const [serverMessage, setServerMessage] = useState<string | null>(null)
 
-	// Step 1: identify by name or passcode
+	const [suggestions, setSuggestions] = useState<PersonSummary[]>([])
+	const [searching, setSearching] = useState(false)
+	const searchTimeout = useRef<NodeJS.Timeout | null>(null)
+	const [timeSlots, setTimeSlots] = useState<string[]>([])
+
+	useEffect(() => {
+		if (step !== 'shift') return
+
+		let isMounted = true
+
+		;(async () => {
+			const res = await fetch('/api/kiosk/hours/today')
+			const data = await res.json()
+			if (!isMounted) return
+
+			if (data.isClosed) {
+				setTimeSlots([])
+				return
+			}
+
+			const now = new Date()
+			const [closeHr, closeMin] = data.closesAt.split(':').map(Number)
+
+			const closingTime = new Date(
+				now.getFullYear(),
+				now.getMonth(),
+				now.getDate(),
+				closeHr,
+				closeMin
+			)
+
+			const slots: string[] = []
+			const cursor = new Date(now)
+
+			// Round UP to the next 15-min interval
+			const remainder = 15 - (cursor.getMinutes() % 15)
+			cursor.setMinutes(cursor.getMinutes() + remainder)
+			cursor.setSeconds(0)
+			cursor.setMilliseconds(0)
+
+			while (cursor < closingTime) {
+				slots.push(cursor.toTimeString().slice(0, 5)) // HH:MM (24-hour)
+				cursor.setMinutes(cursor.getMinutes() + 15)
+			}
+
+			setTimeSlots(slots)
+		})()
+
+		return () => {
+			isMounted = false
+		}
+	}, [step])
+
+	// ──────────────────────────────
+	// LIVE SEARCH
+	// ──────────────────────────────
+
+	const performSearch = async (query: string) => {
+		const res = await fetch(`/api/kiosk/search?q=${encodeURIComponent(query)}`)
+		if (!res.ok) return
+		const data: { people: PersonSummary[] } = await res.json()
+		setSuggestions(data.people)
+	}
+
+	const handleInputChange = (value: string) => {
+		setInput(value)
+		setSelectedPerson(null)
+
+		if (searchTimeout.current) clearTimeout(searchTimeout.current)
+
+		if (value.length < 2) {
+			setSuggestions([])
+			return
+		}
+
+		searchTimeout.current = setTimeout(async () => {
+			setSearching(true)
+			await performSearch(value)
+			setSearching(false)
+		}, 250)
+	}
+
+	// ──────────────────────────────
+	// IDENTIFY HANDLER (Continue)
+	// ──────────────────────────────
+
 	const handleIdentify = async () => {
 		setServerMessage(null)
+
+		const payload: { id?: string; input?: string } = selectedPerson
+			? { id: selectedPerson.id }
+			: { input }
+
 		const res = await fetch('/api/kiosk/identify', {
 			method: 'POST',
-			body: JSON.stringify({ input }),
+			body: JSON.stringify(payload),
 			headers: { 'Content-Type': 'application/json' },
 		})
-		const data = await res.json()
+
+		if (!res.ok) {
+			setServerMessage('Sorry, something went wrong. Please try again.')
+			return
+		}
+
+		const data: IdentifyResponse = await res.json()
+		console.log('IDENTIFY RESPONSE', data)
 
 		if (data.status === 'notFound') {
 			setNewName(data.suggestedName ?? input.trim())
@@ -63,30 +163,39 @@ export default function KioskPage() {
 			return
 		}
 
-		if (data.status === 'foundSingle') {
-			setSelectedPerson(data.person)
-			// If consultant, ask what they’re here for
-			if (data.person.isConsultant) {
-				setStep('roleChoice')
-			} else {
-				await loadPurposes()
-				setStep('visit')
-			}
-			return
-		}
-
 		if (data.status === 'multipleMatches') {
 			setMatches(data.people)
 			setStep('choosePerson')
+			return
+		}
+
+		// foundSingle
+		const person = data.person
+		setSelectedPerson(person)
+		setSuggestions([])
+
+		if (person.isConsultant) {
+			setStep('roleChoice')
+		} else {
+			await loadPurposes()
+			setStep('visit')
 		}
 	}
 
+	// ──────────────────────────────
+	// LOAD PURPOSES
+	// ──────────────────────────────
+
 	const loadPurposes = async () => {
 		if (purposes.length > 0) return
-		const res = await fetch('/api/kiosk/purposes') // implement a GET route
+		const res = await fetch('/api/kiosk/purposes')
 		const data = await res.json()
-		setPurposes(data.purposes)
+		setPurposes(data.purposes as Purpose[])
 	}
+
+	// ──────────────────────────────
+	// CHOOSE PERSON FROM MULTIPLE
+	// ──────────────────────────────
 
 	const handleChoosePerson = async (person: PersonSummary) => {
 		setSelectedPerson(person)
@@ -98,6 +207,10 @@ export default function KioskPage() {
 		}
 	}
 
+	// ──────────────────────────────
+	// NEW PERSON FLOW
+	// ──────────────────────────────
+
 	const handleCreateNewPerson = async () => {
 		const res = await fetch('/api/kiosk/people', {
 			method: 'POST',
@@ -108,18 +221,25 @@ export default function KioskPage() {
 				wantsPasscode,
 			}),
 		})
-		const data = await res.json()
+		const data: { person: PersonSummary; passcode?: string } = await res.json()
+
 		setSelectedPerson(data.person)
+
+		if (data.passcode) {
+			setServerMessage(`Your fast login code is ${data.passcode}`)
+		}
+
 		if (data.person.isConsultant) {
 			setStep('roleChoice')
 		} else {
 			await loadPurposes()
 			setStep('visit')
 		}
-		if (data.person.passcode) {
-			setServerMessage(`Your fast login code is ${data.person.passcode}`)
-		}
 	}
+
+	// ──────────────────────────────
+	// VISIT SUBMIT
+	// ──────────────────────────────
 
 	const handleSubmitVisit = async () => {
 		if (!selectedPerson) return
@@ -133,17 +253,23 @@ export default function KioskPage() {
 				mailingListOptIn: mailingOptIn,
 			}),
 		})
+
 		if (!res.ok) {
 			setServerMessage('Sorry, something went wrong recording your visit.')
 			return
 		}
+
 		setServerMessage('Thanks! You are signed in.')
-		// Reset for next patron
 		resetForm()
 	}
 
+	// ──────────────────────────────
+	// SHIFT SUBMIT
+	// ──────────────────────────────
+
 	const handleSubmitShift = async () => {
 		if (!selectedPerson || !expectedDeparture) return
+
 		const res = await fetch('/api/kiosk/shift', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -152,17 +278,20 @@ export default function KioskPage() {
 				expectedDepartureAt: expectedDeparture,
 			}),
 		})
+
 		if (!res.ok) {
 			setServerMessage('Sorry, something went wrong starting your shift.')
 			return
 		}
-		setServerMessage('Thanks! Your shift has been logged.')
+
+		setServerMessage('Your shift has been logged.')
 		resetForm()
 	}
 
 	const resetForm = () => {
 		setStep('identify')
 		setInput('')
+		setSuggestions([])
 		setMatches([])
 		setSelectedPerson(null)
 		setSelectedPurposeId('')
@@ -173,33 +302,74 @@ export default function KioskPage() {
 		setWantsPasscode(true)
 	}
 
+	// ──────────────────────────────
+	// RENDER
+	// ──────────────────────────────
+
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-muted">
 			<Card className="w-full max-w-md">
 				<CardHeader>
 					<CardTitle className="text-center text-2xl">
-						Family History Center Sign In
+						Family History Center Sign-In
 					</CardTitle>
 				</CardHeader>
+
 				<CardContent className="space-y-4">
+					{/* STEP: IDENTIFY */}
 					{step === 'identify' && (
 						<div className="space-y-3">
 							<Label htmlFor="input">
 								Enter your <strong>name</strong> or{' '}
 								<strong>6-digit code</strong>
 							</Label>
+
 							<Input
 								id="input"
 								value={input}
-								onChange={(e) => setInput(e.target.value)}
+								onChange={(e) => handleInputChange(e.target.value)}
 								autoFocus
 							/>
-							<Button className="w-full" onClick={handleIdentify}>
+
+							{/* Suggestions list */}
+							{suggestions.length > 0 && (
+								<div className="space-y-2 mt-2 max-h-48 overflow-y-auto">
+									{suggestions.map((s) => (
+										<Button
+											key={s.id}
+											className="w-full justify-start"
+											variant={
+												selectedPerson && selectedPerson.id === s.id
+													? 'default'
+													: 'secondary'
+											}
+											onClick={() => {
+												setSelectedPerson(s)
+												setInput(s.fullName)
+											}}
+										>
+											{s.fullName}
+											{s.source === 'kiosk' && s.hasPasscode && (
+												<span className="ml-2 text-xs text-muted-foreground">
+													(fast login)
+												</span>
+											)}
+										</Button>
+									))}
+								</div>
+							)}
+
+							{searching && (
+								<p className="text-sm text-muted-foreground">Searching…</p>
+							)}
+
+							<Button className="w-full mt-2" onClick={handleIdentify}>
 								Continue
 							</Button>
 						</div>
 					)}
 
+					{/* STEP: MULTIPLE MATCHES */}
 					{step === 'choosePerson' && (
 						<div className="space-y-3">
 							<p>We found several matches. Please choose your name:</p>
@@ -213,7 +383,9 @@ export default function KioskPage() {
 									>
 										<span>{p.fullName}</span>
 										{p.isConsultant && (
-											<span className="text-xs">Consultant</span>
+											<span className="text-xs text-muted-foreground">
+												Consultant
+											</span>
 										)}
 									</Button>
 								))}
@@ -228,6 +400,7 @@ export default function KioskPage() {
 						</div>
 					)}
 
+					{/* STEP: NEW PERSON */}
 					{step === 'newPerson' && (
 						<div className="space-y-3">
 							<p>
@@ -267,6 +440,7 @@ export default function KioskPage() {
 						</div>
 					)}
 
+					{/* STEP: ROLE CHOICE FOR CONSULTANTS */}
 					{step === 'roleChoice' && selectedPerson && (
 						<div className="space-y-3">
 							<p className="text-center text-lg font-semibold">
@@ -295,6 +469,7 @@ export default function KioskPage() {
 						</div>
 					)}
 
+					{/* STEP: VISIT */}
 					{step === 'visit' && (
 						<div className="space-y-3">
 							<div>
@@ -332,17 +507,43 @@ export default function KioskPage() {
 						</div>
 					)}
 
+					{/* STEP: SHIFT */}
+
 					{step === 'shift' && (
-						<div className="space-y-3">
-							<p>What time do you expect to leave today?</p>
-							<Input
-								type="datetime-local"
-								value={expectedDeparture}
-								onChange={(e) => setExpectedDeparture(e.target.value)}
-							/>
-							<Button className="w-full" onClick={handleSubmitShift}>
+						<div className="space-y-4">
+							<p className="text-center text-lg font-semibold">
+								What time do you expect to leave today?
+							</p>
+
+							{/* 15-minute interval buttons */}
+							<div className="max-h-64 overflow-y-auto grid grid-cols-3 gap-2">
+								{timeSlots.map((t) => (
+									<Button
+										key={t}
+										variant={expectedDeparture === t ? 'default' : 'outline'}
+										onClick={() => setExpectedDeparture(t)}
+									>
+										{t}
+									</Button>
+								))}
+							</div>
+
+							<Button
+								className="w-full mt-4"
+								disabled={!expectedDeparture}
+								onClick={handleSubmitShift}
+							>
 								Start my shift
 							</Button>
+
+							{/* Optional fallback input (remove if not wanted) */}
+							{/* 
+		<Input
+			type="time"
+			value={expectedDeparture}
+			onChange={(e) => setExpectedDeparture(e.target.value)}
+		/>
+		*/}
 						</div>
 					)}
 

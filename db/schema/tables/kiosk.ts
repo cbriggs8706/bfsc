@@ -8,7 +8,7 @@ import {
 	boolean,
 	integer,
 } from 'drizzle-orm/pg-core'
-import { sql } from 'drizzle-orm'
+import { InferInsertModel, InferSelectModel, sql } from 'drizzle-orm'
 import { user } from './auth' // your existing user table
 
 export const kioskPeople = pgTable('kiosk_people', {
@@ -26,6 +26,9 @@ export const kioskPeople = pgTable('kiosk_people', {
 		.notNull()
 		.defaultNow(),
 })
+
+export type KioskPeopleInsert = InferInsertModel<typeof kioskPeople>
+export type KioskPeopleSelect = InferSelectModel<typeof kioskPeople>
 
 // If you want a stronger DB-level check for numeric 6-digits:
 export const kioskPeopleConstraints = sql`
@@ -88,4 +91,28 @@ export const kioskShiftLogs = pgTable('kiosk_shift_logs', {
 		.notNull()
 		.defaultNow(),
 	notes: text('notes'),
+})
+
+export const kioskOperatingHours = pgTable('kiosk_operating_hours', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	weekday: integer('weekday').notNull(),
+	// 0 = Sunday, 1 = Monday … 6 = Saturday
+	opensAt: varchar('opens_at', { length: 5 }).notNull(),
+	// "09:00"
+	closesAt: varchar('closes_at', { length: 5 }).notNull(),
+	// "20:00"
+	isClosed: boolean('is_closed').notNull().default(false),
+	updatedAt: timestamp('updated_at', { withTimezone: true })
+		.notNull()
+		.defaultNow(),
+})
+
+export const kioskSpecialHours = pgTable('kiosk_special_hours', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	date: varchar('date', { length: 10 }).notNull(), // YYYY-MM-DD
+	isClosed: boolean('is_closed').notNull().default(false),
+	reason: text('reason'),
+	opensAt: varchar('opens_at', { length: 5 }),
+	closesAt: varchar('closes_at', { length: 5 }),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })

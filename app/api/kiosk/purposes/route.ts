@@ -1,38 +1,15 @@
+// app/api/kiosk/purposes/route.ts
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { kioskVisitPurposes } from '@/db/schema/tables/kiosk'
-import { asc } from 'drizzle-orm'
+import { asc, eq } from 'drizzle-orm'
 
-// ────────────────────────────────
-// GET — list purposes (admin view)
-// ────────────────────────────────
 export async function GET() {
-	const items = await db
+	const purposes = await db
 		.select()
 		.from(kioskVisitPurposes)
+		.where(eq(kioskVisitPurposes.isActive, true))
 		.orderBy(asc(kioskVisitPurposes.sortOrder))
 
-	return NextResponse.json({ purposes: items })
-}
-
-// ────────────────────────────────
-// POST — create a new purpose
-// ────────────────────────────────
-export async function POST(req: Request) {
-	const { name, sortOrder = 0, isActive = true } = await req.json()
-
-	if (!name || name.trim() === '') {
-		return NextResponse.json({ error: 'Name is required' }, { status: 400 })
-	}
-
-	const [created] = await db
-		.insert(kioskVisitPurposes)
-		.values({
-			name,
-			sortOrder,
-			isActive,
-		})
-		.returning()
-
-	return NextResponse.json({ purpose: created })
+	return NextResponse.json({ purposes })
 }

@@ -1,57 +1,62 @@
 // app/api/kiosk/shift/route.ts
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { kioskShiftLogs } from '@/db/schema/tables/kiosk'
-import { kioskPeople } from '@/db/schema/tables/kiosk'
-import { and, eq } from 'drizzle-orm'
-import { isConsultantRole } from '@/lib/isConsultantRole'
-import { user } from '@/db/schema/tables/auth'
+import { kioskShiftLogs, kioskPeople } from '@/db/schema/tables/kiosk'
+import { eq } from 'drizzle-orm'
+
+type ShiftRequest = {
+	personId: string
+	expectedDepartureAt: string // "HH:MM"
+}
 
 export async function POST(req: Request) {
-	const { personId, expectedDepartureAt } = (await req.json()) as {
-		personId: string
-		expectedDepartureAt: string // ISO string from client
-	}
+	const body = (await req.json()) as ShiftRequest
 
-	// ensure this person is a consultant with a userId
-	const person = await db
-		.select({
-			id: kioskPeople.id,
-			userId: kioskPeople.userId,
-			fullName: kioskPeople.fullName,
-		})
-		.from(kioskPeople)
-		.where(eq(kioskPeople.id, personId))
-		.limit(1)
-
-	if (!person[0] || !person[0].userId) {
+	if (!body.personId || !body.expectedDepartureAt) {
 		return NextResponse.json(
-			{ error: 'Person is not linked to a consultant user.' },
+			{ error: 'Missing personId or expectedDepartureAt' },
 			{ status: 400 }
 		)
 	}
 
-	const u = await db.query.user.findFirst({
-		where: eq(user.id, person[0].userId),
+	// 1. Get userId from kiosk_people
+	const person = await db.query.kioskPeople.findFirst({
+		columns: { userId: true },
+		where: eq(kioskPeople.id, body.personId),
 	})
 
-	if (!u || !isConsultantRole(u.role)) {
+	if (!person || !person.userId) {
 		return NextResponse.json(
-			{ error: 'User is not in a consultant role.' },
+			{ error: 'This consultant has no linked userId' },
 			{ status: 400 }
 		)
 	}
 
-	const expected = new Date(expectedDepartureAt)
+	// 2. Combine today's date with provided time (HH:MM)
+	const now = new Date()
+	const [hourStr, minuteStr] = body.expectedDepartureAt.split(':')
+	const hours = Number(hourStr)
+	const minutes = Number(minuteStr)
 
-	const [shift] = await db
+	const expectedDepartureDate = new Date(
+		now.getFullYear(),
+		now.getMonth(),
+		now.getDate(),
+		hours,
+		minutes,
+		0,
+		0
+	)
+
+	// 3. Insert shift log
+	const [created] = await db
 		.insert(kioskShiftLogs)
 		.values({
-			personId: person[0].id,
-			userId: person[0].userId,
-			expectedDepartureAt: expected,
+			personId: body.personId,
+			userId: person.userId,
+			expectedDepartureAt: expectedDepartureDate,
 		})
 		.returning()
 
-	return NextResponse.json({ shift })
+	return NextResponse.json({ success: true, shift: created })
 }
