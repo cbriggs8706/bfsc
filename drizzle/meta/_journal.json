@@ -71,6 +71,13 @@
       "when": 1765482085931,
       "tag": "0009_tough_bromley",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1765486761302,
+      "tag": "0010_greedy_silverclaw",
+      "breakpoints": true
     }
   ]
 }

@@ -101,7 +101,16 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				url: `/${locale}/admin/users`,
 				icon: User,
 			},
-			// { name: t('sidebar.input.stories'), url: '#', icon: BookOpen },
+			{
+				name: 'Define Shifts',
+				url: `/${locale}/admin/shifts/define`,
+				icon: Calendar,
+			},
+			{
+				name: 'Shift Scheduler',
+				url: `/${locale}/admin/shifts/assignments`,
+				icon: Calendar,
+			},
 			// { name: t('sidebar.input.scriptures'), url: '#', icon: BookKey },
 			// { name: t('sidebar.input.prayers'), url: '#', icon: HandHeart },
 		],
