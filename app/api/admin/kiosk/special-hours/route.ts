@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { kioskSpecialHours } from '@/db/schema/tables/kiosk'
+import { specialHours } from '@/db'
 import { asc } from 'drizzle-orm'
 
 function dateRange(start: string, end: string): string[] {
@@ -18,8 +18,8 @@ function dateRange(start: string, end: string): string[] {
 export async function GET() {
 	const rows = await db
 		.select()
-		.from(kioskSpecialHours)
-		.orderBy(asc(kioskSpecialHours.date))
+		.from(specialHours)
+		.orderBy(asc(specialHours.date))
 
 	return NextResponse.json({ hours: rows })
 }
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 	const dates = endDate ? dateRange(startDate, endDate) : [startDate]
 
 	for (const d of dates) {
-		await db.insert(kioskSpecialHours).values({
+		await db.insert(specialHours).values({
 			date: d,
 			isClosed: true,
 			reason: reason ?? null,

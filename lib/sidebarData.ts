@@ -20,6 +20,7 @@ import {
 	Camera,
 	Search,
 	User,
+	Megaphone,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
 
@@ -111,7 +112,11 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				url: `/${locale}/admin/shifts/assignments`,
 				icon: Calendar,
 			},
-			// { name: t('sidebar.input.scriptures'), url: '#', icon: BookKey },
+			{
+				name: 'Announcements',
+				url: `/${locale}/admin/announcements`,
+				icon: Megaphone,
+			},
 			// { name: t('sidebar.input.prayers'), url: '#', icon: HandHeart },
 		],
 

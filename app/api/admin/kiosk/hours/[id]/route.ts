@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
-import { kioskOperatingHours } from '@/db/schema/tables/kiosk'
+import { operatingHours } from '@/db'
 import { eq } from 'drizzle-orm'
 
 const timeRegex = /^[0-2][0-9]:[0-5][0-9]$/
@@ -16,13 +16,13 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 	//------------------------------------------------------------
 	if (body.isClosed === true) {
 		await db
-			.update(kioskOperatingHours)
+			.update(operatingHours)
 			.set({
 				isClosed: true,
 				opensAt: '00:00',
 				closesAt: '00:00',
 			})
-			.where(eq(kioskOperatingHours.id, id))
+			.where(eq(operatingHours.id, id))
 
 		return NextResponse.json({ success: true })
 	}
@@ -33,11 +33,11 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 	if (body.isClosed === false) {
 		// Do NOT reset hours; admin will adjust times later
 		await db
-			.update(kioskOperatingHours)
+			.update(operatingHours)
 			.set({
 				isClosed: false,
 			})
-			.where(eq(kioskOperatingHours.id, id))
+			.where(eq(operatingHours.id, id))
 
 		return NextResponse.json({ success: true })
 	}
@@ -89,10 +89,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 		)
 	}
 
-	await db
-		.update(kioskOperatingHours)
-		.set(update)
-		.where(eq(kioskOperatingHours.id, id))
+	await db.update(operatingHours).set(update).where(eq(operatingHours.id, id))
 
 	return NextResponse.json({ success: true })
 }

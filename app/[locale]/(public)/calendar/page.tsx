@@ -1,9 +1,5 @@
 import KioskCalendar from '@/components/custom/calendar'
-import { db } from '@/db'
-import {
-	kioskOperatingHours,
-	kioskSpecialHours,
-} from '@/db/schema/tables/kiosk'
+import { db, operatingHours, specialHours } from '@/db'
 import { toLocalYMD } from '@/utils/time'
 import { and, gte, lte } from 'drizzle-orm'
 
@@ -21,12 +17,9 @@ export default async function Page() {
 
 	const specialsRaw = await db
 		.select()
-		.from(kioskSpecialHours)
+		.from(specialHours)
 		.where(
-			and(
-				gte(kioskSpecialHours.date, firstStr),
-				lte(kioskSpecialHours.date, lastStr)
-			)
+			and(gte(specialHours.date, firstStr), lte(specialHours.date, lastStr))
 		)
 
 	const specials = specialsRaw.map((s) => ({
@@ -38,7 +31,7 @@ export default async function Page() {
 		reason: s.reason,
 	}))
 
-	const weeklyRaw = await db.select().from(kioskOperatingHours)
+	const weeklyRaw = await db.select().from(operatingHours)
 
 	const weekly = weeklyRaw.map((w) => ({
 		weekday: w.weekday,

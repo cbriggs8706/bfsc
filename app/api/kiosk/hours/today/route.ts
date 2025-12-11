@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import {
-	kioskOperatingHours,
-	kioskSpecialHours,
-} from '@/db/schema/tables/kiosk'
+import { operatingHours, specialHours } from '@/db'
 import { eq } from 'drizzle-orm'
 
 export async function GET() {
@@ -17,8 +14,8 @@ export async function GET() {
 	// ───────────────────────────────────────────
 	const special = await db
 		.select()
-		.from(kioskSpecialHours)
-		.where(eq(kioskSpecialHours.date, todayDateString))
+		.from(specialHours)
+		.where(eq(specialHours.date, todayDateString))
 		.limit(1)
 
 	if (special.length > 0) {
@@ -37,8 +34,8 @@ export async function GET() {
 	// ───────────────────────────────────────────
 	const weekly = await db
 		.select()
-		.from(kioskOperatingHours)
-		.where(eq(kioskOperatingHours.weekday, weekday))
+		.from(operatingHours)
+		.where(eq(operatingHours.weekday, weekday))
 		.limit(1)
 
 	if (weekly.length === 0) {

@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { kioskOperatingHours } from '@/db/schema/tables/kiosk'
+import { operatingHours } from '@/db'
 import { asc } from 'drizzle-orm'
 
 export async function GET() {
 	const hours = await db
 		.select()
-		.from(kioskOperatingHours)
-		.orderBy(asc(kioskOperatingHours.weekday))
+		.from(operatingHours)
+		.orderBy(asc(operatingHours.weekday))
 
 	return NextResponse.json({ hours })
 }
