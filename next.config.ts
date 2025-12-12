@@ -3,6 +3,11 @@ import type { NextConfig } from 'next'
 import createNextIntlPlugin from 'next-intl/plugin'
 
 const nextConfig: NextConfig = {
+	experimental: {
+		serverActions: {
+			bodySizeLimit: '3mb', // increase as needed
+		},
+	},
 	images: {
 		remotePatterns: [
 			{
@@ -19,6 +24,7 @@ const nextConfig: NextConfig = {
 				hostname: 'localhost',
 				port: '3000',
 			},
+			{ protocol: 'https', hostname: 'zecjdztqymcsdpyznlfa.supabase.co' },
 		],
 	},
 }

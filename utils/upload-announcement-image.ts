@@ -1,25 +1,34 @@
-import { createClient } from '@supabase/supabase-js'
+// utils/upload-announcement-image.ts
+'use server'
 
-const supabase = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL!,
-	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
-export async function uploadAnnouncementImage(file: File) {
-	const fileName = `announcements/${crypto.randomUUID()}-${file.name}`
+export async function uploadAnnouncementImage(file: File): Promise<string> {
+	const bucket = 'announcements'
 
-	const { data, error } = await supabase.storage
-		.from('public')
-		.upload(fileName, file, {
-			cacheControl: '3600',
+	const ext = file.name.split('.').pop()?.toLowerCase() ?? 'png'
+	const filename = `${crypto.randomUUID()}.${ext}`
+	const path = `images/${filename}`
+
+	const arrayBuffer = await file.arrayBuffer()
+	const bytes = new Uint8Array(arrayBuffer)
+
+	const { error: uploadError } = await supabaseAdmin.storage
+		.from(bucket)
+		.upload(path, bytes, {
+			contentType: file.type || 'image/*',
 			upsert: false,
 		})
 
-	if (error) throw error
+	if (uploadError) {
+		throw new Error(`Supabase upload failed: ${uploadError.message}`)
+	}
 
-	const { data: urlData } = supabase.storage
-		.from('public')
-		.getPublicUrl(fileName)
+	// If the bucket is PUBLIC, this gives a permanent URL:
+	const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(path)
+	if (!data.publicUrl) {
+		throw new Error('Could not generate public URL for uploaded image')
+	}
 
-	return urlData.publicUrl
+	return data.publicUrl
 }

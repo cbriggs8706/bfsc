@@ -27,6 +27,7 @@ import {
 import { Session } from 'next-auth'
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
+import { useUserProfile } from '@/hooks/useUserProfile'
 
 export function NavUser({
 	session,
@@ -48,6 +49,8 @@ export function NavUser({
 	dashboard: string
 }) {
 	const { isMobile } = useSidebar()
+	const { profile } = useUserProfile()
+
 	// --------------------------
 	// GUEST MODE (no session)
 	// --------------------------
@@ -108,6 +111,9 @@ export function NavUser({
 			</SidebarMenu>
 		)
 	}
+	console.log('HERE>>>', profile)
+	const resolvedImageUrl =
+		profile?.profileImageUrl ?? session?.user?.image ?? undefined
 
 	return (
 		<SidebarMenu>
@@ -120,7 +126,7 @@ export function NavUser({
 						>
 							<Avatar className="h-8 w-8 rounded-full">
 								<AvatarImage
-									src={session.user.image ?? '/'}
+									src={resolvedImageUrl}
 									alt={session.user.name ?? 'BFSC User'}
 								/>
 								<AvatarFallback className="rounded-lg">FS</AvatarFallback>
@@ -144,7 +150,7 @@ export function NavUser({
 							<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
 								<Avatar className="h-8 w-8 rounded-full">
 									<AvatarImage
-										src={session.user.image ?? ''}
+										src={resolvedImageUrl}
 										alt={session.user.name ?? 'BFSC User'}
 									/>
 									<AvatarFallback className="rounded-lg">TL</AvatarFallback>

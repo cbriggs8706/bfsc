@@ -18,6 +18,26 @@ import { updateUserProfile } from '@/app/actions/update-user-profile'
 import { changePassword } from '@/app/actions/change-password'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getUserDetails } from '@/app/actions/get-user-details'
+import { uploadProfileImage } from '@/utils/upload-profile-image'
+import { updateKioskProfile } from '@/app/actions/update-kiosk-profile'
+
+export interface UserDetailsData {
+	// kiosk_people (optional)
+	kioskPersonId?: string
+	profileImageUrl?: string | null
+
+	// user
+	id: string
+	name: string | null
+	username: string | null
+	email: string
+	role: string
+
+	// auth / meta
+	providers?: string[]
+	createdAt?: string | Date
+	lastLogin?: string | Date
+}
 
 export default function UserDetails() {
 	const { data: session, update: refreshSession } = useSession()
@@ -25,7 +45,7 @@ export default function UserDetails() {
 	const [name, setName] = useState('')
 	const [username, setUsername] = useState('')
 	const [email, setEmail] = useState('')
-	const [details, setDetails] = useState<any>(null)
+	const [details, setDetails] = useState<UserDetailsData | null>(null)
 
 	const [currentPassword, setCurrentPassword] = useState('')
 	const [newPassword, setNewPassword] = useState('')
@@ -44,6 +64,7 @@ export default function UserDetails() {
 		async function load() {
 			const data = await getUserDetails()
 			setDetails(data)
+			console.log('USER DETAILS FROM SERVER', data)
 		}
 		load()
 	}, [isOpen]) // refresh on open
@@ -73,37 +94,43 @@ export default function UserDetails() {
 	const onSaveProfile = () => {
 		startTransition(async () => {
 			try {
-				let uploadedUrl: string | undefined = undefined
+				let uploadedProfileImageUrl: string | undefined
 
-				// Upload avatar if needed
+				// 1️⃣ Upload to Supabase Storage
 				if (file) {
-					const form = new FormData()
-					form.append('file', file)
+					uploadedProfileImageUrl = await uploadProfileImage(file)
+				}
 
-					const uploadRes = await fetch('/api/upload', {
-						method: 'POST',
-						body: form,
+				// 2️⃣ Persist image URL to kiosk_people
+				if (uploadedProfileImageUrl && details?.kioskPersonId) {
+					await updateKioskProfile({
+						kioskPersonId: details.kioskPersonId,
+						profileImageUrl: uploadedProfileImageUrl,
 					})
-
-					if (!uploadRes.ok) throw new Error('Upload failed')
-					const { url } = await uploadRes.json()
-					uploadedUrl = url
 				}
 
-				const payload: any = {}
+				// 3️⃣ Update public.user (NO image)
+				const userPayload: {
+					name?: string
+					username?: string
+					email?: string
+				} = {}
 
-				if (name !== session?.user?.name) payload.name = name
-				if (username !== session?.user?.username) payload.username = username
-				if (email !== session?.user?.email) payload.email = email
-				if (uploadedUrl) payload.image = uploadedUrl
+				if (name !== session?.user?.name) userPayload.name = name
+				if (username !== session?.user?.username)
+					userPayload.username = username
+				if (email !== session?.user?.email) userPayload.email = email
 
-				if (Object.keys(payload).length > 0) {
-					await updateUserProfile(payload)
-					await refreshSession(payload)
+				if (Object.keys(userPayload).length > 0) {
+					await updateUserProfile(userPayload)
 				}
 
-				// ************ ✨ MAGIC LINE HERE ✨ ************
-				await refreshSession() // ← Forces NextAuth to reload session
+				// 4️⃣ Refresh client state
+				await refreshSession()
+
+				// 5️⃣ Force details reload
+				const refreshed = await getUserDetails()
+				setDetails(refreshed)
 
 				toast.success('Profile updated!')
 				setIsOpen(false)
@@ -147,12 +174,16 @@ export default function UserDetails() {
 		})
 	}
 
+	const resolvedImageUrl =
+		preview ?? details?.profileImageUrl ?? session?.user?.image ?? undefined
+
 	return (
 		<>
 			<Card className="w-full max-w-md mx-auto shadow-md border">
 				<CardHeader className="flex flex-row items-center gap-4">
 					<Avatar className="h-16 w-16">
-						<AvatarImage src={preview || session?.user?.image || undefined} />
+						<AvatarImage src={resolvedImageUrl} />
+
 						{/* <Image
 							src={preview ?? session?.user?.image ?? '/mascot.svg'}
 							width={120}
@@ -231,12 +262,13 @@ export default function UserDetails() {
 						{/* Avatar */}
 						<div className="flex flex-col items-center gap-4">
 							<Image
-								src={preview || session?.user?.image || '/mascot.svg'}
+								src={resolvedImageUrl ?? '/mascot.svg'}
 								alt="Preview"
 								width={120}
 								height={120}
 								className="rounded-full border shadow-sm object-cover"
 							/>
+
 							<input
 								type="file"
 								accept="image/*"
