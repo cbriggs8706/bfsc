@@ -30,7 +30,7 @@ export default async function Page({
 
 				{/* You can uncomment these later; they’ll use your new primary/secondary */}
 				<div className="mt-8 flex flex-wrap justify-center gap-3">
-					<Link href={`/${locale}/register`}>
+					{/* <Link href={`/${locale}/register`}>
 						<Button>{t('register')}</Button>
 					</Link>
 					<Link href={`/${locale}/login`}>
@@ -38,7 +38,7 @@ export default async function Page({
 					</Link>
 					<Link href={`/${locale}/course`}>
 						<Button variant="secondary">{t('guest')}</Button>
-					</Link>
+					</Link> */}
 				</div>
 			</div>
 		</div>
