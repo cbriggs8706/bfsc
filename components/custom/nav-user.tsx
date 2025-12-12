@@ -111,7 +111,6 @@ export function NavUser({
 			</SidebarMenu>
 		)
 	}
-	console.log('HERE>>>', profile)
 	const resolvedImageUrl =
 		profile?.profileImageUrl ?? session?.user?.image ?? undefined
 

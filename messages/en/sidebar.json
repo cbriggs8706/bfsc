@@ -69,5 +69,9 @@
 	"admin": {
 		"title": "Admin",
 		"users": "User Management"
+	},
+	"consultant": {
+		"title": "Consultant",
+		"shiftReport": "Shift Report"
 	}
 }

@@ -26,6 +26,7 @@ import { NavLesson } from './nav-lesson'
 import { useTranslations } from 'next-intl'
 import { buildSidebarData, getTeacherNav } from '@/lib/sidebarData'
 import { Separator } from '../ui/separator'
+import { NavConsultant } from './nav-consultant'
 
 export function AppSidebar({
 	session,
@@ -66,6 +67,22 @@ export function AppSidebar({
 				{['Admin', 'Director', 'Assistant Director'].includes(role) && (
 					<>
 						<NavAdmin admin={data.admin} label={t('sidebar.admin.title')} />
+						<Separator className="my-4" />
+					</>
+				)}
+				{[
+					'Admin',
+					'Director',
+					'Assistant Director',
+					'High Councilman',
+					'Consultant',
+					'Shift Lead',
+				].includes(role) && (
+					<>
+						<NavConsultant
+							consultant={data.consultant}
+							label={t('sidebar.consultant.title')}
+						/>
 						<Separator className="my-4" />
 					</>
 				)}

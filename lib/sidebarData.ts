@@ -21,6 +21,7 @@ import {
 	Search,
 	User,
 	Megaphone,
+	Users2Icon,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
 
@@ -103,6 +104,11 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				icon: User,
 			},
 			{
+				name: 'Visit Reasons',
+				url: `/${locale}/admin/kiosk/purposes`,
+				icon: Pencil,
+			},
+			{
 				name: 'Define Shifts',
 				url: `/${locale}/admin/shifts/define`,
 				icon: Calendar,
@@ -118,6 +124,14 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				icon: Megaphone,
 			},
 			// { name: t('sidebar.input.prayers'), url: '#', icon: HandHeart },
+		],
+
+		consultant: [
+			{
+				name: t('sidebar.consultant.shiftReport'),
+				url: `/${locale}/dashboard/reports/shifts`,
+				icon: Users2Icon,
+			},
 		],
 
 		lesson: [{ name: t('sidebar.lesson.scripts'), url: '#', icon: LetterText }],

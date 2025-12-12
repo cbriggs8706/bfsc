@@ -17,6 +17,7 @@ import {
 	BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { AppSidebar } from '@/components/custom/app-sidebar'
+import { ConsultantAlerts } from '@/components/consultant/ConsultantAlerts'
 
 export default async function Layout({
 	children,
@@ -30,6 +31,8 @@ export default async function Layout({
 			{' '}
 			<AppSidebar session={session} role={session?.user?.role ?? 'Patron'} />
 			<SidebarInset>
+				{/* 🔔 Consultant realtime alerts */}
+				{session?.user?.role !== 'Patron' ? <ConsultantAlerts /> : null}
 				<header className="flex h-16 shrink-0 items-center gap-2">
 					<div className="flex items-center gap-2 px-4">
 						<SidebarTrigger className="-ml-1" />
