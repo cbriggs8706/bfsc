@@ -1,4 +1,4 @@
-import KioskCalendar from '@/components/custom/calendar'
+import KioskCalendar from '@/components/custom/Calendar'
 import { db, operatingHours, specialHours } from '@/db'
 import { toLocalYMD } from '@/utils/time'
 import { and, gte, lte } from 'drizzle-orm'
@@ -41,11 +41,19 @@ export default async function Page() {
 	}))
 
 	return (
-		<KioskCalendar
-			specials={specials}
-			weekly={weekly}
-			initialYear={year}
-			initialMonth={month}
-		/>
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">BFSC Calendar</h1>
+				<p className="text-sm text-muted-foreground">
+					Normal Operating Hours and Class Schedule
+				</p>
+			</div>
+			<KioskCalendar
+				specials={specials}
+				weekly={weekly}
+				initialYear={year}
+				initialMonth={month}
+			/>
+		</div>
 	)
 }

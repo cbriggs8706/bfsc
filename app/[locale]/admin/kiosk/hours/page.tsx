@@ -63,53 +63,63 @@ export default function KioskHoursAdmin() {
 	}
 
 	return (
-		<Card className="w-full max-w-3xl mx-auto mt-10">
-			<CardHeader>
-				<CardTitle>Kiosk Weekly Hours</CardTitle>
-			</CardHeader>
-			<CardContent className="space-y-6">
-				{rows.map((r) => (
-					<div
-						key={r.id}
-						className="flex items-center justify-between gap-4 border-b pb-3"
-					>
-						<div className="w-32 font-semibold">{weekdayNames[r.weekday]}</div>
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Define Regular Center Hours</h1>
+				<p className="text-sm text-muted-foreground">
+					This is used extensively throughout the site. Be careful making edits.
+					Autosaves with each change you make.
+				</p>
+			</div>
+			<Card className="w-full">
+				<CardContent className="space-y-6">
+					{rows.map((r) => (
+						<div
+							key={r.id}
+							className="flex items-center justify-between gap-4 border-b pb-3"
+						>
+							<div className="w-32 font-semibold">
+								{weekdayNames[r.weekday]}
+							</div>
 
-						{/* Closed Toggle */}
-						<div className="flex items-center gap-2">
-							<Switch
-								checked={r.isClosed}
-								onCheckedChange={(v) => updateRow(r.id, { isClosed: v })}
-							/>
-							<Label>Closed</Label>
+							{/* Closed Toggle */}
+							<div className="flex items-center gap-2">
+								<Switch
+									checked={r.isClosed}
+									onCheckedChange={(v) => updateRow(r.id, { isClosed: v })}
+								/>
+								<Label>Closed</Label>
+							</div>
+
+							{/* Time Inputs */}
+							{!r.isClosed && (
+								<>
+									<Input
+										type="time"
+										className="w-28"
+										value={r.opensAt}
+										onChange={(e) =>
+											updateRow(r.id, { opensAt: e.target.value })
+										}
+									/>
+									<Input
+										type="time"
+										className="w-28"
+										value={r.closesAt}
+										onChange={(e) =>
+											updateRow(r.id, { closesAt: e.target.value })
+										}
+									/>
+								</>
+							)}
 						</div>
+					))}
 
-						{/* Time Inputs */}
-						{!r.isClosed && (
-							<>
-								<Input
-									type="time"
-									className="w-28"
-									value={r.opensAt}
-									onChange={(e) => updateRow(r.id, { opensAt: e.target.value })}
-								/>
-								<Input
-									type="time"
-									className="w-28"
-									value={r.closesAt}
-									onChange={(e) =>
-										updateRow(r.id, { closesAt: e.target.value })
-									}
-								/>
-							</>
-						)}
-					</div>
-				))}
-
-				<Button disabled={loading} onClick={load} className="w-full">
-					Refresh
-				</Button>
-			</CardContent>
-		</Card>
+					<Button disabled={loading} onClick={load} className="w-full">
+						Refresh
+					</Button>
+				</CardContent>
+			</Card>
+		</div>
 	)
 }

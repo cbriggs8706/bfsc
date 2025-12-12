@@ -14,19 +14,19 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from '@/components/ui/sidebar'
-import { NavMain } from './nav-main'
-import { NavInput } from './nav-input'
-import { NavAdmin } from './nav-admin'
-import { NavSecondary } from './nav-secondary'
-import { NavUser } from './nav-user'
+import { NavAdmin } from './NavAdmin'
+import { NavSecondary } from './NavSecondary'
+import { NavUser } from './NavUser'
 import { Session } from 'next-auth'
-import { SidebarLanguageSwitcher } from './sidebar-language-switcher'
 import { useParams } from 'next/navigation'
-import { NavLesson } from './nav-lesson'
+import { NavLesson } from './NavLesson'
 import { useTranslations } from 'next-intl'
-import { buildSidebarData, getTeacherNav } from '@/lib/sidebarData'
+import { buildSidebarData, getTeacherNav } from '@/lib/sidebar-data'
 import { Separator } from '../ui/separator'
-import { NavConsultant } from './nav-consultant'
+import { NavConsultant } from './NavConsultant'
+import { NavMain } from './NavMain'
+import { NavInput } from './NavInput'
+import { SidebarLanguageSwitcher } from './SidebarLanguageSwitcher'
 
 export function AppSidebar({
 	session,
@@ -91,10 +91,10 @@ export function AppSidebar({
 					lesson={data.lesson}
 					content={t('sidebar.lesson.lessonContent')}
 				/> */}
-				<NavInput
+				{/* <NavInput
 					input={data.input}
 					label={t('sidebar.input.comprehensible')}
-				/>
+				/> */}
 				{/* <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
 			</SidebarContent>
 			<SidebarFooter>

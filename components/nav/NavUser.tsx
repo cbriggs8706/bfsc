@@ -27,7 +27,7 @@ import {
 import { Session } from 'next-auth'
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
-import { useUserProfile } from '@/hooks/useUserProfile'
+import { useUserProfile } from '@/hooks/use-user-profile'
 
 export function NavUser({
 	session,

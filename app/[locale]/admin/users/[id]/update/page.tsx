@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { user } from '@/db/schema/tables/auth'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { UserForm } from '@/components/admin/user-form'
+import { UserForm } from '@/components/admin/user/UserForm'
 
 export default async function UserUpdatePage({
 	params,
@@ -28,8 +28,11 @@ export default async function UserUpdatePage({
 	if (!u) notFound()
 
 	return (
-		<div className="max-w-xl space-y-6">
-			<h1 className="text-2xl font-bold">Edit User</h1>
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Edit User</h1>
+				<p className="text-sm text-muted-foreground">Lorem ipsum</p>
+			</div>
 
 			<Card>
 				<CardHeader>

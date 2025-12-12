@@ -28,7 +28,7 @@ import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getSession, signIn } from 'next-auth/react'
-import GoogleLogo from '../logos/google'
+import GoogleLogo from '../logos/Google'
 
 const formSchema = z.object({
 	username: z.string().min(3, 'Username must be at least 3 characters long.'),

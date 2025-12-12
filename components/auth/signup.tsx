@@ -26,7 +26,7 @@ import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import GoogleLogo from '../logos/google'
+import GoogleLogo from '../logos/Google'
 import { signIn } from 'next-auth/react'
 
 const formSchema = z.object({

@@ -1,3 +1,5 @@
+// app/[locale]/classes/update/[id]/page.tsx
+
 import { notFound, redirect } from 'next/navigation'
 import {
 	deleteAnnouncement,
@@ -26,7 +28,12 @@ export default async function DeleteAnnouncementPage({ params }: Props) {
 	}
 
 	return (
-		<div className="p-4 space-y-6">
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Delete {announcement.title}</h1>
+				<p className="text-sm text-muted-foreground">Lorem ipsum</p>
+			</div>
+
 			<AnnouncementForm
 				mode="delete"
 				initial={announcement}

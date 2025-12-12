@@ -218,12 +218,12 @@ export default function UserDetails() {
 							<p>
 								<strong>Credentials Provider:</strong>{' '}
 								{details.providers?.length
-									? details.providers.join(', ')
+									? details.providers.join(', ').toUpperCase()
 									: 'Username/Password'}
 							</p>
 							<p>
-								<strong>Note:</strong> Known bug: After saving edits, logout and
-								back in to see it update here.
+								<strong>Note:</strong> After saving edits you may need to logout
+								and back in to see it update here.
 							</p>
 
 							{details.createdAt && (
@@ -243,7 +243,7 @@ export default function UserDetails() {
 
 					<Button
 						className="w-full mt-4"
-						variant="secondary"
+						variant="default"
 						onClick={() => setIsOpen(true)}
 					>
 						Edit Profile

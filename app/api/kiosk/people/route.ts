@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { kioskPeople } from '@/db/schema/tables/kiosk'
-import { isConsultantRole } from '@/lib/isConsultantRole'
+import { isConsultantRole } from '@/lib/is-consultant-role'
 import { user } from '@/db/schema/tables/auth'
 import { eq } from 'drizzle-orm'
 

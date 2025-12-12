@@ -56,77 +56,79 @@ export default function SpecialHoursAdmin() {
 	}
 
 	return (
-		<Card className="max-w-xl mx-auto mt-10">
-			<CardHeader>
-				<CardTitle>Closed Days & Special Hours</CardTitle>
-			</CardHeader>
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Closed Days & Special Hours</h1>
+				<p className="text-sm text-muted-foreground">Lorem ipsum</p>
+			</div>
+			<Card className="w-full">
+				<CardContent className="space-y-6">
+					{/* Add date range */}
+					<div className="space-y-3">
+						<Label>Start Date</Label>
+						<Input
+							type="date"
+							value={startDate}
+							onChange={(e) => setStartDate(e.target.value)}
+						/>
 
-			<CardContent className="space-y-6">
-				{/* Add date range */}
-				<div className="space-y-3">
-					<Label>Start Date</Label>
-					<Input
-						type="date"
-						value={startDate}
-						onChange={(e) => setStartDate(e.target.value)}
-					/>
+						<Label>End Date (optional)</Label>
+						<Input
+							type="date"
+							value={endDate}
+							onChange={(e) => setEndDate(e.target.value)}
+						/>
 
-					<Label>End Date (optional)</Label>
-					<Input
-						type="date"
-						value={endDate}
-						onChange={(e) => setEndDate(e.target.value)}
-					/>
+						<Label>Reason (optional)</Label>
+						<Input
+							type="text"
+							placeholder="Thanksgiving Break, Cleaning, etc."
+							value={reason}
+							onChange={(e) => setReason(e.target.value)}
+						/>
 
-					<Label>Reason (optional)</Label>
-					<Input
-						type="text"
-						placeholder="Thanksgiving Break, Cleaning, etc."
-						value={reason}
-						onChange={(e) => setReason(e.target.value)}
-					/>
+						<Button className="w-full" onClick={addClosedRange}>
+							Add Closure
+						</Button>
+					</div>
 
-					<Button className="w-full" onClick={addClosedRange}>
-						Add Closure
-					</Button>
-				</div>
+					{/* List of closures */}
+					<div className="space-y-2">
+						{items.map((i) => (
+							<div
+								key={i.id}
+								className="flex justify-between items-center border p-2 rounded"
+							>
+								<div>
+									<div className="font-semibold">
+										{i.date} {i.isClosed && '(Closed)'}
+									</div>
 
-				{/* List of closures */}
-				<div className="space-y-2">
-					{items.map((i) => (
-						<div
-							key={i.id}
-							className="flex justify-between items-center border p-2 rounded"
-						>
-							<div>
-								<div className="font-semibold">
-									{i.date} {i.isClosed && '(Closed)'}
+									{i.reason && (
+										<div className="text-sm italic text-muted-foreground">
+											{i.reason}
+										</div>
+									)}
+
+									{!i.isClosed && (i.opensAt || i.closesAt) && (
+										<div className="text-sm text-muted-foreground">
+											{`Open ${i.opensAt} – ${i.closesAt}`}
+										</div>
+									)}
 								</div>
 
-								{i.reason && (
-									<div className="text-sm italic text-muted-foreground">
-										{i.reason}
-									</div>
-								)}
-
-								{!i.isClosed && (i.opensAt || i.closesAt) && (
-									<div className="text-sm text-muted-foreground">
-										{`Open ${i.opensAt} – ${i.closesAt}`}
-									</div>
-								)}
+								<Button
+									variant="destructive"
+									size="sm"
+									onClick={() => deleteItem(i.id)}
+								>
+									Delete
+								</Button>
 							</div>
-
-							<Button
-								variant="destructive"
-								size="sm"
-								onClick={() => deleteItem(i.id)}
-							>
-								Delete
-							</Button>
-						</div>
-					))}
-				</div>
-			</CardContent>
-		</Card>
+						))}
+					</div>
+				</CardContent>
+			</Card>
+		</div>
 	)
 }

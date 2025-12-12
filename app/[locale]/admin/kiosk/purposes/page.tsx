@@ -83,88 +83,93 @@ export default function AdminPurposesPage() {
 	}
 
 	return (
-		<Card className="max-w-3xl mx-auto mt-10">
-			<CardHeader>
-				<CardTitle>Kiosk Visit Purposes</CardTitle>
-			</CardHeader>
-			<CardContent className="space-y-6">
-				{/* Create New Purpose */}
-				<div className="flex items-end gap-3">
-					<div className="flex-1">
-						<Label>Name</Label>
-						<Input
-							value={newName}
-							onChange={(e) => setNewName(e.target.value)}
-							placeholder="e.g., Research Help"
-						/>
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Define Visit Purposes</h1>
+				<p className="text-sm text-muted-foreground">
+					These will show up in the kiosk when a patron signs in.
+				</p>
+			</div>
+			<Card className="w-full">
+				<CardContent className="space-y-6">
+					{/* Create New Purpose */}
+					<div className="flex items-end gap-3">
+						<div className="flex-1">
+							<Label>Name</Label>
+							<Input
+								value={newName}
+								onChange={(e) => setNewName(e.target.value)}
+								placeholder="e.g., Research Help"
+							/>
+						</div>
+						<Button onClick={handleCreate} disabled={loading}>
+							Add
+						</Button>
 					</div>
-					<Button onClick={handleCreate} disabled={loading}>
-						Add
-					</Button>
-				</div>
 
-				{/* Table */}
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>Sort</TableHead>
-							<TableHead>Name</TableHead>
-							<TableHead>Active</TableHead>
-							<TableHead className="text-right">Actions</TableHead>
-						</TableRow>
-					</TableHeader>
-
-					<TableBody>
-						{purposes.map((p) => (
-							<TableRow key={p.id}>
-								{/* Sort order */}
-								<TableCell>
-									<Input
-										type="number"
-										className="w-20"
-										value={p.sortOrder ?? 0}
-										onChange={(e) =>
-											updatePurpose(p.id, {
-												sortOrder: Number(e.target.value),
-											})
-										}
-									/>
-								</TableCell>
-
-								{/* Editable name */}
-								<TableCell>
-									<Input
-										value={p.name}
-										onChange={(e) =>
-											updatePurpose(p.id, { name: e.target.value })
-										}
-									/>
-								</TableCell>
-
-								{/* Active toggle */}
-								<TableCell>
-									<Switch
-										checked={p.isActive}
-										onCheckedChange={(value) =>
-											updatePurpose(p.id, { isActive: value })
-										}
-									/>
-								</TableCell>
-
-								{/* Delete */}
-								<TableCell className="text-right">
-									<Button
-										variant="destructive"
-										onClick={() => deletePurpose(p.id)}
-									>
-										Delete
-									</Button>
-								</TableCell>
+					{/* Table */}
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead>Sort</TableHead>
+								<TableHead>Name</TableHead>
+								<TableHead>Active</TableHead>
+								<TableHead className="text-right">Actions</TableHead>
 							</TableRow>
-						))}
-					</TableBody>
-				</Table>
-			</CardContent>
-		</Card>
+						</TableHeader>
+
+						<TableBody>
+							{purposes.map((p) => (
+								<TableRow key={p.id}>
+									{/* Sort order */}
+									<TableCell>
+										<Input
+											type="number"
+											className="w-20"
+											value={p.sortOrder ?? 0}
+											onChange={(e) =>
+												updatePurpose(p.id, {
+													sortOrder: Number(e.target.value),
+												})
+											}
+										/>
+									</TableCell>
+
+									{/* Editable name */}
+									<TableCell>
+										<Input
+											value={p.name}
+											onChange={(e) =>
+												updatePurpose(p.id, { name: e.target.value })
+											}
+										/>
+									</TableCell>
+
+									{/* Active toggle */}
+									<TableCell>
+										<Switch
+											checked={p.isActive}
+											onCheckedChange={(value) =>
+												updatePurpose(p.id, { isActive: value })
+											}
+										/>
+									</TableCell>
+
+									{/* Delete */}
+									<TableCell className="text-right">
+										<Button
+											variant="destructive"
+											onClick={() => deletePurpose(p.id)}
+										>
+											Delete
+										</Button>
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</CardContent>
+			</Card>
+		</div>
 	)
 }

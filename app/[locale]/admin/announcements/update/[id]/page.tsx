@@ -23,7 +23,13 @@ export default async function UpdateAnnouncementPage({ params }: Props) {
 	}
 
 	return (
-		<div className="p-4">
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Update {announcement.title}</h1>
+				<p className="text-sm text-muted-foreground">
+					Changes are not saved until you click Save below.
+				</p>
+			</div>
 			<AnnouncementForm
 				mode="update"
 				initial={announcement}

@@ -1,7 +1,7 @@
 // app/[locale]/(auth)/register/page.tsx
 'use client'
 
-import { SignUpForm } from '@/components/auth/signup'
+import { SignUpForm } from '@/components/auth/Signup'
 
 export default function RegisterPage() {
 	return (

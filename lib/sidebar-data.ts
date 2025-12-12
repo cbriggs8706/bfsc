@@ -22,46 +22,49 @@ import {
 	User,
 	Megaphone,
 	Users2Icon,
+	X,
+	CalendarX,
+	Clock,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
 
 export function buildSidebarData(t: TFunction, locale: string) {
 	return {
 		navMain: [
-			{
-				title: t('sidebar.main.groups'),
-				url: `/${locale}/groups`,
-				icon: Users,
-				items: [{ title: t('sidebar.groups.schedule'), url: '#' }],
-			},
-			{
-				title: t('sidebar.main.projects'),
-				url: '#',
-				icon: Dog,
-				items: [
-					{ title: t('sidebar.projects.cassiaphotos'), url: '#' },
-					{ title: t('sidebar.projects.cassianegatives'), url: '#' },
-					{ title: t('sidebar.projects.findagrave'), url: '#' },
-					{ title: t('sidebar.projects.mccemeteries'), url: '#' },
-					{ title: t('sidebar.projects.censuses'), url: '#' },
-					{ title: t('sidebar.projects.mvwwii'), url: '#' },
-					{ title: t('sidebar.projects.naturalization'), url: '#' },
-					{ title: t('sidebar.projects.numident'), url: '#' },
-					{ title: t('sidebar.projects.obituaries'), url: '#' },
-					{ title: t('sidebar.projects.oral'), url: '#' },
-				],
-			},
-			{
-				title: t('sidebar.main.digitization'),
-				url: '#',
-				icon: Camera,
-				items: [
-					// { title: t('sidebar.digitization.verbs'), url: '#' },
-					// { title: t('sidebar.digitization.scramble'), url: '#' },
-					// { title: t('sidebar.digitization.builder'), url: '#' },
-					// { title: t('sidebar.digitization.memorizer'), url: '#' },
-				],
-			},
+			// {
+			// 	title: t('sidebar.main.groups'),
+			// 	url: `/${locale}/groups`,
+			// 	icon: Users,
+			// 	items: [{ title: t('sidebar.groups.schedule'), url: '#' }],
+			// },
+			// {
+			// 	title: t('sidebar.main.projects'),
+			// 	url: '#',
+			// 	icon: Dog,
+			// 	items: [
+			// 		{ title: t('sidebar.projects.cassiaphotos'), url: '#' },
+			// 		{ title: t('sidebar.projects.cassianegatives'), url: '#' },
+			// 		{ title: t('sidebar.projects.findagrave'), url: '#' },
+			// 		{ title: t('sidebar.projects.mccemeteries'), url: '#' },
+			// 		{ title: t('sidebar.projects.censuses'), url: '#' },
+			// 		{ title: t('sidebar.projects.mvwwii'), url: '#' },
+			// 		{ title: t('sidebar.projects.naturalization'), url: '#' },
+			// 		{ title: t('sidebar.projects.numident'), url: '#' },
+			// 		{ title: t('sidebar.projects.obituaries'), url: '#' },
+			// 		{ title: t('sidebar.projects.oral'), url: '#' },
+			// 	],
+			// },
+			// {
+			// 	title: t('sidebar.main.digitization'),
+			// 	url: '#',
+			// 	icon: Camera,
+			// 	items: [
+			// 		{ title: t('sidebar.digitization.verbs'), url: '#' },
+			// 		{ title: t('sidebar.digitization.scramble'), url: '#' },
+			// 		{ title: t('sidebar.digitization.builder'), url: '#' },
+			// 		{ title: t('sidebar.digitization.memorizer'), url: '#' },
+			// 	],
+			// },
 			{
 				title: t('sidebar.main.calendar'),
 				url: `/${locale}/calendar`,
@@ -104,15 +107,16 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				icon: User,
 			},
 			{
-				name: 'Visit Reasons',
-				url: `/${locale}/admin/kiosk/purposes`,
+				name: 'Center Definitions',
+				url: `/${locale}/admin/center`,
 				icon: Pencil,
 			},
 			{
-				name: 'Define Shifts',
-				url: `/${locale}/admin/shifts/define`,
-				icon: Calendar,
+				name: 'Schedule Closures',
+				url: `/${locale}/admin/kiosk/special-hours`,
+				icon: CalendarX,
 			},
+
 			{
 				name: 'Shift Scheduler',
 				url: `/${locale}/admin/shifts/assignments`,

@@ -33,7 +33,7 @@ export default async function Page({ params }: DashboardPageProps) {
 		.orderBy(announcement.createdAt)
 
 	return (
-		<div className="space-y-6">
+		<div className="p-4 space-y-4">
 			{announcements.length > 0 && (
 				<div className="space-y-3">
 					{announcements.map((a) => (
@@ -41,12 +41,15 @@ export default async function Page({ params }: DashboardPageProps) {
 					))}
 				</div>
 			)}
-			<h1 className="text-3xl font-bold">
-				{role === 'admin' ? 'Admin Dashboard' : 'User Dashboard'}
-			</h1>
+			<div>
+				<h1 className="text-3xl font-bold">
+					{role === 'admin' ? 'Admin Dashboard' : 'User Dashboard'}
+				</h1>
 
-			{/* <JoinCourseModal locale={locale} /> */}
-			<h2 className="text-2xl font-bold">My Enrolled Courses</h2>
+				<p className="text-sm text-muted-foreground">
+					Dashboard Coming Soon...
+				</p>
+			</div>
 		</div>
 	)
 }

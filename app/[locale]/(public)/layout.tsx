@@ -16,7 +16,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import { AppSidebar } from '@/components/custom/app-sidebar'
+import { AppSidebar } from '@/components/nav/AppSidebar'
 
 export default async function Layout({
 	children,

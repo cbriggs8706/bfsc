@@ -16,7 +16,13 @@ export default async function NewAnnouncementPage({ params }: Props) {
 	}
 
 	return (
-		<div className="p-4">
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Create Announcement</h1>
+				<p className="text-sm text-muted-foreground">
+					Create an announcment for patrons, consultants etc.
+				</p>
+			</div>
 			<AnnouncementForm
 				mode="create"
 				onSubmit={createAction}

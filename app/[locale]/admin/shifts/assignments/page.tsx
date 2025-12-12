@@ -8,7 +8,7 @@ import {
 	shiftAssignments,
 } from '@/db/schema/tables/shifts'
 import { user } from '@/db/schema/tables/auth'
-import { ShiftScheduler } from '@/components/admin/shift-scheduler'
+import { ShiftScheduler } from '@/components/admin/shift/ShiftScheduler'
 
 export const metadata: Metadata = {
 	title: 'Shift Schedule',
@@ -93,10 +93,10 @@ export default async function ShiftsPage() {
 		}))
 
 	return (
-		<div className="p-6 space-y-4">
-			<div className="flex flex-col gap-1">
-				<h1 className="text-2xl font-semibold">Shift Schedule</h1>
-				<p className="text-muted-foreground text-sm">
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Shift Schedule</h1>
+				<p className="text-sm text-muted-foreground">
 					Drag people between shifts. Only active operating days are shown.
 				</p>
 			</div>

@@ -42,10 +42,10 @@ export default async function AdminUsersPage({
 		.from(user)
 
 	return (
-		<div className="space-y-6">
-			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-bold">User Management</h1>
-				{/* Placeholder if you later want "Create user" or filters */}
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Manage Users</h1>
+				<p className="text-sm text-muted-foreground">Lorem ipsum</p>
 			</div>
 
 			<Card>
@@ -60,8 +60,6 @@ export default async function AdminUsersPage({
 							<TableHeader>
 								<TableRow>
 									<TableHead>Name</TableHead>
-									<TableHead>Email</TableHead>
-									<TableHead>Username</TableHead>
 									<TableHead>Role</TableHead>
 									<TableHead className="w-[120px] text-right">
 										Actions
@@ -72,8 +70,6 @@ export default async function AdminUsersPage({
 								{users.map((u) => (
 									<TableRow key={u.id}>
 										<TableCell>{u.name ?? '—'}</TableCell>
-										<TableCell>{u.email}</TableCell>
-										<TableCell>{u.username ?? '—'}</TableCell>
 										<TableCell className="capitalize">{u.role}</TableCell>
 										<TableCell className="text-right">
 											<Link href={`/${locale}/admin/users/${u.id}/update`}>

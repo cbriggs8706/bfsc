@@ -1,5 +1,5 @@
 // app/[locale]/admin/users/create/page.tsx
-import { UserForm } from '@/components/admin/user-form'
+import { UserForm } from '@/components/admin/user/UserForm'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
 export default async function CreateUserPage({
@@ -10,8 +10,11 @@ export default async function CreateUserPage({
 	const { locale } = await params
 
 	return (
-		<div className="max-w-xl space-y-6">
-			<h1 className="text-2xl font-bold">Create User</h1>
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Create User</h1>
+				<p className="text-sm text-muted-foreground">Lorem ipsum</p>
+			</div>
 
 			<Card>
 				<CardHeader>

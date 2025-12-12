@@ -3,7 +3,7 @@ import { Metadata } from 'next'
 import { db } from '@/db'
 import { inArray, eq } from 'drizzle-orm'
 import { operatingHours, weeklyShifts } from '@/db/schema/tables/shifts'
-import { ShiftDefinitionsManager } from '@/components/admin/shift-definitions'
+import { ShiftDefinitionsManager } from '@/components/admin/shift/ShiftDefinitions'
 
 type PageProps = {
 	params: { locale: string }
@@ -74,9 +74,9 @@ export default async function ManageShiftsPage({
 		.where(inArray(weeklyShifts.weekday, activeWeekdayNumbers))
 
 	return (
-		<div className="p-6 space-y-4">
+		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-2xl font-semibold">Shift Definitions</h1>
+				<h1 className="text-3xl font-bold">Shift Definitions</h1>
 				<p className="text-sm text-muted-foreground">
 					Admins and Directors can define the standard weekly shifts (day + time
 					blocks) that others can assign people to.

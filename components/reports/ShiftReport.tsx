@@ -9,6 +9,8 @@ import { DateRangeButtons } from '@/components/custom/DateRangeButtons'
 import { ShiftSummaryChart } from '@/components/reports/ShiftSummaryChart'
 import type {
 	DateRangePreset,
+	ShiftReportConsultant,
+	ShiftReportPatron,
 	ShiftSummaryPoint,
 	TodayShift,
 } from '@/types/shift-report'
@@ -18,13 +20,13 @@ import { supabase } from '@/lib/supabase-client'
 type Props = {
 	initialShifts: TodayShift[]
 	initialOffShift: {
-		consultants: any[]
-		patrons: any[]
+		consultants: ShiftReportConsultant[]
+		patrons: ShiftReportPatron[]
 	}
 }
 type OffShift = {
-	consultants: any[]
-	patrons: any[]
+	consultants: ShiftReportConsultant[]
+	patrons: ShiftReportPatron[]
 }
 
 export function ShiftReport({ initialShifts, initialOffShift }: Props) {

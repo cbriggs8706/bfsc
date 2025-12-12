@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getTranslations } from 'next-intl/server'
-import UserDetails from '@/components/auth/user-details'
+import UserDetails from '@/components/auth/UserDetails'
 
 interface DashboardPageProps {
 	params: Promise<{ locale: string }>
@@ -19,7 +19,11 @@ export default async function Page({ params }: DashboardPageProps) {
 	if (!session) redirect(`/${locale}`)
 
 	return (
-		<div className="space-y-6">
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">User Account</h1>
+				<p className="text-sm text-muted-foreground">Lorem ipsum</p>
+			</div>
 			<UserDetails />
 		</div>
 	)

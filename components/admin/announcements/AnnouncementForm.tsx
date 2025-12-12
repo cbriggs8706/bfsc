@@ -142,22 +142,7 @@ export function AnnouncementForm(props: Props) {
 
 	return (
 		<Card>
-			<CardHeader>
-				<CardTitle>
-					{props.mode === 'create' && 'Create Announcement'}
-					{props.mode === 'update' && 'Update Announcement'}
-					{props.mode === 'read' && 'View Announcement'}
-					{props.mode === 'delete' && 'Delete Announcement'}
-				</CardTitle>
-			</CardHeader>
-
 			<CardContent className="space-y-6">
-				{props.mode === 'delete' && (
-					<p className="text-sm text-destructive">
-						This announcement will be permanently deleted.
-					</p>
-				)}
-
 				<div className="space-y-2">
 					<Label>Title</Label>
 					<Input

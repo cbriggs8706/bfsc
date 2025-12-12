@@ -24,6 +24,15 @@ export default async function ShiftReportPage() {
 	const data = await res.json()
 
 	return (
-		<ShiftReport initialShifts={data.shifts} initialOffShift={data.offShift} />
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Shift Reports</h1>
+				<p className="text-sm text-muted-foreground">Daily and Historical</p>
+			</div>
+			<ShiftReport
+				initialShifts={data.shifts}
+				initialOffShift={data.offShift}
+			/>
+		</div>
 	)
 }

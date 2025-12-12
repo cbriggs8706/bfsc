@@ -26,9 +26,9 @@ export type ShiftReportResponse = {
 
 export interface ShiftReportPatron {
 	visitId: string
-	patronName: string
+	fullName: string
 	purposeName: string | null
-	time: Date
+	arrivedAt: Date
 }
 
 export interface ShiftReportRow {
@@ -80,14 +80,7 @@ export type TodayShift = {
 	weekday: number
 	startTime: string
 	endTime: string
-
-	consultants: {
-		userId: string
-		fullName: string
-		profileImageUrl: string | null
-		arrivalAt: Date
-	}[]
-
+	consultants: ShiftReportConsultant[]
 	patrons: {
 		visitId: string
 		fullName: string
@@ -118,4 +111,11 @@ export type ShiftSummaryPoint = {
 	label: string // day or month label
 	consultants: number
 	patrons: number
+}
+
+export type ShiftReportConsultant = {
+	userId: string
+	fullName: string
+	profileImageUrl: string | null
+	arrivalAt: Date
 }
