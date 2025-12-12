@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth'
 import { getTranslations } from 'next-intl/server'
 import { announcement, db } from '@/db'
 import { sql } from 'drizzle-orm'
-import { AnnouncementBanner } from '@/components/custom/announcement-banner'
+import { AnnouncementBanner } from '@/components/custom/AnnouncementBanner'
 
 interface DashboardPageProps {
 	params: Promise<{ locale: string }>

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { AnnouncementDialog } from './announcement-dialog'
+import { AnnouncementDialog } from './AnnouncementDialog'
+import { Megaphone } from 'lucide-react'
 
 interface Announcement {
 	id: string
@@ -22,9 +23,11 @@ export function AnnouncementBanner({ announcement }: AnnouncementBannerProps) {
 	return (
 		<>
 			<div
-				className="w-full bg-accent outline-green-accent outline-2  p-3 rounded-md cursor-pointer hover:bg-green-accent transition"
+				className="w-full bg-accent outline-green-accent outline-2 p-3 rounded-md cursor-pointer hover:bg-green-accent transition flex items-center gap-2"
 				onClick={() => setOpen(true)}
 			>
+				<Megaphone className="h-5 w-5 shrink-0 " />
+
 				<span className="font-semibold">{announcement.title}</span>
 			</div>
 

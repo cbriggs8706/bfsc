@@ -1,3 +1,5 @@
+// db/schema/tables/announcements.ts
+
 import {
 	pgTable,
 	uuid,
