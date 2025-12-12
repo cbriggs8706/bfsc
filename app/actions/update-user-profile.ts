@@ -1,3 +1,4 @@
+//TODO do i delete this now that i've created update-kiosk-profile action?
 'use server'
 
 import { getServerSession } from 'next-auth'

@@ -14,6 +14,7 @@ import {
 	SelectItem,
 } from '@/components/ui/select'
 import type { IdentifyResponse } from '@/app/api/kiosk/identify/route'
+import { ConsultantCard } from '@/components/kiosk/ConsultantCard'
 
 type PersonSource = 'kiosk' | 'user'
 
@@ -26,6 +27,12 @@ type PersonSummary = {
 	source?: PersonSource
 }
 
+type OnShiftConsultant = {
+	personId: string
+	fullName: string
+	profileImageUrl: string | null
+}
+
 type Purpose = {
 	id: number
 	name: string
@@ -33,7 +40,13 @@ type Purpose = {
 
 export default function KioskPage() {
 	const [step, setStep] = useState<
-		'identify' | 'choosePerson' | 'newPerson' | 'roleChoice' | 'visit' | 'shift'
+		| 'identify'
+		| 'choosePerson'
+		| 'newPerson'
+		| 'roleChoice'
+		| 'visit'
+		| 'shift'
+		| 'consultants'
 	>('identify')
 
 	const [input, setInput] = useState('')
@@ -54,6 +67,9 @@ export default function KioskPage() {
 	const [searching, setSearching] = useState(false)
 	const searchTimeout = useRef<NodeJS.Timeout | null>(null)
 	const [timeSlots, setTimeSlots] = useState<string[]>([])
+	const [onShiftConsultants, setOnShiftConsultants] = useState<
+		OnShiftConsultant[]
+	>([])
 
 	useEffect(() => {
 		if (step !== 'shift') return
@@ -259,8 +275,8 @@ export default function KioskPage() {
 			return
 		}
 
-		setServerMessage('Thanks! You are signed in.')
-		resetForm()
+		setServerMessage(null)
+		setStep('consultants')
 	}
 
 	// ──────────────────────────────
@@ -301,6 +317,18 @@ export default function KioskPage() {
 		setNewEmail('')
 		setWantsPasscode(true)
 	}
+
+	useEffect(() => {
+		;(async () => {
+			const res = await fetch('/api/kiosk/on-shift', {
+				cache: 'no-store',
+			})
+			if (!res.ok) return
+
+			const data: { consultants: OnShiftConsultant[] } = await res.json()
+			setOnShiftConsultants(data.consultants)
+		})()
+	}, [])
 
 	// ──────────────────────────────
 	// RENDER
@@ -503,6 +531,42 @@ export default function KioskPage() {
 							</div>
 							<Button className="w-full" onClick={handleSubmitVisit}>
 								Sign me in
+							</Button>
+						</div>
+					)}
+
+					{/* STEP: CONSULTANTS */}
+
+					{step === 'consultants' && (
+						<div className="space-y-4">
+							<p className="text-center text-lg font-semibold">
+								You’re signed in!
+							</p>
+
+							{onShiftConsultants.length > 0 ? (
+								<>
+									<p className="text-center text-sm text-muted-foreground">
+										Consultants currently on shift
+									</p>
+
+									<div className="grid grid-cols-2 gap-3">
+										{onShiftConsultants.map((c) => (
+											<ConsultantCard
+												key={c.personId}
+												name={c.fullName}
+												imageUrl={c.profileImageUrl}
+											/>
+										))}
+									</div>
+								</>
+							) : (
+								<p className="text-center text-sm text-muted-foreground">
+									No consultants are currently on shift.
+								</p>
+							)}
+
+							<Button className="w-full mt-4" onClick={resetForm}>
+								Return to Sign In
 							</Button>
 						</div>
 					)}
