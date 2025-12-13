@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/breadcrumb'
 import { AppSidebar } from '@/components/nav/AppSidebar'
 import { ConsultantAlerts } from '@/components/consultant/ConsultantAlerts'
+import { MentionBell } from '@/components/cases/MentionBell'
+import { redirect } from 'next/navigation'
 
 export default async function Layout({
 	children,
@@ -25,13 +27,15 @@ export default async function Layout({
 	children: React.ReactNode
 }) {
 	const session = await getServerSession(authOptions)
-	// if (!session) redirect(`/`)
+	if (!session) redirect(`/`)
 	return (
 		<SidebarProvider>
 			{' '}
 			<AppSidebar session={session} role={session?.user?.role ?? 'Patron'} />
 			<SidebarInset>
 				{/* 🔔 Consultant realtime alerts */}
+				<MentionBell userId={session.user.id} />
+
 				{session?.user?.role !== 'Patron' ? <ConsultantAlerts /> : null}
 				<header className="flex h-16 shrink-0 items-center gap-2">
 					<div className="flex items-center gap-2 px-4">

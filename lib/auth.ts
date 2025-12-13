@@ -147,3 +147,18 @@ export const getUserRole = async () => {
 	const s = await getSession()
 	return s?.user?.role ?? 'guest'
 }
+
+export const getCurrentUser = async () => {
+	const session = await getSession()
+
+	if (!session?.user?.id) return null
+
+	return {
+		id: session.user.id,
+		role: session.user.role ?? 'Patron',
+		name: session.user.name ?? 'User',
+		email: session.user.email ?? '',
+		username: session.user.username ?? null,
+		image: session.user.image ?? null,
+	}
+}

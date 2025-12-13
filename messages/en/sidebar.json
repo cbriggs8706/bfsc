@@ -74,5 +74,9 @@
 		"title": "Consultant",
 		"shiftReport": "Shift Report",
 		"teachClass": "Teach A Class"
+	},
+	"cases": {
+		"title": "Cases",
+		"mentions": "Mentions"
 	}
 }

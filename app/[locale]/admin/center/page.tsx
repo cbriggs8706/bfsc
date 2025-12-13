@@ -42,6 +42,12 @@ export default async function Page({ params }: PageProps) {
 						<Button>Define Purposes</Button>
 					</Link>
 				</li>
+				<li>
+					{' '}
+					<Link href={`/${locale}/admin/case-types`}>
+						<Button>Define Case Types</Button>
+					</Link>
+				</li>
 			</ul>
 		</div>
 	)

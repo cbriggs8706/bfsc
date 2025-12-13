@@ -26,6 +26,7 @@ import {
 	CalendarX,
 	Clock,
 	Lectern,
+	Ticket,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
 
@@ -76,6 +77,19 @@ export function buildSidebarData(t: TFunction, locale: string) {
 					{ title: t('sidebar.calendar.classes'), url: '#' },
 					// { title: t('sidebar.calendar.syllables'), url: '#' },
 					// { title: t('sidebar.calendar.niqqud'), url: '#' },
+				],
+			},
+			{
+				title: t('sidebar.cases.title'),
+				url: `/${locale}/cases`,
+				icon: Ticket,
+				items: [
+					{
+						title: t('sidebar.cases.mentions'),
+						url: `/${locale}/cases/mentions`,
+					},
+					// { title: t('sidebar.cases.memorylane'), url: '#' },
+					// { title: t('sidebar.cases.classes'), url: '#' },
 				],
 			},
 		],
