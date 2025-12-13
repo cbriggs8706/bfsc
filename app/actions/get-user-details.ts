@@ -6,7 +6,7 @@ import { kioskPeople } from '@/db'
 import { eq } from 'drizzle-orm'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { UserDetailsData } from '@/components/auth/UserDetails'
+import { UserDetailsData } from '@/components/auth/AuthUserDetails'
 
 export async function getUserDetails(): Promise<UserDetailsData | null> {
 	const session = await getServerSession(authOptions)

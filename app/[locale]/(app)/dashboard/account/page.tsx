@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getTranslations } from 'next-intl/server'
-import UserDetails from '@/components/auth/UserDetails'
+import UserDetails from '@/components/auth/AuthUserDetails'
 
 interface DashboardPageProps {
 	params: Promise<{ locale: string }>

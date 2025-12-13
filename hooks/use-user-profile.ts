@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { getUserDetails } from '@/app/actions/get-user-details'
-import type { UserDetailsData } from '@/components/auth/UserDetails'
+import type { UserDetailsData } from '@/components/auth/AuthUserDetails'
 
 export function useUserProfile() {
 	const [profile, setProfile] = useState<UserDetailsData | null>(null)
