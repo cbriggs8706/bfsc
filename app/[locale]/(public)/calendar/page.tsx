@@ -1,7 +1,9 @@
-import KioskCalendar from '@/components/custom/Calendar'
+// app/[locale]/(public)/calendar/page.tsx
+import CenterCalendar from '@/components/custom/CenterCalendar'
 import { db, operatingHours, specialHours } from '@/db'
 import { toLocalYMD } from '@/utils/time'
 import { and, gte, lte } from 'drizzle-orm'
+import { listCalendarClasses } from '@/db/queries/calendar-classes'
 
 export default async function Page() {
 	const today = new Date()
@@ -40,6 +42,8 @@ export default async function Page() {
 		isClosed: w.isClosed,
 	}))
 
+	const classes = await listCalendarClasses(rangeStart, rangeEnd)
+
 	return (
 		<div className="p-4 space-y-4">
 			<div>
@@ -48,9 +52,10 @@ export default async function Page() {
 					Normal Operating Hours and Class Schedule
 				</p>
 			</div>
-			<KioskCalendar
+			<CenterCalendar
 				specials={specials}
 				weekly={weekly}
+				classes={classes}
 				initialYear={year}
 				initialMonth={month}
 			/>

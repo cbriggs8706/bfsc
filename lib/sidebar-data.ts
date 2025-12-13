@@ -25,6 +25,7 @@ import {
 	X,
 	CalendarX,
 	Clock,
+	Lectern,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
 
@@ -135,6 +136,11 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				name: t('sidebar.consultant.shiftReport'),
 				url: `/${locale}/dashboard/reports/shifts`,
 				icon: Users2Icon,
+			},
+			{
+				name: t('sidebar.consultant.teachClass'),
+				url: `/${locale}/classes`,
+				icon: Lectern,
 			},
 		],
 

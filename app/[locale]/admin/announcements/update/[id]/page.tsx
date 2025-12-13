@@ -1,3 +1,4 @@
+// app/[locale]/admin/announcements/update/[id]/page.tsx
 import { notFound } from 'next/navigation'
 import {
 	getAnnouncementById,

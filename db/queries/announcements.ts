@@ -1,5 +1,4 @@
 // db/queries/announcements.ts
-// db/queries/announcements.ts
 import 'server-only'
 import { db } from '@/db'
 import { announcement } from '@/db/schema/tables/announcements'
