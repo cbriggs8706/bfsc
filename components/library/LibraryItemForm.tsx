@@ -23,6 +23,7 @@ export type LibraryItemFormInput = {
 	isbn?: string
 	notes?: string
 	copyCodes: string[]
+	tags: string[]
 }
 
 type Props = {
@@ -51,6 +52,7 @@ export function LibraryItemForm({
 	const [copyCodesText, setCopyCodesText] = useState(
 		initial?.copyCodes?.join('\n') ?? ''
 	)
+	const [tagsText, setTagsText] = useState(initial?.tags?.join('\n') ?? '')
 
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -60,6 +62,11 @@ export function LibraryItemForm({
 		setError(null)
 
 		const copyCodes = copyCodesText
+			.split('\n')
+			.map((c) => c.trim())
+			.filter(Boolean)
+
+		const tags = tagsText
 			.split('\n')
 			.map((c) => c.trim())
 			.filter(Boolean)
@@ -74,6 +81,7 @@ export function LibraryItemForm({
 				isbn: isbn || undefined,
 				notes: notes || undefined,
 				copyCodes,
+				tags,
 			})
 
 			window.location.href = onDoneHref
@@ -149,6 +157,14 @@ export function LibraryItemForm({
 					placeholder="BK-001&#10;BK-002"
 					value={copyCodesText}
 					onChange={(e) => setCopyCodesText(e.target.value)}
+				/>
+			</div>
+			<div>
+				<Label>Tags (one per line)</Label>
+				<Textarea
+					placeholder="Burley, History, Scanner"
+					value={tagsText}
+					onChange={(e) => setTagsText(e.target.value)}
 				/>
 			</div>
 

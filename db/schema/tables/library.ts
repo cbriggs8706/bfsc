@@ -36,6 +36,7 @@ export const libraryItems = pgTable(
 
 		year: integer('year'),
 		authorManufacturer: varchar('author_manufacturer', { length: 256 }),
+		tags: text('tags').array().notNull().default([]),
 
 		isbn: varchar('isbn', { length: 32 }),
 		notes: text('notes'),

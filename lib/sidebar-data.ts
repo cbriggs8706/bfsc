@@ -29,6 +29,10 @@ import {
 	Ticket,
 	AtSign,
 	Book,
+	Users2,
+	Brain,
+	BadgeQuestionMark,
+	MapIcon,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
 import { CASE_VIEWS } from '@/lib/cases/views'
@@ -106,6 +110,48 @@ export function buildSidebarData(t: TFunction, locale: string) {
 					// { title: t('sidebar.cases.memorylane'), url: '#' },
 					// { title: t('sidebar.cases.classes'), url: '#' },
 				],
+			},
+			{
+				title: 'Group Visits',
+				url: `/${locale}/groups`,
+				icon: Users2,
+				items: [],
+			},
+			{
+				title: 'Research Specialists',
+				url: `/${locale}/research-specialists`,
+				icon: Search,
+				items: [],
+			},
+			{
+				title: 'Training Guide',
+				url: `/${locale}/training-guide`,
+				icon: GraduationCap,
+				items: [],
+			},
+			{
+				title: 'Consultant Helps',
+				url: `/${locale}/consultant-helps`,
+				icon: BadgeQuestionMark,
+				items: [],
+			},
+			{
+				title: 'Community Projects',
+				url: `/${locale}/community-projects`,
+				icon: MapIcon,
+				items: [],
+			},
+			{
+				title: 'Memory Lane',
+				url: `/${locale}/memory-lane`,
+				icon: Camera,
+				items: [],
+			},
+			{
+				title: 'Activities',
+				url: `/${locale}/activities`,
+				icon: Pencil,
+				items: [],
 			},
 		],
 

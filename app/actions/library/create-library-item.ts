@@ -14,6 +14,7 @@ export async function createLibraryItem(
 		isbn?: string
 		notes?: string
 		copyCodes: string[]
+		tags: string[]
 	}
 ) {
 	if (input.copyCodes.length === 0) {
@@ -31,6 +32,7 @@ export async function createLibraryItem(
 				authorManufacturer: input.authorManufacturer,
 				isbn: input.isbn,
 				notes: input.notes,
+				tags: input.tags,
 			})
 			.returning({ id: libraryItems.id })
 

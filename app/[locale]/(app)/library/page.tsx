@@ -1,26 +1,40 @@
 // app/[locale]/(app)/library/page.tsx
-import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { listLibraryItemsForTable } from '@/db/queries/library'
 import { LibraryItemsTable } from '@/components/library/LibraryItemsTable'
 import { requireCurrentUser } from '@/utils/require-current-user'
+import { LibraryFilters } from '@/components/library/LibraryFilters'
+import { LibraryFilterDrawer } from '@/components/library/LibraryFilterDrawer'
+import { listLibraryItems } from '@/db/queries/library'
+import { LibraryPagination } from '@/components/library/LibraryPagination'
 
 interface Props {
 	params: Promise<{ locale: string }>
+	searchParams: Promise<{
+		q?: string
+		type?: 'book' | 'equipment'
+		tag?: string
+		page?: string
+	}>
 }
 
-export default async function LibraryPage({ params }: Props) {
+export default async function LibraryPage({ params, searchParams }: Props) {
 	const { locale } = await params
+	const sp = await searchParams
 
 	let currentUser = null
 	try {
 		currentUser = await requireCurrentUser()
 	} catch {
-		// public view allowed
+		// public allowed
 	}
 
-	const items = await listLibraryItemsForTable()
+	const PAGE_SIZE = 25
+
+	const { items, total } = await listLibraryItems({
+		q: sp.q,
+		type: sp.type,
+		tag: sp.tag,
+		page: sp.page ? Number(sp.page) : 1,
+	})
 
 	return (
 		<div className="p-4 space-y-4">
@@ -31,23 +45,26 @@ export default async function LibraryPage({ params }: Props) {
 						Books and equipment available at the center
 					</p>
 				</div>
-
-				{/* {currentUser?.role === 'Admin' && (
-					<Button asChild>
-						<Link href={`/${locale}/library/create`}>Add Item</Link>
-					</Button>
-				)} */}
 			</div>
 
-			<Card>
-				<CardContent>
-					<LibraryItemsTable
-						items={items}
-						currentUser={currentUser}
-						locale={locale}
-					/>
-				</CardContent>
-			</Card>
+			{/* Desktop filters */}
+			<div className="hidden md:block">
+				<LibraryFilters />
+			</div>
+
+			{/* Mobile filters */}
+			<LibraryFilterDrawer />
+
+			<LibraryItemsTable
+				items={items}
+				locale={locale}
+				currentUser={currentUser}
+			/>
+			<LibraryPagination
+				page={sp.page ? Number(sp.page) : 1}
+				pageSize={PAGE_SIZE}
+				total={total}
+			/>
 		</div>
 	)
 }
