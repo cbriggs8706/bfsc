@@ -28,6 +28,7 @@ import {
 	Lectern,
 	Ticket,
 	AtSign,
+	Book,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
 import { CASE_VIEWS } from '@/lib/cases/views'
@@ -169,6 +170,11 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				name: t('sidebar.consultant.teachClass'),
 				url: `/${locale}/classes`,
 				icon: Lectern,
+			},
+			{
+				name: t('sidebar.consultant.library'),
+				url: `/${locale}/library`,
+				icon: Book,
 			},
 		],
 

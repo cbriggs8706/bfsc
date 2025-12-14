@@ -3,6 +3,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { listSeriesForTable } from '@/db/queries/classes'
 import { ClassesTable } from '@/components/classes/ClassesTable'
 import { requireCurrentUser } from '@/utils/require-current-user'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
 interface Props {
 	params: Promise<{ locale: string }>
@@ -32,7 +34,6 @@ export default async function ClassesPage({ params }: Props) {
 					</p>
 				</div>
 			</div>
-
 			<Card>
 				<CardContent>
 					<ClassesTable

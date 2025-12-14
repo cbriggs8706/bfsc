@@ -3,40 +3,22 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-	Select,
-	SelectTrigger,
-	SelectContent,
-	SelectValue,
-	SelectItem,
-} from '@/components/ui/select'
 import type { IdentifyResponse } from '@/app/api/kiosk/identify/route'
-import { ConsultantCard } from '@/components/kiosk/ConsultantCard'
-
-type PersonSource = 'kiosk' | 'user'
-
-type PersonSummary = {
-	id: string
-	fullName: string
-	userId: string | null
-	isConsultant: boolean
-	hasPasscode: boolean
-	source?: PersonSource
-}
-
-type OnShiftConsultant = {
-	personId: string
-	fullName: string
-	profileImageUrl: string | null
-}
-
-type Purpose = {
-	id: number
-	name: string
-}
+import {
+	PersonSummary,
+	OnShiftConsultant,
+	Purpose,
+	KioskStep,
+} from '@/types/kiosk'
+import { IdentifyStep } from '@/components/kiosk/IdentifyStep'
+import { ChoosePersonStep } from '@/components/kiosk/ChoosePersonStep'
+import { NewPersonStep } from '@/components/kiosk/NewPersonStep'
+import { ShiftStep } from '@/components/kiosk/ShiftStep'
+import { ConsultantsStep } from '@/components/kiosk/ConsultantsStep'
+import { VisitStep } from '@/components/kiosk/VisitStep'
+import { RoleChoiceStep } from '@/components/kiosk/RoleChoiceStep'
+import { ActionChoiceStep } from '@/components/kiosk/ActionChoiceStep'
+import { CheckoutStep } from '@/components/kiosk/CheckoutStep'
 
 export default function KioskPage() {
 	const [step, setStep] = useState<
@@ -47,6 +29,8 @@ export default function KioskPage() {
 		| 'visit'
 		| 'shift'
 		| 'consultants'
+		| 'actionChoice'
+		| 'checkout'
 	>('identify')
 
 	const [input, setInput] = useState('')
@@ -276,7 +260,7 @@ export default function KioskPage() {
 		}
 
 		setServerMessage(null)
-		setStep('consultants')
+		setStep('actionChoice')
 	}
 
 	// ──────────────────────────────
@@ -346,269 +330,103 @@ export default function KioskPage() {
 				<CardContent className="space-y-4">
 					{/* STEP: IDENTIFY */}
 					{step === 'identify' && (
-						<div className="space-y-3">
-							<Label htmlFor="input">
-								Enter your <strong>name</strong> or{' '}
-								<strong>6-digit code</strong>
-							</Label>
-
-							<Input
-								id="input"
-								value={input}
-								onChange={(e) => handleInputChange(e.target.value)}
-								autoFocus
-							/>
-
-							{/* Suggestions list */}
-							{suggestions.length > 0 && (
-								<div className="space-y-2 mt-2 max-h-48 overflow-y-auto">
-									{suggestions.map((s) => (
-										<Button
-											key={s.id}
-											className="w-full justify-start"
-											variant={
-												selectedPerson && selectedPerson.id === s.id
-													? 'default'
-													: 'secondary'
-											}
-											onClick={() => {
-												setSelectedPerson(s)
-												setInput(s.fullName)
-											}}
-										>
-											{s.fullName}
-											{s.source === 'kiosk' && s.hasPasscode && (
-												<span className="ml-2 text-xs text-muted-foreground">
-													(fast login)
-												</span>
-											)}
-										</Button>
-									))}
-								</div>
-							)}
-
-							{searching && (
-								<p className="text-sm text-muted-foreground">Searching…</p>
-							)}
-
-							<Button className="w-full mt-2" onClick={handleIdentify}>
-								Continue
-							</Button>
-						</div>
+						<IdentifyStep
+							input={input}
+							suggestions={suggestions}
+							searching={searching}
+							onInputChange={handleInputChange}
+							onContinue={handleIdentify}
+							onSelectSuggestion={(p) => {
+								setSelectedPerson(p)
+								setInput(p.fullName)
+							}}
+						/>
 					)}
 
 					{/* STEP: MULTIPLE MATCHES */}
 					{step === 'choosePerson' && (
-						<div className="space-y-3">
-							<p>We found several matches. Please choose your name:</p>
-							<div className="space-y-2 max-h-64 overflow-y-auto">
-								{matches.map((p) => (
-									<Button
-										key={p.id}
-										variant="outline"
-										className="w-full justify-between"
-										onClick={() => handleChoosePerson(p)}
-									>
-										<span>{p.fullName}</span>
-										{p.isConsultant && (
-											<span className="text-xs text-muted-foreground">
-												Consultant
-											</span>
-										)}
-									</Button>
-								))}
-							</div>
-							<Button
-								variant="ghost"
-								className="w-full"
-								onClick={() => setStep('newPerson')}
-							>
-								I don&apos;t see my name
-							</Button>
-						</div>
+						<ChoosePersonStep
+							matches={matches}
+							onChoose={handleChoosePerson}
+							onCreateNew={() => setStep('newPerson')}
+						/>
 					)}
 
 					{/* STEP: NEW PERSON */}
 					{step === 'newPerson' && (
-						<div className="space-y-3">
-							<p>
-								Welcome! Let&apos;s save your name for faster sign-in next time.
-							</p>
-							<div>
-								<Label htmlFor="newName">Name</Label>
-								<Input
-									id="newName"
-									value={newName}
-									onChange={(e) => setNewName(e.target.value)}
-								/>
-							</div>
-							<div>
-								<Label htmlFor="newEmail">Email (optional)</Label>
-								<Input
-									id="newEmail"
-									type="email"
-									value={newEmail}
-									onChange={(e) => setNewEmail(e.target.value)}
-								/>
-							</div>
-							<div className="flex items-center gap-2">
-								<input
-									id="wantsPasscode"
-									type="checkbox"
-									checked={wantsPasscode}
-									onChange={(e) => setWantsPasscode(e.target.checked)}
-								/>
-								<Label htmlFor="wantsPasscode">
-									Give me a 6-digit code for faster login
-								</Label>
-							</div>
-							<Button className="w-full" onClick={handleCreateNewPerson}>
-								Save &amp; Continue
-							</Button>
-						</div>
+						<NewPersonStep
+							newName={newName}
+							newEmail={newEmail}
+							wantsPasscode={wantsPasscode}
+							setNewName={setNewName}
+							setNewEmail={setNewEmail}
+							setWantsPasscode={setWantsPasscode}
+							onSubmit={handleCreateNewPerson}
+						/>
 					)}
 
 					{/* STEP: ROLE CHOICE FOR CONSULTANTS */}
 					{step === 'roleChoice' && selectedPerson && (
-						<div className="space-y-3">
-							<p className="text-center text-lg font-semibold">
-								Hi {selectedPerson.fullName}!
-							</p>
-							<p className="text-center">
-								Are you here <strong>for your shift</strong> or for{' '}
-								<strong>your own research</strong> today?
-							</p>
-							<Button
-								className="w-full"
-								onClick={async () => {
-									await loadPurposes()
-									setStep('visit')
-								}}
-							>
-								I&apos;m visiting as a patron
-							</Button>
-							<Button
-								className="w-full"
-								variant="outline"
-								onClick={() => setStep('shift')}
-							>
-								I&apos;m here for my shift
-							</Button>
-						</div>
+						<RoleChoiceStep
+							person={selectedPerson}
+							onVisit={async () => {
+								await loadPurposes()
+								setStep('visit')
+							}}
+							onShift={() => setStep('shift')}
+						/>
 					)}
 
 					{/* STEP: VISIT */}
 					{step === 'visit' && (
-						<div className="space-y-3">
-							<div>
-								<Label>Reason for your visit today</Label>
-								<Select
-									value={selectedPurposeId}
-									onValueChange={(value) => setSelectedPurposeId(value)}
-								>
-									<SelectTrigger>
-										<SelectValue placeholder="Choose one" />
-									</SelectTrigger>
-									<SelectContent>
-										{purposes.map((p) => (
-											<SelectItem key={p.id} value={String(p.id)}>
-												{p.name}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-							</div>
-							<div className="flex items-center gap-2">
-								<input
-									id="mailingOptIn"
-									type="checkbox"
-									checked={mailingOptIn}
-									onChange={(e) => setMailingOptIn(e.target.checked)}
-								/>
-								<Label htmlFor="mailingOptIn">
-									I&apos;d like to receive emails about classes and events
-								</Label>
-							</div>
-							<Button className="w-full" onClick={handleSubmitVisit}>
-								Sign me in
-							</Button>
-						</div>
+						<VisitStep
+							purposes={purposes}
+							selectedPurposeId={selectedPurposeId}
+							mailingOptIn={mailingOptIn}
+							setSelectedPurposeId={setSelectedPurposeId}
+							setMailingOptIn={setMailingOptIn}
+							onSubmit={handleSubmitVisit}
+						/>
+					)}
+
+					{/* STEP: ACTION CHOICE */}
+
+					{step === 'actionChoice' && selectedPerson && (
+						<ActionChoiceStep
+							person={selectedPerson}
+							onResearch={() => setStep('consultants')}
+							onCheckout={() => setStep('checkout')}
+							onFinish={resetForm}
+						/>
+					)}
+
+					{/* STEP: CHECKOUT */}
+
+					{step === 'checkout' && selectedPerson && (
+						<CheckoutStep
+							person={selectedPerson}
+							onDone={() => setStep('actionChoice')}
+						/>
 					)}
 
 					{/* STEP: CONSULTANTS */}
 
 					{step === 'consultants' && (
-						<div className="space-y-4">
-							<p className="text-center text-lg font-semibold">
-								You’re signed in!
-							</p>
-
-							{onShiftConsultants.length > 0 ? (
-								<>
-									<p className="text-center text-sm text-muted-foreground">
-										Consultants currently on shift
-									</p>
-
-									<div className="grid grid-cols-2 gap-3">
-										{onShiftConsultants.map((c) => (
-											<ConsultantCard
-												key={c.personId}
-												name={c.fullName}
-												imageUrl={c.profileImageUrl}
-											/>
-										))}
-									</div>
-								</>
-							) : (
-								<p className="text-center text-sm text-muted-foreground">
-									No consultants are currently on shift.
-								</p>
-							)}
-
-							<Button className="w-full mt-4" onClick={resetForm}>
-								Return to Sign In
-							</Button>
-						</div>
+						<ConsultantsStep
+							consultants={onShiftConsultants}
+							onDone={resetForm}
+						/>
 					)}
 
 					{/* STEP: SHIFT */}
 
 					{step === 'shift' && (
-						<div className="space-y-4">
-							<p className="text-center text-lg font-semibold">
-								What time do you expect to leave today?
-							</p>
-
-							{/* 15-minute interval buttons */}
-							<div className="max-h-64 overflow-y-auto grid grid-cols-3 gap-2">
-								{timeSlots.map((t) => (
-									<Button
-										key={t}
-										variant={expectedDeparture === t ? 'default' : 'outline'}
-										onClick={() => setExpectedDeparture(t)}
-									>
-										{t}
-									</Button>
-								))}
-							</div>
-
-							<Button
-								className="w-full mt-4"
-								disabled={!expectedDeparture}
-								onClick={handleSubmitShift}
-							>
-								Start my shift
-							</Button>
-
-							{/* Optional fallback input (remove if not wanted) */}
-							{/* 
-		<Input
-			type="time"
-			value={expectedDeparture}
-			onChange={(e) => setExpectedDeparture(e.target.value)}
-		/>
-		*/}
-						</div>
+						<ShiftStep
+							timeSlots={timeSlots}
+							expectedDeparture={expectedDeparture}
+							setExpectedDeparture={setExpectedDeparture}
+							onSubmit={handleSubmitShift}
+						/>
 					)}
 
 					{serverMessage && (

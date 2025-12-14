@@ -6,6 +6,7 @@ export * from './tables/shifts'
 export * from './tables/announcements'
 export * from './tables/classes'
 export * from './tables/cases'
+export * from './tables/library'
 
 export * from './relations/auth.relations'
 export * from './relations/kiosk.relations'

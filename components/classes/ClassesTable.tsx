@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge'
 import type { UISeriesTableRow } from '@/db/queries/classes'
 import { format } from 'date-fns'
 
-type CurrentUser = {
+export type CurrentUser = {
 	id: string
 	role: string
 }

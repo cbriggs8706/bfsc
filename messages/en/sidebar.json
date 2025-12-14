@@ -73,7 +73,8 @@
 	"consultant": {
 		"title": "Consultant",
 		"shiftReport": "Shift Report",
-		"teachClass": "Teach A Class"
+		"teachClass": "Teach A Class",
+		"library": "Library"
 	},
 	"cases": {
 		"title": "Cases",
