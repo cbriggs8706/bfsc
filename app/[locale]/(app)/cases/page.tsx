@@ -2,43 +2,44 @@
 import { CaseFeed } from '@/components/cases/CaseFeed'
 import { NewCaseSheet } from '@/components/cases/NewCaseSheet'
 import { mapCases } from '@/db/mappers/case-mappers'
-import { getActiveCaseTypes, getMyWatchedCases } from '@/db/queries/cases'
-import { getNeedsAttentionCases } from '@/db/queries/cases'
-import { getAllActiveCases } from '@/db/queries/cases'
+import { getActiveCaseTypes, getCasesByView } from '@/db/queries/cases'
 import { getCurrentUser } from '@/lib/auth'
+import { CaseView, parseCaseView, titleCaseView } from '@/lib/cases/views'
 import { redirect } from 'next/navigation'
+export const dynamic = 'force-dynamic'
 
 interface Props {
 	params: Promise<{ locale: string }>
+	searchParams?: Promise<{ view?: string }>
 }
 
-export default async function CasesPage({ params }: Props) {
+export default async function CasesPage({ params, searchParams }: Props) {
 	const { locale } = await params
 
 	const user = await getCurrentUser()
 	if (!user) redirect('/login')
 
-	const [watched, needsAttention, allActive, caseTypes] = await Promise.all([
-		getMyWatchedCases(user.id),
-		getNeedsAttentionCases(),
-		getAllActiveCases(),
+	const sp = (await searchParams) ?? {}
+	const view: CaseView = parseCaseView(sp.view, 'open')
+
+	const [rows, caseTypes] = await Promise.all([
+		getCasesByView(view, user.id),
 		getActiveCaseTypes(),
 	])
+
+	const items = mapCases(rows)
 
 	return (
 		<div className="p-4 space-y-4">
 			<div>
 				<h1 className="text-3xl font-bold">Cases</h1>
 				<p className="text-sm text-muted-foreground">
-					Help each other solve mysteries.
+					{titleCaseView(view)} cases
 				</p>
 			</div>
-			<CaseFeed
-				watched={mapCases(watched)}
-				needsAttention={mapCases(needsAttention)}
-				allActive={mapCases(allActive)}
-				locale={locale}
-			/>
+
+			<CaseFeed items={items} locale={locale} />
+
 			<NewCaseSheet caseTypes={caseTypes} locale={locale} />
 		</div>
 	)

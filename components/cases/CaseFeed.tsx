@@ -1,10 +1,10 @@
 // components/cases/CaseFeed.tsx
 'use client'
 
-import { CaseCard } from './CaseCard'
 import { useRouter } from 'next/navigation'
+import { CaseCard } from './CaseCard'
 
-type CaseItem = {
+export type CaseItem = {
 	id: string
 	title: string
 	status: string
@@ -19,78 +19,30 @@ type CaseItem = {
 }
 
 type Props = {
-	watched: CaseItem[]
-	needsAttention: CaseItem[]
-	allActive: CaseItem[]
+	items: CaseItem[]
 	locale: string
 }
 
-export function CaseFeed({
-	watched,
-	needsAttention,
-	allActive,
-	locale,
-}: Props) {
+export function CaseFeed({ items, locale }: Props) {
 	const router = useRouter()
 
 	function handleSelect(id: string) {
 		router.push(`/${locale}/cases/${id}`)
 	}
 
+	if (items.length === 0) {
+		return (
+			<div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+				No cases found.
+			</div>
+		)
+	}
+
 	return (
-		<div className="space-y-6 pb-24">
-			{watched.length > 0 ? (
-				<Section title="⭐ My Watched">
-					{watched.map((c) => (
-						<CaseCard key={c.id} {...c} onClick={() => handleSelect(c.id)} />
-					))}
-				</Section>
-			) : (
-				<EmptyState message="You’re not watching any cases yet." />
-			)}
-
-			{needsAttention.length > 0 && (
-				<Section title="⚠️ Needs Attention">
-					{needsAttention.map((c) => (
-						<CaseCard key={c.id} {...c} onClick={() => handleSelect(c.id)} />
-					))}
-				</Section>
-			)}
-
-			<Section title="📋 All Active">
-				{allActive.length > 0 ? (
-					allActive.map((c) => (
-						<CaseCard key={c.id} {...c} onClick={() => handleSelect(c.id)} />
-					))
-				) : (
-					<EmptyState message="No cases have been created yet." />
-				)}
-			</Section>
-		</div>
-	)
-}
-
-function Section({
-	title,
-	children,
-}: {
-	title: string
-	children: React.ReactNode
-}) {
-	return (
-		<div className="space-y-3">
-			<h2 className="px-1 text-sm font-semibold text-muted-foreground">
-				{title}
-			</h2>
-			<div className="space-y-3">{children}</div>
-		</div>
-	)
-}
-
-function EmptyState({ message }: { message: string }) {
-	return (
-		<div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-			{message}
+		<div className="space-y-3 pb-24">
+			{items.map((c) => (
+				<CaseCard key={c.id} {...c} onClick={() => handleSelect(c.id)} />
+			))}
 		</div>
 	)
 }

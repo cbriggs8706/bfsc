@@ -18,6 +18,7 @@ export async function GET() {
 		.select({
 			id: user.id,
 			label: user.name,
+			value: user.username,
 			image: user.image,
 		})
 		.from(user)

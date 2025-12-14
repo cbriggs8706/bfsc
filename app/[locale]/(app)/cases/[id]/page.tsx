@@ -7,19 +7,23 @@ import { redirect } from 'next/navigation'
 import { CaseThread } from '@/components/cases/CaseThread'
 import { markCaseSolved } from '@/app/actions/cases/mark-solved'
 import { addComment } from '@/app/actions/cases/add-comment'
+import { reopenCase } from '@/app/actions/cases/reopen-case'
+import { isUserInvestigating } from '@/db/queries/cases'
 
 export default async function CasePage({
 	params,
 }: {
 	params: Promise<{ id: string; locale: string }>
 }) {
-	const { id } = await params
+	const { id, locale } = await params
 
 	const currentUser = await getCurrentUser()
 	if (!currentUser) redirect('/login')
 
 	const [caseRow] = await db.select().from(cases).where(eq(cases.id, id))
 	if (!caseRow) redirect('/cases')
+
+	const isInvestigating = await isUserInvestigating(caseRow.id, currentUser.id)
 
 	const comments = await db
 		.select({
@@ -50,37 +54,60 @@ export default async function CasePage({
 		caseRow.createdByUserId === currentUser.id || currentUser.role === 'Admin'
 
 	return (
-		<CaseThread
-			caseId={caseRow.id}
-			title={caseRow.title}
-			status={caseRow.status}
-			typeName="Case"
-			submitterName={currentUser.name ?? 'User'}
-			description={caseRow.description}
-			currentUser={currentUser}
-			comments={comments.map((c) => ({
-				id: c.id,
-				body: c.body,
-				createdAt: c.createdAt,
-				authorId: c.authorId,
-				authorName: c.kioskName ?? c.userName ?? 'User',
-				authorImage: c.kioskImage ?? c.userImage ?? null,
-				replyToCommentId: c.replyToCommentId ?? null,
-			}))}
-			canSolve={canSolve}
-			onSolve={async () => {
-				'use server'
-				await markCaseSolved(caseRow.id)
-			}}
-			onComment={async (body, replyTo, clientNonce) => {
-				'use server'
-				await addComment(caseRow.id, body, replyTo, clientNonce)
-			}}
-			attachments={attachments.map((a) => ({
-				id: a.id,
-				fileUrl: a.fileUrl,
-				fileType: a.fileType,
-			}))}
-		/>
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">{caseRow.title}</h1>
+				<p className="text-sm text-muted-foreground">
+					Created by {currentUser.name}
+				</p>
+			</div>
+			<CaseThread
+				caseId={caseRow.id}
+				title={caseRow.title}
+				status={caseRow.status}
+				typeName="Case"
+				submitterName={currentUser.name ?? 'User'}
+				description={caseRow.description}
+				currentUser={currentUser}
+				comments={comments.map((c) => ({
+					id: c.id,
+					body: c.body,
+					createdAt: c.createdAt,
+					authorId: c.authorId,
+					authorName: c.kioskName ?? c.userName ?? 'User',
+					authorImage: c.kioskImage ?? c.userImage ?? null,
+					replyToCommentId: c.replyToCommentId ?? null,
+				}))}
+				canSolve={canSolve}
+				isInvestigating={isInvestigating}
+				onSolve={async () => {
+					'use server'
+					await markCaseSolved(caseRow.id)
+				}}
+				onReopen={async () => {
+					'use server'
+					await reopenCase(caseRow.id)
+				}}
+				onClaim={async () => {
+					'use server'
+					const { claimCase } = await import('@/app/actions/cases/claim-case')
+					await claimCase(caseRow.id, currentUser.id, locale)
+				}}
+				onUnclaim={async () => {
+					'use server'
+					const { unclaimCase } = await import('@/app/actions/cases/claim-case')
+					await unclaimCase(caseRow.id, currentUser.id, locale)
+				}}
+				onComment={async (body, replyTo, clientNonce) => {
+					'use server'
+					await addComment(caseRow.id, body, replyTo, clientNonce)
+				}}
+				attachments={attachments.map((a) => ({
+					id: a.id,
+					fileUrl: a.fileUrl,
+					fileType: a.fileType,
+				}))}
+			/>
+		</div>
 	)
 }

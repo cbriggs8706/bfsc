@@ -32,7 +32,7 @@ export const cases = pgTable('cases', {
 		.notNull(),
 
 	createdByUserId: uuid('created_by_user_id')
-		.references(() => user.id)
+		.references(() => user.id, { onDelete: 'restrict' })
 		.notNull(),
 
 	createdAt: timestamp('created_at', { withTimezone: true })
@@ -150,3 +150,62 @@ export const commentMentions = pgTable('comment_mentions', {
 
 	readAt: timestamp('read_at', { withTimezone: true }), // null = unread
 })
+
+export const caseInvestigators = pgTable(
+	'case_investigators',
+	{
+		caseId: uuid('case_id')
+			.references(() => cases.id, { onDelete: 'cascade' })
+			.notNull(),
+
+		userId: uuid('user_id')
+			.references(() => user.id)
+			.notNull(),
+
+		claimedAt: timestamp('claimed_at', { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => ({
+		pk: primaryKey({ columns: [table.caseId, table.userId] }),
+	})
+)
+
+export const caseInvestigatorsRelations = relations(
+	caseInvestigators,
+	({ one }) => ({
+		case: one(cases, {
+			fields: [caseInvestigators.caseId],
+			references: [cases.id],
+		}),
+		user: one(user, {
+			fields: [caseInvestigators.userId],
+			references: [user.id],
+		}),
+	})
+)
+
+export const casesRelations = relations(cases, ({ many, one }) => ({
+	type: one(caseTypes, {
+		fields: [cases.typeId],
+		references: [caseTypes.id],
+	}),
+	investigators: many(caseInvestigators),
+	watchers: many(caseWatchers),
+	comments: many(caseComments),
+}))
+
+export const caseWatchersRelations = relations(caseWatchers, ({ one }) => ({
+	case: one(cases, {
+		fields: [caseWatchers.caseId],
+		references: [cases.id],
+	}),
+	user: one(user, {
+		fields: [caseWatchers.userId],
+		references: [user.id],
+	}),
+}))
+
+export const caseTypesRelations = relations(caseTypes, ({ many }) => ({
+	cases: many(cases),
+}))

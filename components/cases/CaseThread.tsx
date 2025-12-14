@@ -55,7 +55,11 @@ type Props = {
 	comments: Comment[]
 	currentUser: CurrentUser
 	canSolve: boolean
-	onSolve: () => void
+	isInvestigating: boolean
+	onSolve: () => Promise<void>
+	onReopen: () => Promise<void>
+	onClaim: () => Promise<void>
+	onUnclaim: () => Promise<void>
 	onComment: (
 		body: string,
 		replyTo?: string,
@@ -76,7 +80,11 @@ export function CaseThread({
 	comments: initialComments,
 	currentUser,
 	canSolve,
+	isInvestigating,
 	onSolve,
+	onReopen,
+	onClaim,
+	onUnclaim,
 	onComment,
 	attachments,
 }: Props) {
@@ -86,12 +94,50 @@ export function CaseThread({
 	const [editing, setEditing] = useState<Comment | null>(null)
 	const [editDraft, setEditDraft] = useState('')
 	const bottomRef = useRef<HTMLDivElement | null>(null)
+	const [inlineReplyTo, setInlineReplyTo] = useState<string | null>(null)
+	const [inlineDraft, setInlineDraft] = useState('')
+	const [caseStatus, setCaseStatus] = useState(status)
+	const [investigating, setInvestigating] = useState(isInvestigating)
+
+	function getStatusMeta(status: string) {
+		switch (status) {
+			case 'investigating':
+				return {
+					label: 'Investigating',
+					className:
+						'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+				}
+			case 'waiting':
+				return {
+					label: 'Waiting',
+					className:
+						'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+				}
+			case 'solved':
+				return {
+					label: 'Solved',
+					className:
+						'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+				}
+			case 'archived':
+				return {
+					label: 'Archived',
+					className: 'bg-muted text-muted-foreground',
+				}
+			default:
+				return {
+					label: 'Open',
+					className:
+						'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+				}
+		}
+	}
+
+	const statusMeta = getStatusMeta(caseStatus)
 
 	/* ================= MENTIONS ================= */
 
 	const [mentionUsers, setMentionUsers] = useState<MentionUser[]>([])
-	const [mentionQuery, setMentionQuery] = useState('')
-	const [mentionAnchor, setMentionAnchor] = useState<number | null>(null)
 
 	useEffect(() => {
 		fetch('/api/mentions')
@@ -99,39 +145,8 @@ export function CaseThread({
 			.then(setMentionUsers)
 	}, [])
 
-	function handleDraftChange(value: string) {
-		setDraft(value)
-
-		const cursor = value.length
-		const before = value.slice(0, cursor)
-		const match = before.match(/@([\w.-]{1,20})$/)
-
-		if (match) {
-			setMentionQuery(match[1].toLowerCase())
-			setMentionAnchor(cursor - match[1].length - 1)
-		} else {
-			setMentionQuery('')
-			setMentionAnchor(null)
-		}
-	}
-
-	const mentionResults = useMemo(() => {
-		if (!mentionQuery) return []
-		return mentionUsers.filter((u) =>
-			u.label.toLowerCase().includes(mentionQuery)
-		)
-	}, [mentionQuery, mentionUsers])
-
-	function insertMention(user: MentionUser) {
-		if (mentionAnchor == null) return
-
-		const before = draft.slice(0, mentionAnchor)
-		const after = draft.slice(mentionAnchor + mentionQuery.length + 1)
-
-		setDraft(before + '@' + user.value + ' ' + after)
-		setMentionQuery('')
-		setMentionAnchor(null)
-	}
+	const footerMentions = useMentions(mentionUsers)
+	const inlineMentions = useMentions(mentionUsers)
 
 	/* ================= TREE ================= */
 
@@ -257,6 +272,24 @@ export function CaseThread({
 		await deleteComment(id)
 	}
 
+	async function handleMarkSolved() {
+		setCaseStatus('solved') // optimistic
+		try {
+			await onSolve()
+		} catch {
+			setCaseStatus('open') // rollback if server fails
+		}
+	}
+
+	async function handleReopen() {
+		setCaseStatus('open') // optimistic
+		try {
+			await onReopen()
+		} catch {
+			setCaseStatus('solved')
+		}
+	}
+
 	/* ================= RENDER ================= */
 	function renderBody(text: string) {
 		return text.split(/(@[\w.-]+)/g).map((part, i) =>
@@ -277,7 +310,7 @@ export function CaseThread({
 		const isOwner = node.authorId === currentUser.id
 
 		return (
-			<div key={node.id}>
+			<div key={node.id} className="mt-2">
 				<div
 					id={`comment-${node.id}`}
 					className="flex gap-3 rounded bg-card p-3"
@@ -317,7 +350,14 @@ export function CaseThread({
 						)}
 
 						<div className="mt-1 flex gap-3 text-xs text-muted-foreground">
-							<button onClick={() => setReplyTo(node)}>Reply</button>
+							<button
+								onClick={() => {
+									setInlineReplyTo(node.id)
+									setInlineDraft('')
+								}}
+							>
+								Reply
+							</button>
 							{isOwner && (
 								<>
 									<button onClick={() => startEdit(node)}>Edit</button>
@@ -330,6 +370,98 @@ export function CaseThread({
 								</>
 							)}
 						</div>
+						{inlineReplyTo === node.id && (
+							<div className="mt-2 rounded border bg-muted/40 p-2 space-y-2">
+								<div className="text-xs text-muted-foreground">
+									Replying to <strong>{node.authorName}</strong>
+								</div>
+
+								<div className="relative">
+									{inlineMentions.results.length > 0 && (
+										<div className="absolute bottom-full mb-1 z-50 w-full max-h-40 overflow-auto rounded border bg-popover shadow">
+											{inlineMentions.results.map((u) => (
+												<button
+													key={u.id}
+													onClick={() => {
+														const res = inlineMentions.insert(inlineDraft, u)
+														if (!res) return
+														setInlineDraft(res.next)
+														inlineMentions.reset()
+													}}
+													className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent text-left"
+												>
+													<span className="text-green-600 font-medium">
+														@{u.value}
+													</span>
+													<span className="text-muted-foreground">
+														{u.label}
+													</span>
+												</button>
+											))}
+										</div>
+									)}
+
+									<Textarea
+										rows={2}
+										autoFocus
+										value={inlineDraft}
+										onChange={(e) => {
+											setInlineDraft(e.target.value)
+											inlineMentions.onChange(
+												e.target.value,
+												e.target.selectionStart ?? e.target.value.length
+											)
+										}}
+										placeholder="Write a reply…"
+									/>
+								</div>
+
+								<div className="flex justify-end gap-2">
+									<Button
+										size="sm"
+										variant="ghost"
+										onClick={() => {
+											setInlineReplyTo(null)
+											setInlineDraft('')
+										}}
+									>
+										Cancel
+									</Button>
+
+									<Button
+										size="sm"
+										onClick={async () => {
+											if (!inlineDraft.trim()) return
+
+											const clientNonce = crypto.randomUUID()
+
+											// optimistic insert
+											setComments((prev) => [
+												...prev,
+												{
+													id: clientNonce,
+													clientNonce,
+													__optimistic: true,
+													authorId: currentUser.id,
+													authorName: currentUser.name,
+													authorImage: currentUser.image,
+													body: inlineDraft,
+													createdAt: new Date(),
+													replyToCommentId: node.id,
+												},
+											])
+
+											await onComment(inlineDraft, node.id, clientNonce)
+
+											setInlineReplyTo(null)
+											setInlineDraft('')
+										}}
+									>
+										Reply
+									</Button>
+								</div>
+							</div>
+						)}
 					</div>
 				</div>
 
@@ -366,19 +498,74 @@ export function CaseThread({
 
 	return (
 		<div className="flex h-full flex-col">
-			<header className="border-b p-4 space-y-1">
-				<div className="flex justify-between">
-					<h1 className="text-lg font-bold">{title}</h1>
-					<Badge>{status}</Badge>
+			<header className="border-b bg-background p-4 space-y-3">
+				<div className="flex flex-wrap items-center justify-between gap-3">
+					{/* LEFT: Status + type */}
+					<div className="flex items-center gap-2">
+						<Badge className={statusMeta.className}>{statusMeta.label}</Badge>
+
+						<span className="text-xs text-muted-foreground">{typeName}</span>
+					</div>
+
+					{/* RIGHT: Actions */}
+					<div className="flex flex-wrap items-center gap-2">
+						{/* Claim / Unclaim */}
+						{caseStatus !== 'archived' &&
+							caseStatus !== 'solved' &&
+							(investigating ? (
+								<Button
+									size="sm"
+									variant="outline"
+									onClick={async () => {
+										setInvestigating(false)
+
+										// optimistic: revert to open only if this user was last investigator
+										setCaseStatus('open')
+
+										try {
+											await onUnclaim()
+										} catch {
+											setInvestigating(true)
+											setCaseStatus('investigating')
+										}
+									}}
+								>
+									Unclaim
+								</Button>
+							) : (
+								<Button
+									size="sm"
+									variant="default"
+									onClick={async () => {
+										setCaseStatus('investigating')
+										setInvestigating(true)
+
+										try {
+											await onClaim()
+										} catch {
+											setCaseStatus(status)
+											setInvestigating(false)
+										}
+									}}
+								>
+									I&apos;ll investigate this
+								</Button>
+							))}
+
+						{/* Solve / Reopen */}
+						{canSolve &&
+							caseStatus !== 'archived' &&
+							(caseStatus === 'solved' ? (
+								<Button size="sm" variant="outline" onClick={handleReopen}>
+									Reopen
+								</Button>
+							) : (
+								<Button size="sm" onClick={handleMarkSolved}>
+									Mark Solved
+								</Button>
+							))}
+					</div>
 				</div>
-				<div className="text-sm text-muted-foreground">
-					{typeName} • Submitted by {submitterName}
-				</div>
-				{canSolve && status !== 'solved' && (
-					<Button size="sm" onClick={onSolve}>
-						Mark Solved
-					</Button>
-				)}
 			</header>
 
 			<main className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -402,7 +589,7 @@ export function CaseThread({
 				)}
 
 				<div className="relative">
-					{mentionResults.length > 0 && (
+					{/* {mentionResults.length > 0 && (
 						<div className="absolute bottom-full mb-2 z-50 w-full max-h-48 overflow-auto rounded border bg-popover shadow">
 							{mentionResults.slice(0, 6).map((u) => (
 								<button
@@ -426,12 +613,37 @@ export function CaseThread({
 								</button>
 							))}
 						</div>
+					)} */}
+					{footerMentions.results.length > 0 && (
+						<div className="absolute bottom-full mb-2 z-50 w-full max-h-48 overflow-auto rounded border bg-popover shadow">
+							{footerMentions.results.map((u) => (
+								<button
+									key={u.id}
+									onClick={() => {
+										const res = footerMentions.insert(draft, u)
+										if (!res) return
+										setDraft(res.next)
+										footerMentions.reset()
+									}}
+									className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent text-left"
+								>
+									<span className="text-green-600 font-medium">@{u.value}</span>
+									<span className="text-muted-foreground">{u.label}</span>
+								</button>
+							))}
+						</div>
 					)}
 
 					<Textarea
 						rows={3}
 						value={draft}
-						onChange={(e) => handleDraftChange(e.target.value)}
+						onChange={(e) => {
+							setDraft(e.target.value)
+							footerMentions.onChange(
+								e.target.value,
+								e.target.selectionStart ?? e.target.value.length
+							)
+						}}
 						placeholder="Write a comment…"
 					/>
 				</div>
@@ -444,4 +656,53 @@ export function CaseThread({
 			</footer>
 		</div>
 	)
+}
+
+function useMentions(users: MentionUser[]) {
+	const [query, setQuery] = useState('')
+	const [anchor, setAnchor] = useState<number | null>(null)
+
+	function onChange(value: string, cursor: number) {
+		const before = value.slice(0, cursor)
+		const match = before.match(/@([\w.-]{1,20})$/)
+
+		if (match) {
+			setQuery(match[1].toLowerCase())
+			setAnchor(cursor - match[1].length - 1)
+		} else {
+			setQuery('')
+			setAnchor(null)
+		}
+	}
+
+	function insert(
+		value: string,
+		user: MentionUser
+	): { next: string; reset: true } | null {
+		if (anchor == null) return null
+
+		const before = value.slice(0, anchor)
+		const after = value.slice(anchor + query.length + 1)
+
+		return {
+			next: `${before}@${user.value} ${after}`,
+			reset: true,
+		}
+	}
+
+	const results = query
+		? users.filter((u) => u.label.toLowerCase().includes(query)).slice(0, 6)
+		: []
+
+	return {
+		query,
+		results,
+		anchor,
+		onChange,
+		insert,
+		reset: () => {
+			setQuery('')
+			setAnchor(null)
+		},
+	}
 }

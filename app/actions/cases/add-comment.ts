@@ -68,15 +68,22 @@ export async function addComment(
 		mentionedUsers = await db
 			.select({ id: user.id })
 			.from(user)
-			.where(inArray(user.username, mentionedUsernames))
+			.where(
+				inArray(
+					user.name,
+					mentionedUsernames.map((n) => n.replace(/([A-Z])/g, ' $1').trim())
+				)
+			)
 
 		if (mentionedUsers.length > 0) {
 			await db.insert(commentMentions).values(
-				mentionedUsers.map((u) => ({
-					commentId: comment.id,
-					caseId,
-					mentionedUserId: u.id,
-				}))
+				mentionedUsers.map((u) => {
+					return {
+						commentId: comment.id,
+						caseId,
+						mentionedUserId: u.id,
+					}
+				})
 			)
 		}
 	}

@@ -4,11 +4,12 @@
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { MessageCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 type Props = {
 	title: string
 	type: { name: string; icon?: string; color?: string }
-	status: string
+	status: 'open' | 'solved' | string
 	commentCount: number
 	updatedAt: Date
 	submitterName: string
@@ -34,8 +35,18 @@ export function CaseCard({
 					<span>{type.icon}</span>
 					<span>{type.name}</span>
 				</div>
-
-				<Badge variant="secondary">{status}</Badge>
+				<Badge
+					variant="secondary"
+					className={cn(
+						'capitalize',
+						status === 'open' &&
+							'bg-red-100 text-red-700 border border-red-200',
+						status === 'solved' &&
+							'bg-green-100 text-green-700 border border-green-200'
+					)}
+				>
+					{status}
+				</Badge>{' '}
 			</div>
 
 			<div className="text-base font-semibold leading-tight">{title}</div>

@@ -77,6 +77,13 @@
 	},
 	"cases": {
 		"title": "Cases",
+		"open": "New",
+		"investigating": "All Invest.",
+		"myInvestigating": "My Invest.",
+		"waiting": "Waiting",
+		"solved": "Solved",
+		"archived": "Archived",
+		"watching": "Watching",
 		"mentions": "Mentions"
 	}
 }

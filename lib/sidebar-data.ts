@@ -27,8 +27,10 @@ import {
 	Clock,
 	Lectern,
 	Ticket,
+	AtSign,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
+import { CASE_VIEWS } from '@/lib/cases/views'
 
 export function buildSidebarData(t: TFunction, locale: string) {
 	return {
@@ -83,11 +85,23 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				title: t('sidebar.cases.title'),
 				url: `/${locale}/cases`,
 				icon: Ticket,
+				items: CASE_VIEWS.map((v) => ({
+					title: t(`sidebar.cases.${v.key}`),
+					url: `/${locale}/cases?view=${v.key}`,
+					badgeKey: v.key,
+				})),
+			},
+
+			{
+				title: t('sidebar.cases.mentions'),
+				url: `/${locale}/cases/mentions`,
+				icon: AtSign,
+				isMentionItem: true,
 				items: [
-					{
-						title: t('sidebar.cases.mentions'),
-						url: `/${locale}/cases/mentions`,
-					},
+					// {
+					// 	title: t('sidebar.cases.mentions'),
+					// 	url: `/${locale}/cases/mentions`,
+					// },
 					// { title: t('sidebar.cases.memorylane'), url: '#' },
 					// { title: t('sidebar.cases.classes'), url: '#' },
 				],
