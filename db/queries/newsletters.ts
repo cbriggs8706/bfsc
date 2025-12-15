@@ -42,7 +42,6 @@ export async function getNewsletterForForm(
 		translationsByLocale[locale] = {
 			title: t.title,
 			excerpt: t.excerpt ?? '',
-			//TODO fix?
 			content: t.content as string,
 		}
 	}
@@ -69,11 +68,12 @@ export async function getPublicNewsletters(locale: NewsletterLocale) {
 			slug: newsletterPosts.slug,
 			featured: newsletterPosts.featured,
 			publishedAt: newsletterPosts.publishedAt,
+			coverImageUrl: newsletterPosts.coverImageUrl,
 			title: newsletterTranslations.title,
 			excerpt: newsletterTranslations.excerpt,
+			content: newsletterTranslations.content,
 			tagSlug: newsletterTags.slug,
 		})
-
 		.from(newsletterPosts)
 		.innerJoin(
 			newsletterTranslations,
@@ -82,12 +82,11 @@ export async function getPublicNewsletters(locale: NewsletterLocale) {
 				eq(newsletterTranslations.locale, locale)
 			)
 		)
-		.innerJoin(
+		.leftJoin(
 			newsletterPostTags,
 			eq(newsletterPostTags.postId, newsletterPosts.id)
 		)
-		.innerJoin(newsletterTags, eq(newsletterTags.id, newsletterPostTags.tagId))
-
+		.leftJoin(newsletterTags, eq(newsletterTags.id, newsletterPostTags.tagId))
 		.where(eq(newsletterPosts.status, 'published'))
 		.orderBy(desc(newsletterPosts.publishedAt))
 

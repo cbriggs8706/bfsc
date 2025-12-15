@@ -1,5 +1,4 @@
 // app/[locale]/(app)/newsletter/page.tsx
-import Link from 'next/link'
 import { NewsletterCard } from '@/components/newsletters/NewsletterCard'
 import { getPublicNewsletters } from '@/db/queries/newsletters'
 import { NewsletterLocale } from '@/types/newsletters'
@@ -27,7 +26,7 @@ export default async function NewsletterListPage({
 	const sp = (await searchParams) ?? {}
 
 	const q = sp.q?.toLowerCase()
-	const tag = sp.tag
+	// const tag = sp.tag
 
 	// Fetch all published newsletters (already filtered by status)
 	let posts = await getPublicNewsletters(locale)
@@ -88,7 +87,7 @@ export default async function NewsletterListPage({
 				<section className="space-y-4">
 					<h2 className="text-xl font-semibold">Featured</h2>
 					{featured.map((post) => (
-						<NewsletterCard key={post.id} {...post} />
+						<NewsletterCard key={post.id} {...post} locale={locale} />
 					))}
 				</section>
 			)}
@@ -101,7 +100,7 @@ export default async function NewsletterListPage({
 					<div key={month} className="space-y-4">
 						<h2 className="text-xl font-semibold">{month}</h2>
 						{posts.map((post) => (
-							<NewsletterCard key={post.id} {...post} />
+							<NewsletterCard key={post.id} {...post} locale={locale} />
 						))}
 					</div>
 				))}

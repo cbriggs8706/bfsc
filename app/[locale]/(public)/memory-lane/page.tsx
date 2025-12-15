@@ -42,9 +42,7 @@ export default function MemoryLanePage() {
 					<CardHeader>
 						<CardTitle>{section.title}</CardTitle>
 					</CardHeader>
-					<CardContent>
-						<Checklist items={section.items} />
-					</CardContent>
+					<CardContent>{/* <Checklist items={section.items} /> */}</CardContent>
 				</Card>
 			))}
 		</div>

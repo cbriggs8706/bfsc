@@ -11,6 +11,9 @@ import {
 	NewsletterFormData,
 	NewsletterFormMode,
 } from '@/types/newsletters'
+import Image from 'next/image'
+import { uploadNewsletterCover } from '@/utils/upload-newsletter-cover'
+import { Textarea } from '../ui/textarea'
 
 type Props = {
 	mode: NewsletterFormMode
@@ -22,15 +25,20 @@ type Props = {
 export function NewsletterForm({ mode, value, locale, action }: Props) {
 	const isReadOnly = mode === 'read'
 	const [form, setForm] = useState<NewsletterFormData>(value)
+	const [uploading, setUploading] = useState(false)
+	const [uploadError, setUploadError] = useState<string | null>(null)
 
 	return (
 		<form action={action} className="space-y-6">
 			{/* Hidden fields */}
 			<input type="hidden" name="id" value={form.id ?? ''} />
 			<input type="hidden" name="slug" value={form.slug} />
-			<input type="hidden" name="intent" value={form.status} />
-
 			<input type="hidden" name="locale" value={locale} />
+			<input
+				type="hidden"
+				name="coverImageUrl"
+				value={form.coverImageUrl ?? ''}
+			/>
 
 			{NEWSLETTER_LOCALES.map((l) => (
 				<div key={l}>
@@ -62,6 +70,54 @@ export function NewsletterForm({ mode, value, locale, action }: Props) {
 					<> — {form.publishedAt.toLocaleDateString()}</>
 				)}
 			</div>
+
+			{/* Cover image */}
+			{!isReadOnly && (
+				<div className="space-y-2">
+					<label className="text-sm font-medium">Cover image</label>
+
+					<input
+						type="file"
+						accept="image/*"
+						disabled={uploading}
+						onChange={async (e) => {
+							const file = e.target.files?.[0]
+							if (!file) return
+
+							setUploading(true)
+							setUploadError(null)
+
+							try {
+								const url = await uploadNewsletterCover(file)
+								setForm((f) => ({ ...f, coverImageUrl: url }))
+							} catch (err) {
+								setUploadError('Failed to upload image')
+								console.error(err)
+							} finally {
+								setUploading(false)
+							}
+						}}
+						className="block text-sm"
+					/>
+
+					{form.coverImageUrl && (
+						<div className="relative w-full max-w-md aspect-video border rounded overflow-hidden">
+							<Image
+								src={form.coverImageUrl}
+								alt="Cover preview"
+								fill
+								className="object-cover"
+								sizes="(max-width: 768px) 100vw, 640px"
+							/>
+						</div>
+					)}
+
+					{uploading && (
+						<p className="text-sm text-muted-foreground">Uploading…</p>
+					)}
+					{uploadError && <p className="text-sm text-red-600">{uploadError}</p>}
+				</div>
+			)}
 
 			{/* Slug */}
 			<Input
@@ -98,6 +154,20 @@ export function NewsletterForm({ mode, value, locale, action }: Props) {
 							}
 						/>
 
+						{/* <Editor
+							apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
+							value={form.translations[l].content}
+							disabled={isReadOnly}
+							onEditorChange={(content) =>
+								setForm({
+									...form,
+									translations: {
+										...form.translations,
+										[l]: { ...form.translations[l], content },
+									},
+								})
+							}
+						/> */}
 						<Editor
 							apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
 							value={form.translations[l].content}
@@ -108,6 +178,49 @@ export function NewsletterForm({ mode, value, locale, action }: Props) {
 									translations: {
 										...form.translations,
 										[l]: { ...form.translations[l], content },
+									},
+								})
+							}
+							init={{
+								height: 500,
+								menubar: false,
+
+								/* Force semantic HTML */
+								forced_root_block: 'p',
+								force_p_newlines: true,
+								remove_trailing_brs: true,
+
+								/* 🔥 THIS IS KEY */
+								inline_styles: false,
+								paste_as_text: false,
+								paste_webkit_styles: 'none',
+								paste_remove_styles: true,
+								paste_remove_spans: false,
+
+								/* Prevent divs */
+								block_formats:
+									'Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Heading 5=h5; Heading 6=h6',
+
+								plugins: ['lists', 'link', 'code', 'blockquote', 'paste'],
+
+								toolbar:
+									'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | blockquote | code',
+							}}
+						/>
+						<Textarea
+							name={`translations.${l}.excerpt`}
+							value={form.translations[l].excerpt}
+							disabled={isReadOnly}
+							placeholder={`Excerpt (${l})`}
+							onChange={(e) =>
+								setForm({
+									...form,
+									translations: {
+										...form.translations,
+										[l]: {
+											...form.translations[l],
+											excerpt: e.target.value,
+										},
 									},
 								})
 							}
@@ -147,18 +260,28 @@ export function NewsletterForm({ mode, value, locale, action }: Props) {
 							<Button
 								type="submit"
 								variant="outline"
-								onClick={() => setForm((f) => ({ ...f, status: 'draft' }))}
+								formAction={
+									action &&
+									((fd: FormData) => {
+										fd.set('intent', 'draft')
+										return action(fd)
+									})
+								}
 							>
 								Save Draft
 							</Button>
+
 							<Button
 								type="submit"
-								onClick={() =>
-									setForm((f) => ({
-										...f,
-										status: 'published',
-										publishedAt: f.publishedAt ?? new Date(),
-									}))
+								formAction={
+									action &&
+									((fd: FormData) => {
+										fd.set('intent', 'publish')
+										if (!fd.get('publishedAt')) {
+											fd.set('publishedAt', new Date().toISOString())
+										}
+										return action(fd)
+									})
 								}
 							>
 								Publish

@@ -35,6 +35,8 @@ export async function saveNewsletter(formData: FormData): Promise<void> {
 	const id = formData.get('id') as string | null
 	const locale = formData.get('locale') as string
 	const slug = formData.get('slug') as string
+	const coverImageUrl = (formData.get('coverImageUrl') as string) || null
+
 	const intent =
 		(formData.get('intent') as 'draft' | 'publish' | 'unpublish') ?? 'draft'
 
@@ -91,6 +93,7 @@ export async function saveNewsletter(formData: FormData): Promise<void> {
 					slug,
 					status,
 					publishedAt,
+					coverImageUrl,
 					authorId: user.id,
 				})
 				.returning()
@@ -105,6 +108,7 @@ export async function saveNewsletter(formData: FormData): Promise<void> {
 				slug,
 				status,
 				publishedAt,
+				coverImageUrl,
 				updatedAt: new Date(),
 			})
 			.where(eq(newsletterPosts.id, postId))

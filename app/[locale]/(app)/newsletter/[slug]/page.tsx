@@ -3,6 +3,7 @@
 import { notFound } from 'next/navigation'
 import { getPublicNewsletterBySlug } from '@/db/queries/newsletters'
 import { NewsletterLocale } from '@/types/newsletters'
+import Image from 'next/image'
 
 type Props = {
 	params: Promise<{ locale: NewsletterLocale; slug: string }>
@@ -30,6 +31,18 @@ export default async function NewsletterDetailPage({ params }: Props) {
 		<article className="max-w-3xl mx-auto space-y-6">
 			<h1 className="text-3xl font-bold">{post.title}</h1>
 
+			{post.coverImageUrl && (
+				<div className="relative w-full aspect-video overflow-hidden rounded-md">
+					<Image
+						src={post.coverImageUrl}
+						alt={post.title}
+						fill
+						className="object-cover"
+						sizes="(max-width: 768px) 100vw, 640px"
+						priority={false}
+					/>
+				</div>
+			)}
 			{post.publishedAt && (
 				<div className="text-sm text-muted-foreground">
 					{post.publishedAt.toLocaleDateString()}
@@ -37,7 +50,29 @@ export default async function NewsletterDetailPage({ params }: Props) {
 			)}
 
 			<div
-				className="prose max-w-none"
+				className="
+    prose prose-neutral max-w-none
+
+    prose-headings:font-semibold
+    prose-h1:text-4xl prose-h1:mt-8 prose-h1:mb-4
+    prose-h2:text-3xl prose-h2:mt-8 prose-h2:mb-4
+    prose-h3:text-2xl prose-h3:mt-6 prose-h3:mb-3
+    prose-h4:text-xl prose-h4:mt-6 prose-h4:mb-3
+
+    prose-p:my-5
+    prose-p:leading-relaxed
+
+    prose-blockquote:my-8
+    prose-blockquote:pl-6
+    prose-blockquote:border-l-4
+
+    prose-ul:my-6
+    prose-ol:my-6
+    prose-li:my-1
+
+    prose-code:before:content-none
+    prose-code:after:content-none
+  "
 				dangerouslySetInnerHTML={{
 					__html: post.content,
 				}}
