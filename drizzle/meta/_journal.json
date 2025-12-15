@@ -120,6 +120,20 @@
       "when": 1765692437787,
       "tag": "0016_chunky_wild_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1765769601179,
+      "tag": "0017_concerned_genesis",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1765776610226,
+      "tag": "0018_far_patch",
+      "breakpoints": true
     }
   ]
 }
