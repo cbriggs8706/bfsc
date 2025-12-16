@@ -45,7 +45,7 @@ export function MentionsList({ locale, initialMentions }: Props) {
 
 			<div className="space-y-2">
 				{mentions.map((m) => (
-					<Card key={m.mentionId} className={!m.readAt ? 'bg-muted/40' : ''}>
+					<Card key={m.mentionId} className={!m.readAt ? 'bg-card' : ''}>
 						<CardHeader className="flex flex-row items-start justify-between gap-2">
 							<div className="text-sm font-semibold">
 								{m.authorName ?? 'User'} mentioned you in{' '}

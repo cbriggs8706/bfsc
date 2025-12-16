@@ -33,6 +33,8 @@ import {
 	Brain,
 	BadgeQuestionMark,
 	MapIcon,
+	Newspaper,
+	PlusCircle,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
 import { CASE_VIEWS } from '@/lib/cases/views'
@@ -79,38 +81,12 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				url: `/${locale}/calendar`,
 				icon: Calendar,
 				items: [
-					{ title: t('sidebar.calendar.expo'), url: '#' },
-					{ title: t('sidebar.calendar.memorylane'), url: '#' },
-					{ title: t('sidebar.calendar.classes'), url: '#' },
-					// { title: t('sidebar.calendar.syllables'), url: '#' },
-					// { title: t('sidebar.calendar.niqqud'), url: '#' },
+					// { title: t('sidebar.calendar.expo'), url: '#' },
+					// { title: t('sidebar.calendar.memorylane'), url: '#' },
+					// { title: t('sidebar.calendar.classes'), url: '#' },
 				],
-			},
-			{
-				title: t('sidebar.cases.title'),
-				url: `/${locale}/cases`,
-				icon: Ticket,
-				items: CASE_VIEWS.map((v) => ({
-					title: t(`sidebar.cases.${v.key}`),
-					url: `/${locale}/cases?view=${v.key}`,
-					badgeKey: v.key,
-				})),
 			},
 
-			{
-				title: t('sidebar.cases.mentions'),
-				url: `/${locale}/cases/mentions`,
-				icon: AtSign,
-				isMentionItem: true,
-				items: [
-					// {
-					// 	title: t('sidebar.cases.mentions'),
-					// 	url: `/${locale}/cases/mentions`,
-					// },
-					// { title: t('sidebar.cases.memorylane'), url: '#' },
-					// { title: t('sidebar.cases.classes'), url: '#' },
-				],
-			},
 			{
 				title: 'Group Visits',
 				url: `/${locale}/groups`,
@@ -153,6 +129,12 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				icon: Pencil,
 				items: [],
 			},
+			{
+				title: 'Newsletters',
+				url: `/${locale}/newsletters`,
+				icon: Newspaper,
+				items: [],
+			},
 		],
 
 		navSecondary: [
@@ -172,9 +154,6 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				url: `/${locale}/specialists`,
 				icon: Search,
 			},
-			// { name: t('sidebar.input.stories'), url: '#', icon: BookOpen },
-			// { name: t('sidebar.input.scriptures'), url: '#', icon: BookKey },
-			// { name: t('sidebar.input.prayers'), url: '#', icon: HandHeart },
 		],
 		admin: [
 			{
@@ -203,7 +182,16 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				url: `/${locale}/admin/announcements`,
 				icon: Megaphone,
 			},
-			// { name: t('sidebar.input.prayers'), url: '#', icon: HandHeart },
+			{
+				name: 'Newsletter',
+				url: `/${locale}/admin/newsletter`,
+				icon: Pencil,
+			},
+			{
+				name: 'Add Book/Equip',
+				url: `/${locale}/library/create`,
+				icon: PlusCircle,
+			},
 		],
 
 		consultant: [
@@ -217,8 +205,27 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				url: `/${locale}/classes`,
 				icon: Lectern,
 			},
+		],
+		patron: [
 			{
-				name: t('sidebar.consultant.library'),
+				title: t('sidebar.cases.title'),
+				url: `/${locale}/cases`,
+				icon: Ticket,
+				items: CASE_VIEWS.map((v) => ({
+					title: t(`sidebar.cases.${v.key}`),
+					url: `/${locale}/cases?view=${v.key}`,
+					badgeKey: v.key,
+				})),
+			},
+			{
+				title: t('sidebar.cases.mentions'),
+				url: `/${locale}/cases/mentions`,
+				icon: AtSign,
+				isMentionItem: true,
+				items: [],
+			},
+			{
+				title: t('sidebar.consultant.library'),
 				url: `/${locale}/library`,
 				icon: Book,
 			},

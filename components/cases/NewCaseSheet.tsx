@@ -11,6 +11,7 @@ import { createCase } from '@/app/actions/cases/create-case'
 import { CaseTypeSelect } from './CaseTypeSelect'
 import { ImagePicker } from './ImagePicker'
 import { CaseType } from '@/types/cases'
+import { PlusCircle } from 'lucide-react'
 
 export function NewCaseSheet({
 	caseTypes,
@@ -53,7 +54,8 @@ export function NewCaseSheet({
 	return (
 		<Sheet>
 			<SheetTrigger asChild>
-				<Button className="fixed bottom-4 right-4 z-50 rounded-full">
+				<Button className="fixed bottom-4 right-4 z-50 rounded-full h-16 w-35">
+					<PlusCircle className="h-6 w-6" />
 					New Case
 				</Button>
 			</SheetTrigger>

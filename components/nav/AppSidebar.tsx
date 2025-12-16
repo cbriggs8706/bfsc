@@ -15,38 +15,58 @@ import {
 	SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { NavAdmin } from './NavAdmin'
-import { NavSecondary } from './NavSecondary'
 import { NavUser } from './NavUser'
 import { Session } from 'next-auth'
 import { useParams } from 'next/navigation'
-import { NavLesson } from './NavLesson'
 import { useTranslations } from 'next-intl'
-import { buildSidebarData, getTeacherNav } from '@/lib/sidebar-data'
+import { buildSidebarData } from '@/lib/sidebar-data'
 import { Separator } from '../ui/separator'
 import { NavConsultant } from './NavConsultant'
 import { NavMain } from './NavMain'
-import { NavInput } from './NavInput'
 import { SidebarLanguageSwitcher } from './SidebarLanguageSwitcher'
+import { NavPatron } from './NavPatron'
+import { SidebarCalendar } from '../custom/SidebarCalendar'
+
+type Weekly = {
+	id: string
+	weekday: number
+	opensAt: string
+	closesAt: string
+	isClosed: boolean
+	updatedAt: Date
+}
+type Specials = {
+	id: string
+	date: string
+	isClosed: boolean
+	reason: string | null
+	opensAt: string | null
+	closesAt: string | null
+	updatedAt: Date | null
+}
 
 export function AppSidebar({
 	session,
 	role,
+	weekly,
+	specials,
 	...props
 }: {
 	session: Session | null
 	role: string
+	weekly: Weekly[]
+	specials: Specials[]
 } & React.ComponentProps<typeof Sidebar>) {
 	const { locale } = useParams()
 	const t = useTranslations()
 	const data = buildSidebarData(t, locale as string)
-	const teacherNav = getTeacherNav(t, locale as string)
 	return (
 		<Sidebar variant="inset" {...props}>
 			<SidebarHeader>
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<SidebarMenuButton size="lg" asChild>
-							<a href="#">
+							<a href={`/${locale}/home`}>
 								<div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
 									<Heart className="size-4" />
 								</div>
@@ -67,7 +87,7 @@ export function AppSidebar({
 				{['Admin', 'Director', 'Assistant Director'].includes(role) && (
 					<>
 						<NavAdmin admin={data.admin} label={t('sidebar.admin.title')} />
-						<Separator className="my-4" />
+						<Separator className="my-0" />
 					</>
 				)}
 				{[
@@ -83,21 +103,27 @@ export function AppSidebar({
 							consultant={data.consultant}
 							label={t('sidebar.consultant.title')}
 						/>
-						<Separator className="my-4" />
+						<Separator className="my-0" />
+					</>
+				)}
+				{[
+					'Admin',
+					'Director',
+					'Assistant Director',
+					'High Councilman',
+					'Consultant',
+					'Shift Lead',
+					'Patron',
+				].includes(role) && (
+					<>
+						<NavPatron items={data.patron} label={t('sidebar.patron.title')} />
+						<Separator className="my-0" />
 					</>
 				)}
 				<NavMain items={data.navMain} />
-				{/* <NavLesson
-					lesson={data.lesson}
-					content={t('sidebar.lesson.lessonContent')}
-				/> */}
-				{/* <NavInput
-					input={data.input}
-					label={t('sidebar.input.comprehensible')}
-				/> */}
-				{/* <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
 			</SidebarContent>
 			<SidebarFooter>
+				<SidebarCalendar specials={specials} weekly={weekly} />
 				<SidebarLanguageSwitcher
 					locale={(locale as string) ?? 'en'}
 					label={t('sidebar.main.language')}

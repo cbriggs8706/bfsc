@@ -17,6 +17,8 @@ import {
 	BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { AppSidebar } from '@/components/nav/AppSidebar'
+import { db, operatingHours, specialHours } from '@/db'
+import { eq } from 'drizzle-orm'
 
 export default async function Layout({
 	children,
@@ -25,9 +27,20 @@ export default async function Layout({
 }) {
 	const session = await getServerSession(authOptions)
 	// if (!session) redirect(`/`)
+	const weekly = await db.select().from(operatingHours)
+	const specials = await db
+		.select()
+		.from(specialHours)
+		.where(eq(specialHours.isClosed, true))
+
 	return (
 		<SidebarProvider>
-			<AppSidebar session={session} role={session?.user?.role ?? 'Patron'} />
+			<AppSidebar
+				session={session}
+				role={session?.user?.role ?? 'Patron'}
+				weekly={weekly}
+				specials={specials}
+			/>
 			<SidebarInset>
 				<header className="flex h-16 shrink-0 items-center gap-2">
 					<div className="flex items-center gap-2 px-4">

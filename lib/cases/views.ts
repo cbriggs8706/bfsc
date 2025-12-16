@@ -4,12 +4,14 @@ import {
 	CheckCircle,
 	Clock,
 	Eye,
+	LayoutDashboard,
 	PauseCircle,
 	Search,
 	type LucideIcon,
 } from 'lucide-react'
 
 export const CASE_VIEWS = [
+	{ key: 'dashboard', icon: LayoutDashboard },
 	{ key: 'open', icon: Clock },
 	{ key: 'investigating', icon: Search },
 	{ key: 'myInvestigating', icon: Search },

@@ -2,6 +2,7 @@
 import { stripHtml } from '@/utils/strip-html'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Button } from '../ui/button'
 
 type Props = {
 	slug: string
@@ -24,8 +25,8 @@ export function NewsletterCard({
 }: Props) {
 	return (
 		<Link
-			href={`/${locale}/newsletter/${slug}`}
-			className="block border rounded-lg p-4 hover:bg-muted space-y-2 bg-white"
+			href={`/${locale}/newsletters/${slug}`}
+			className="block border rounded-lg p-4 hover:bg-(--green-logo-soft) space-y-2 bg-white"
 		>
 			{coverImageUrl && (
 				<div className="relative w-full aspect-video overflow-hidden rounded-md">
@@ -46,7 +47,7 @@ export function NewsletterCard({
 				</div>
 			)}
 
-			<div className="text-lg font-semibold">{title}</div>
+			<div className="text-xl font-semibold">{title}</div>
 
 			{/* {content && (
 				<p className="text-sm text-muted-foreground line-clamp-2 mt-1">
@@ -58,6 +59,9 @@ export function NewsletterCard({
 					{excerpt}
 				</p>
 			)}
+			<Button variant="link" className="px-0">
+				Read →
+			</Button>
 		</Link>
 	)
 }

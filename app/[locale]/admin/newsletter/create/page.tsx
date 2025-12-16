@@ -11,11 +11,17 @@ export default async function CreateNewsletterPage({
 	const { locale } = await params
 
 	return (
-		<NewsletterForm
-			mode="create"
-			value={EMPTY_NEWSLETTER_FORM}
-			locale={locale}
-			action={saveNewsletter}
-		/>
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Create a Newsletter</h1>
+				{/* <p className="text-sm text-muted-foreground"></p> */}
+			</div>
+			<NewsletterForm
+				mode="create"
+				value={EMPTY_NEWSLETTER_FORM}
+				locale={locale}
+				action={saveNewsletter}
+			/>
+		</div>
 	)
 }

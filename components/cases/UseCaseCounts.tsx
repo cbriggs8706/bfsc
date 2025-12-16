@@ -11,6 +11,7 @@ type State =
 	| { loading: false; counts: CaseCounts }
 
 const EMPTY: CaseCounts = {
+	dashboard: 0,
 	open: 0,
 	investigating: 0,
 	myInvestigating: 0,

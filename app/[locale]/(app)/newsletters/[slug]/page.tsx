@@ -28,8 +28,15 @@ export default async function NewsletterDetailPage({ params }: Props) {
 	if (!post) notFound()
 
 	return (
-		<article className="max-w-3xl mx-auto space-y-6">
-			<h1 className="text-3xl font-bold">{post.title}</h1>
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">{post.title}</h1>
+				{post.publishedAt && (
+					<p className="text-sm text-muted-foreground">
+						{post.publishedAt.toLocaleDateString()}
+					</p>
+				)}{' '}
+			</div>
 
 			{post.coverImageUrl && (
 				<div className="relative w-full aspect-video overflow-hidden rounded-md">
@@ -41,11 +48,6 @@ export default async function NewsletterDetailPage({ params }: Props) {
 						sizes="(max-width: 768px) 100vw, 640px"
 						priority={false}
 					/>
-				</div>
-			)}
-			{post.publishedAt && (
-				<div className="text-sm text-muted-foreground">
-					{post.publishedAt.toLocaleDateString()}
 				</div>
 			)}
 
@@ -77,6 +79,6 @@ export default async function NewsletterDetailPage({ params }: Props) {
 					__html: post.content,
 				}}
 			/>
-		</article>
+		</div>
 	)
 }

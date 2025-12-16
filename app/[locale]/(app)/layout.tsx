@@ -20,6 +20,8 @@ import { AppSidebar } from '@/components/nav/AppSidebar'
 import { ConsultantAlerts } from '@/components/consultant/ConsultantAlerts'
 import { redirect } from 'next/navigation'
 import { MentionAlerts } from '@/components/cases/MentionAlerts'
+import { db, operatingHours, specialHours } from '@/db'
+import { eq } from 'drizzle-orm'
 
 export default async function Layout({
 	children,
@@ -27,11 +29,23 @@ export default async function Layout({
 	children: React.ReactNode
 }) {
 	const session = await getServerSession(authOptions)
-	if (!session) redirect(`/`)
+	// if (!session) redirect(`/`)
+
+	const weekly = await db.select().from(operatingHours)
+	const specials = await db
+		.select()
+		.from(specialHours)
+		.where(eq(specialHours.isClosed, true))
+
 	return (
 		<SidebarProvider>
 			{' '}
-			<AppSidebar session={session} role={session?.user?.role ?? 'Patron'} />
+			<AppSidebar
+				session={session}
+				role={session?.user?.role ?? 'Patron'}
+				weekly={weekly}
+				specials={specials}
+			/>
 			<SidebarInset>
 				{/* 🔔 Consultant realtime alerts */}
 				<MentionAlerts />

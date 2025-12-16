@@ -1,5 +1,6 @@
 // app/[locale]/(app)/newsletter/page.tsx
 import { NewsletterCard } from '@/components/newsletters/NewsletterCard'
+import { Button } from '@/components/ui/button'
 import { getPublicNewsletters } from '@/db/queries/newsletters'
 import { NewsletterLocale } from '@/types/newsletters'
 
@@ -63,21 +64,27 @@ export default async function NewsletterListPage({
 	)
 
 	return (
-		<div className="max-w-3xl mx-auto space-y-10">
-			<h1 className="text-3xl font-bold">Newsletter</h1>
-
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Newsletters</h1>
+				<p className="text-sm text-muted-foreground">
+					Monthly announcements and thought.
+				</p>
+			</div>
 			{/* ----------------------------
 			    Search
 			----------------------------- */}
-			<form className="flex gap-2">
+			<form className="flex gap-2 max-w-2xl">
 				<input
 					type="text"
 					name="q"
 					defaultValue={q}
 					placeholder="Search newsletters"
-					className="flex-1 border rounded px-3 py-2"
+					className="flex-1 border rounded px-3 py-2 bg-card"
 				/>
-				<button className="border rounded px-4 py-2">Search</button>
+				<Button variant="default" className="border rounded px-4 py-2">
+					Search
+				</Button>
 			</form>
 
 			{/* ----------------------------

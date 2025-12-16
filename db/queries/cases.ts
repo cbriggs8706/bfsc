@@ -117,13 +117,11 @@ export async function getCasesByView(view: CaseView, userId: string) {
 				.where(eq(cases.status, 'open'))
 				.groupBy(cases.id, user.name, caseTypes.id)
 
-		// 🔥 ALL investigating cases (everyone sees these)
 		case 'investigating':
 			return base
 				.where(eq(cases.status, 'investigating'))
 				.groupBy(cases.id, user.name, caseTypes.id)
 
-		// 🔥 ONLY cases this user is investigating
 		case 'myInvestigating':
 			return base
 				.innerJoin(caseInvestigators, eq(caseInvestigators.caseId, cases.id))
@@ -159,6 +157,10 @@ export async function getCasesByView(view: CaseView, userId: string) {
 				.innerJoin(caseWatchers, eq(caseWatchers.caseId, cases.id))
 				.where(eq(caseWatchers.userId, userId))
 				.groupBy(cases.id, user.name, caseTypes.id)
+
+		// 🔒 SAFETY NET — never hit, but satisfies TS
+		default:
+			return []
 	}
 }
 
@@ -178,4 +180,26 @@ export async function isUserInvestigating(
 		.limit(1)
 
 	return rows.length > 0
+}
+
+export async function getDashboardCases() {
+	return db
+		.select({
+			cases,
+			users: { name: user.name },
+			case_types: {
+				id: caseTypes.id,
+				name: caseTypes.name,
+				icon: caseTypes.icon,
+				color: caseTypes.color,
+			},
+			commentCount: count(caseComments.id),
+		})
+		.from(cases)
+		.leftJoin(user, eq(user.id, cases.createdByUserId))
+		.leftJoin(caseTypes, eq(caseTypes.id, cases.typeId))
+		.leftJoin(caseComments, eq(caseComments.caseId, cases.id))
+		.where(ne(cases.status, 'archived'))
+		.groupBy(cases.id, user.name, caseTypes.id)
+		.orderBy(caseTypes.name, cases.updatedAt)
 }

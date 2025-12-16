@@ -14,11 +14,17 @@ export default async function UpdateNewsletterPage({
 	if (!data) notFound()
 
 	return (
-		<NewsletterForm
-			mode="update"
-			value={data}
-			locale={locale}
-			action={saveNewsletter}
-		/>
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Update Newsletter</h1>
+				{/* <p className="text-sm text-muted-foreground"></p> */}
+			</div>
+			<NewsletterForm
+				mode="update"
+				value={data}
+				locale={locale}
+				action={saveNewsletter}
+			/>
+		</div>
 	)
 }

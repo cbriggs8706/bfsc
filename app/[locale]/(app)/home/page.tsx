@@ -6,6 +6,19 @@ import { NewsletterLocale } from '@/types/newsletters'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import {
+	BadgeQuestionMark,
+	Calendar,
+	Camera,
+	GraduationCap,
+	MapIcon,
+	Newspaper,
+	Pencil,
+	Search,
+	Users2,
+	Facebook,
+	Instagram,
+} from 'lucide-react'
 
 type Props = {
 	params: Promise<{ locale: NewsletterLocale }>
@@ -17,6 +30,64 @@ export default async function HomePage({ params }: Props) {
 	const posts = await getPublicNewsletters(locale)
 
 	const [latest, ...rest] = posts
+
+	const homeCards = [
+		{
+			title: 'Calendar',
+			url: `/${locale}/calendar`,
+			icon: Calendar,
+			description:
+				'Plan a visit to attend a class or meet with a consultant 1-on-1.',
+		},
+		{
+			title: 'Group Visits',
+			url: `/${locale}/groups`,
+			icon: Users2,
+			description: 'Plan and manage group visits to the center.',
+		},
+		{
+			title: 'Research Specialists',
+			url: `/${locale}/research-specialists`,
+			icon: Search,
+			description: 'Get help from trained research specialists.',
+		},
+		{
+			title: 'Training Guide',
+			url: `/${locale}/training-guide`,
+			icon: GraduationCap,
+			description: 'Learn how to use FamilySearch tools effectively.',
+		},
+		{
+			title: 'Consultant Helps',
+			url: `/${locale}/consultant-helps`,
+			icon: BadgeQuestionMark,
+			description: 'Resources and guides for consultants.',
+		},
+		{
+			title: 'Community Projects',
+			url: `/${locale}/community-projects`,
+			icon: MapIcon,
+			description: 'Explore and contribute to local history projects.',
+		},
+		{
+			title: 'Memory Lane',
+			url: `/${locale}/memory-lane`,
+			icon: Camera,
+			description: 'Stories, photos, and shared memories.',
+		},
+		{
+			title: 'Activities',
+			url: `/${locale}/activities`,
+			icon: Pencil,
+			description: 'Games and activities for individuals and groups.',
+		},
+		{
+			title: 'Newsletters',
+			url: `/${locale}/newsletters`,
+			icon: Newspaper,
+			description: 'Read updates, highlights, and center news.',
+		},
+	]
 
 	return (
 		<div className="space-y-20">
@@ -51,7 +122,7 @@ export default async function HomePage({ params }: Props) {
 							)}
 
 							<Button asChild size="lg">
-								<Link href={`/${locale}/newsletter/${latest.slug}`}>
+								<Link href={`/${locale}/newsletters/${latest.slug}`}>
 									Read Now
 								</Link>
 							</Button>
@@ -73,40 +144,40 @@ export default async function HomePage({ params }: Props) {
 
 				<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 					{rest.slice(0, 6).map((post) => (
-						<Card key={post.id} className="overflow-hidden">
-							{post.coverImageUrl && (
-								<div className="relative aspect-video">
-									<Image
-										src={post.coverImageUrl}
-										alt={post.title}
-										fill
-										className="object-cover"
-									/>
-								</div>
-							)}
-
-							<CardContent className="p-4 space-y-2">
-								<div className="text-xs text-muted-foreground">
-									{post.publishedAt?.toLocaleDateString()}
-								</div>
-
-								<h3 className="font-semibold leading-tight line-clamp-2">
-									{post.title}
-								</h3>
-
-								{post.excerpt && (
-									<p className="text-sm text-muted-foreground line-clamp-3">
-										{post.excerpt}
-									</p>
+						<Link key={post.id} href={`/${locale}/newsletter/${post.slug}`}>
+							<Card className="overflow-hidden">
+								{post.coverImageUrl && (
+									<div className="relative aspect-video">
+										<Image
+											src={post.coverImageUrl}
+											alt={post.title}
+											fill
+											className="object-cover"
+										/>
+									</div>
 								)}
 
-								<Button asChild variant="link" className="px-0">
-									<Link href={`/${locale}/newsletter/${post.slug}`}>
+								<CardContent className="p-4 space-y-2">
+									<div className="text-xs text-muted-foreground">
+										{post.publishedAt?.toLocaleDateString()}
+									</div>
+
+									<h3 className="font-semibold leading-tight line-clamp-2">
+										{post.title}
+									</h3>
+
+									{post.excerpt && (
+										<p className="text-sm text-muted-foreground line-clamp-3">
+											{post.excerpt}
+										</p>
+									)}
+
+									<Button variant="link" className="px-0">
 										Read →
-									</Link>
-								</Button>
-							</CardContent>
-						</Card>
+									</Button>
+								</CardContent>
+							</Card>
+						</Link>
 					))}
 				</div>
 			</section>
@@ -117,58 +188,86 @@ export default async function HomePage({ params }: Props) {
 			   PLACEHOLDER SECTION #1
 			============================= */}
 			<section className="max-w-5xl mx-auto px-4 space-y-4">
-				<h2 className="text-2xl font-semibold">About This Organization</h2>
-				<p className="text-muted-foreground max-w-3xl">
-					This section can be used for a mission statement, welcome message, or
-					explanation of what this site offers. Replace this copy later.
+				<h2 className="text-2xl font-semibold">About This Center</h2>
+				<p className="text-muted-foreground w-full">
+					The Burley FamilySearch Center is dedicated to assisting people in
+					researching their family and preserving their memories for future
+					generations. There are several consultants on staff to assist one to
+					one. We offer classes for all ages and skills. Additionally, we have
+					the capability of digitizing most media types. VHS and VHS-C tapes,
+					mini DV, 8 mm cassette movies, audio cassettes, audio reels, 8 mm reel
+					movies, slides, negatives, pictures, documents, newspaper clippings,
+					etc. Come see what we can do for you!
 				</p>
 			</section>
 
 			{/* =============================
 			   PLACEHOLDER SECTION #2
 			============================= */}
-			<section className="bg-muted/40 py-16">
-				<div className="max-w-6xl mx-auto px-4 grid gap-8 md:grid-cols-3">
-					<Card>
-						<CardContent className="p-6 space-y-2">
-							<h3 className="font-semibold">Programs</h3>
-							<p className="text-sm text-muted-foreground">
-								Highlight key programs or services here.
-							</p>
-						</CardContent>
-					</Card>
+			<section className="bg-muted/40 py-4">
+				<div className="max-w-6xl mx-auto px-4 grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+					{homeCards.map(({ title, url, icon: Icon, description }) => (
+						<Link key={title} href={url} className="group">
+							<Card className="h-full transition hover:shadow-md hover:border-primary">
+								<CardContent className="p-6 space-y-3">
+									<div className="flex items-center gap-3">
+										<Icon className="h-6 w-6 text-primary" />
+										<h3 className="font-semibold group-hover:underline">
+											{title}
+										</h3>
+									</div>
 
-					<Card>
-						<CardContent className="p-6 space-y-2">
-							<h3 className="font-semibold">Get Involved</h3>
-							<p className="text-sm text-muted-foreground">
-								Volunteer, attend events, or contribute.
-							</p>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardContent className="p-6 space-y-2">
-							<h3 className="font-semibold">Resources</h3>
-							<p className="text-sm text-muted-foreground">
-								Links, tools, or learning materials.
-							</p>
-						</CardContent>
-					</Card>
+									<p className="text-sm text-muted-foreground">{description}</p>
+								</CardContent>
+							</Card>
+						</Link>
+					))}
 				</div>
 			</section>
 
 			{/* =============================
 			   PLACEHOLDER CTA
 			============================= */}
-			<section className="text-center space-y-4 px-4 pb-20">
+			<section className="text-center space-y-6 px-4 pb-20">
 				<h2 className="text-2xl font-semibold">Stay Connected</h2>
+
 				<p className="text-muted-foreground">
 					Subscribe, follow, or visit regularly for updates.
 				</p>
-				<Button size="lg" variant="default">
-					Subscribe
-				</Button>
+
+				<div className="flex flex-col items-center gap-4">
+					<Button size="lg">Subscribe to our Monthly Newsletter</Button>
+
+					<div className="flex items-center gap-4">
+						<Link
+							href="https://www.facebook.com/burleyfamilyhistory"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<Button
+								variant="outline"
+								size="icon"
+								aria-label="Visit us on Facebook"
+							>
+								<Facebook className="h-5 w-5" />
+							</Button>
+						</Link>
+
+						<Link
+							href="https://www.instagram.com/burleyidahofhc/"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<Button
+								variant="outline"
+								size="icon"
+								aria-label="Visit us on Instagram"
+							>
+								<Instagram className="h-5 w-5" />
+							</Button>
+						</Link>
+					</div>
+				</div>
 			</section>
 		</div>
 	)

@@ -76,12 +76,16 @@
 		"teachClass": "Teach A Class",
 		"library": "Library"
 	},
+	"patron": {
+		"title": "Patron"
+	},
 	"cases": {
 		"title": "Cases",
+		"dashboard": "Dashboard",
 		"open": "New",
-		"investigating": "All Invest.",
+		"investigating": "Under Invest.",
 		"myInvestigating": "My Invest.",
-		"waiting": "Waiting",
+		"waiting": "Paused",
 		"solved": "Solved",
 		"archived": "Archived",
 		"watching": "Watching",

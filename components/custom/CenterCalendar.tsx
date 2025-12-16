@@ -1,10 +1,32 @@
 //components/custom/CenterCalendar.tsx
 'use client'
 
-import { useState } from 'react'
-import { format } from 'date-fns'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+	addDays,
+	addMonths,
+	addWeeks,
+	differenceInCalendarDays,
+	endOfMonth,
+	endOfWeek,
+	format,
+	isSameDay,
+	isSameMonth,
+	isToday,
+	parseISO,
+	startOfDay,
+	startOfMonth,
+	startOfWeek,
+	subDays,
+	subMonths,
+	subWeeks,
+	eachDayOfInterval,
+} from 'date-fns'
 
-import { Calendar } from '@/components/ui/calendar'
+import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/use-mobile'
+
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
 	Dialog,
@@ -13,9 +35,18 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+
+import {
+	ChevronLeft,
+	ChevronRight,
+	CalendarDays,
+	CalendarRange,
+	Calendar as CalendarIcon,
+} from 'lucide-react'
 
 import { toAmPm, formatLongDate } from '@/utils/time'
-import { useIsMobile } from '@/hooks/use-mobile'
+import { formatHourShort } from '@/lib/date'
 
 /* ============================
    TYPES
@@ -47,6 +78,50 @@ type CalendarClass = {
 	presenters: string[]
 }
 
+type CalendarView = 'month' | 'week' | 'day'
+
+/* ============================
+   SMALL HELPERS
+============================ */
+
+function ymd(date: Date) {
+	return format(date, 'yyyy-MM-dd')
+}
+
+function clamp(n: number, min: number, max: number) {
+	return Math.max(min, Math.min(max, n))
+}
+
+function minutesSinceMidnight(d: Date) {
+	return d.getHours() * 60 + d.getMinutes()
+}
+
+// Stable “color” class from title hash (Tailwind utilities)
+function classColorClass(title: string) {
+	let h = 0
+	for (let i = 0; i < title.length; i++)
+		h = (h * 31 + title.charCodeAt(i)) >>> 0
+	const idx = h % 7
+
+	// subtle, Apple-ish (no neon)
+	const styles = [
+		'bg-blue-100 text-blue-900 border-blue-200',
+		'bg-emerald-100 text-emerald-900 border-emerald-200',
+		'bg-amber-100 text-amber-900 border-amber-200',
+		'bg-violet-100 text-violet-900 border-violet-200',
+		'bg-rose-100 text-rose-900 border-rose-200',
+		'bg-sky-100 text-sky-900 border-sky-200',
+		'bg-stone-100 text-stone-900 border-stone-200',
+	]
+	return styles[idx]
+}
+
+// For week/day time grid sizing
+const START_HOUR = 6
+const END_HOUR = 21
+const MINUTES_PER_PIXEL = 2 // 2 min per px => 60 min = 30px
+const EVENT_DEFAULT_MINUTES = 60
+
 /* ============================
    COMPONENT
 ============================ */
@@ -66,36 +141,44 @@ export default function CenterCalendar({
 }) {
 	const isMobile = useIsMobile()
 
+	const [view, setView] = useState<CalendarView>('month')
 	const [viewDate, setViewDate] = useState(
 		new Date(initialYear, initialMonth, 1)
 	)
 	const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
+	// Mobile default: day view
+	useEffect(() => {
+		if (isMobile) setView('day')
+	}, [isMobile])
+
 	/* ============================
 	   MAPS
 	============================ */
 
-	const specialsMap = new Map(specials.map((s) => [s.date, s]))
+	const specialsMap = useMemo(
+		() => new Map(specials.map((s) => [s.date, s])),
+		[specials]
+	)
 
-	const classesByDate = new Map<string, CalendarClass[]>()
-	for (const c of classes) {
-		const arr = classesByDate.get(c.date) ?? []
-		arr.push(c)
-		classesByDate.set(c.date, arr)
-	}
-
-	const hasClassesOnDay = (date: Date) => {
-		const ymd = format(date, 'yyyy-MM-dd')
-		return classesByDate.has(ymd)
-	}
+	const classesByDate = useMemo(() => {
+		const m = new Map<string, CalendarClass[]>()
+		for (const c of classes) {
+			const arr = m.get(c.date) ?? []
+			arr.push(c)
+			arr.sort((a, b) => a.startsAtIso.localeCompare(b.startsAtIso))
+			m.set(c.date, arr)
+		}
+		return m
+	}, [classes])
 
 	/* ============================
 	   DAY INFO
 	============================ */
 
 	const getDayInfo = (date: Date) => {
-		const ymd = format(date, 'yyyy-MM-dd')
-		const special = specialsMap.get(ymd)
+		const key = ymd(date)
+		const special = specialsMap.get(key)
 
 		if (special) {
 			return {
@@ -130,38 +213,48 @@ export default function CenterCalendar({
 	}
 
 	/* ============================
-	   CALENDAR MODIFIERS
+	   NAVIGATION
 	============================ */
 
-	const modifiers = {
-		specialClosed: (date: Date) =>
-			getDayInfo(date).source === 'special' && getDayInfo(date).isClosed,
-
-		specialOpen: (date: Date) =>
-			getDayInfo(date).source === 'special' && !getDayInfo(date).isClosed,
-
-		weeklyClosed: (date: Date) =>
-			getDayInfo(date).source === 'weekly' && getDayInfo(date).isClosed,
-
-		hasClass: (date: Date) => {
-			const ymd = format(date, 'yyyy-MM-dd')
-			return classesByDate.has(ymd)
-		},
+	const goToday = () => {
+		const t = new Date()
+		setViewDate(startOfMonth(t))
+		setSelectedDate(t)
 	}
 
-	const modifiersClassNames = {
-		specialClosed: 'bg-red-200 border-red-400 text-red-700',
-		specialOpen: 'bg-yellow-200 border-yellow-400 text-yellow-700',
-		weeklyClosed: 'bg-neutral-200 border-neutral-400 text-neutral-700',
-		hasClass:
-			'border-2 border-primary hover:border-primary/80 focus-visible:ring-2 focus-visible:ring-ring',
+	const goPrev = () => {
+		setSelectedDate(null)
+		setViewDate((d) => {
+			if (view === 'month') return subMonths(d, 1)
+			if (view === 'week') return subWeeks(d, 1)
+			return subDays(d, 1)
+		})
 	}
+
+	const goNext = () => {
+		setSelectedDate(null)
+		setViewDate((d) => {
+			if (view === 'month') return addMonths(d, 1)
+			if (view === 'week') return addWeeks(d, 1)
+			return addDays(d, 1)
+		})
+	}
+
+	const headerLabel = useMemo(() => {
+		if (view === 'month') return format(viewDate, 'MMMM yyyy')
+		if (view === 'week') {
+			const ws = startOfWeek(viewDate, { weekStartsOn: 0 })
+			const we = endOfWeek(viewDate, { weekStartsOn: 0 })
+			return `${format(ws, 'MMM d')} – ${format(we, 'MMM d, yyyy')}`
+		}
+		return format(viewDate, 'MMMM d, yyyy')
+	}, [view, viewDate])
 
 	/* ============================
-	   CLASS LIST RENDERER
+	   DAY DETAILS (you already had this, kept)
 	============================ */
 
-	const renderClasses = (dayClasses: CalendarClass[]) => {
+	const renderClassesList = (dayClasses: CalendarClass[]) => {
 		if (dayClasses.length === 0) return null
 
 		return (
@@ -170,13 +263,13 @@ export default function CenterCalendar({
 				<ul className="space-y-2">
 					{dayClasses.map((c) => {
 						const startsAt = new Date(c.startsAtIso)
-
 						return (
 							<li
 								key={c.id}
-								className={`text-sm ${
-									c.isCanceled ? 'line-through text-muted-foreground' : ''
-								}`}
+								className={cn(
+									'text-sm',
+									c.isCanceled && 'line-through text-muted-foreground'
+								)}
 							>
 								<div>
 									{toAmPm(format(startsAt, 'HH:mm'))} — {c.title}
@@ -201,67 +294,527 @@ export default function CenterCalendar({
 		)
 	}
 
+	const DayDetails = ({ date }: { date: Date }) => {
+		const info = getDayInfo(date)
+		const key = ymd(date)
+		const dayClasses = classesByDate.get(key) ?? []
+
+		if (info.source === 'special' && info.isClosed) {
+			return (
+				<>
+					<p className="text-red-600 font-semibold">
+						{info.reason ? `Closed for ${info.reason}` : 'Closed'}
+					</p>
+					{renderClassesList(dayClasses)}
+				</>
+			)
+		}
+
+		if (info.isClosed) {
+			return (
+				<>
+					<p className="text-neutral-700 font-semibold">
+						Open By Appointment Only
+					</p>
+					{renderClassesList(dayClasses)}
+				</>
+			)
+		}
+
+		return (
+			<>
+				<p>
+					Open: {toAmPm(info.opensAt)} <br />
+					Close: {toAmPm(info.closesAt)}
+				</p>
+				{renderClassesList(dayClasses)}
+			</>
+		)
+	}
+
+	/* ============================
+	   MONTH VIEW
+	============================ */
+
+	const MonthView = () => {
+		const monthStart = startOfMonth(viewDate)
+		const monthEnd = endOfMonth(viewDate)
+		const gridStart = startOfWeek(monthStart, { weekStartsOn: 0 })
+		const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 0 })
+		const days = eachDayOfInterval({ start: gridStart, end: gridEnd })
+
+		const dayHeaders = isMobile
+			? ['Su', 'M', 'T', 'W', 'R', 'F', 'Sa']
+			: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+		return (
+			<div className="rounded-md border overflow-hidden bg-background">
+				<div className="grid grid-cols-7 border-b">
+					{dayHeaders.map((d) => (
+						<div
+							key={d}
+							className="p-2 text-xs font-medium text-muted-foreground"
+						>
+							{d}
+						</div>
+					))}
+				</div>
+
+				<div className="grid grid-cols-7">
+					{days.map((d) => {
+						const key = ymd(d)
+						const dayClasses = classesByDate.get(key) ?? []
+						const info = getDayInfo(d)
+						const inMonth = isSameMonth(d, viewDate)
+
+						return (
+							<button
+								key={key}
+								onClick={() => setSelectedDate(d)}
+								className={cn(
+									'relative border p-1 text-left flex flex-col gap-1 transition bg-(--green-logo-soft)',
+									// height: Apple-ish; smaller on mobile
+									isMobile ? 'h-20' : 'h-28',
+									!inMonth && 'bg-neutral-200 text-muted-foreground',
+									'hover:bg-card',
+									// Closed styling
+									info.isClosed && inMonth && 'bg-(--red-accent-soft)',
+									// Today highlight (sticky feel)
+									isToday(d) && 'ring-2 ring-primary ring-inset'
+								)}
+							>
+								<div className="flex items-center justify-between">
+									<div className="text-xs font-semibold">{format(d, 'd')}</div>
+
+									{/* subtle “Closed” dot */}
+									{info.isClosed && inMonth && (
+										<span className="h-2 w-2 rounded-full bg-(--red-accent)" />
+									)}
+									{!info.isClosed && inMonth && (
+										<span className="h-2 w-2 rounded-full bg-(--green-logo)" />
+									)}
+								</div>
+
+								<div className="flex flex-col gap-0.5 overflow-hidden">
+									{dayClasses.slice(0, isMobile ? 2 : 3).map((c) => {
+										const startsAt = parseISO(c.startsAtIso)
+										const time = toAmPm(format(startsAt, 'HH:mm'))
+										return (
+											<div
+												key={c.id}
+												className={cn(
+													'border rounded px-1 text-[11px] truncate',
+													classColorClass(c.title),
+													c.isCanceled && 'line-through opacity-70'
+												)}
+												title={`${time} — ${c.title}`}
+											>
+												<span className="font-medium">{time}</span>{' '}
+												<span className="opacity-90">{c.title}</span>
+											</div>
+										)
+									})}
+
+									{dayClasses.length > (isMobile ? 2 : 3) && (
+										<div className="text-[10px] text-muted-foreground">
+											+{dayClasses.length - (isMobile ? 2 : 3)} more
+										</div>
+									)}
+								</div>
+							</button>
+						)
+					})}
+				</div>
+			</div>
+		)
+	}
+
+	/* ============================
+	   WEEK / DAY VIEW (TIME GRID)
+	   - time-of-day positioning
+	   - week: horizontal scroll + drag
+	============================ */
+
+	const hours = useMemo(() => {
+		const arr: number[] = []
+		for (let h = START_HOUR; h <= END_HOUR; h++) arr.push(h)
+		return arr
+	}, [])
+
+	const gridHeightPx = ((END_HOUR - START_HOUR) * 60) / MINUTES_PER_PIXEL
+
+	function eventTopPx(start: Date) {
+		const minutes = minutesSinceMidnight(start) - START_HOUR * 60
+		return Math.max(0, minutes / MINUTES_PER_PIXEL)
+	}
+
+	function eventHeightPx() {
+		return EVENT_DEFAULT_MINUTES / MINUTES_PER_PIXEL
+	}
+
+	const WeekView = () => {
+		const weekStart = startOfWeek(viewDate, { weekStartsOn: 0 })
+		const weekEnd = endOfWeek(viewDate, { weekStartsOn: 0 })
+		const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
+
+		// drag-to-scroll
+		const headerScrollRef = useRef<HTMLDivElement | null>(null)
+		const bodyScrollRef = useRef<HTMLDivElement | null>(null)
+		const drag = useRef<{ down: boolean; x: number; left: number }>({
+			down: false,
+			x: 0,
+			left: 0,
+		})
+
+		const syncScroll = () => {
+			if (!headerScrollRef.current || !bodyScrollRef.current) return
+			headerScrollRef.current.scrollLeft = bodyScrollRef.current.scrollLeft
+		}
+
+		const onMouseDown = (e: React.MouseEvent) => {
+			if (!bodyScrollRef.current) return
+			drag.current.down = true
+			drag.current.x = e.pageX
+			drag.current.left = bodyScrollRef.current.scrollLeft
+		}
+		const onMouseLeave = () => (drag.current.down = false)
+		const onMouseUp = () => (drag.current.down = false)
+		const onMouseMove = (e: React.MouseEvent) => {
+			if (!drag.current.down || !bodyScrollRef.current) return
+			const dx = e.pageX - drag.current.x
+			bodyScrollRef.current.scrollLeft = drag.current.left - dx
+			syncScroll()
+		}
+
+		return (
+			<div className="rounded-md border bg-card overflow-hidden">
+				{/* header row */}
+				<div className="grid grid-cols-[56px_1fr] border-b bg-primary/70">
+					<div className="p-3 text-xs font-medium ">Time</div>
+
+					<div ref={headerScrollRef} className="overflow-x-hidden">
+						<div
+							className="grid"
+							style={{ gridTemplateColumns: `repeat(7, minmax(160px, 1fr))` }}
+						>
+							{days.map((d) => (
+								<div
+									key={ymd(d)}
+									className={cn(
+										'p-2 border-l text-sm',
+										isToday(d) && 'bg-primary/5'
+									)}
+								>
+									<div className="flex flex-col items-center justify-between">
+										<div className="font-medium">
+											{format(d, isMobile ? 'EEE d' : 'EEEE d')}
+										</div>
+										{getDayInfo(d).isClosed && (
+											<Badge
+												variant="destructive"
+												className="h-5 px-2 text-[10px]"
+											>
+												Closed
+											</Badge>
+										)}
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+				</div>
+
+				{/* grid body */}
+				<div className="grid grid-cols-[56px_1fr]">
+					{/* left time axis */}
+					<div className="relative border-r">
+						<div style={{ height: gridHeightPx }} className="relative">
+							{hours.map((h) => (
+								<div
+									key={h}
+									className="absolute left-0 w-full text-[10px] text-muted-foreground"
+									style={{
+										top: ((h - START_HOUR) * 60) / MINUTES_PER_PIXEL - 6,
+									}}
+								>
+									<div className="px-4 py-3">{formatHourShort(h)}</div>
+								</div>
+							))}
+						</div>
+					</div>
+
+					{/* day columns scroller */}
+					<div
+						ref={bodyScrollRef}
+						onScroll={syncScroll}
+						className="overflow-x-auto overscroll-x-contain"
+						onMouseDown={onMouseDown}
+						onMouseLeave={onMouseLeave}
+						onMouseUp={onMouseUp}
+						onMouseMove={onMouseMove}
+					>
+						<div
+							className="grid"
+							style={{ gridTemplateColumns: `repeat(7, minmax(160px, 1fr))` }}
+						>
+							{days.map((d) => {
+								const key = ymd(d)
+								const dayClasses = classesByDate.get(key) ?? []
+
+								return (
+									<div
+										key={key}
+										className={cn('relative border-l')}
+										style={{ height: gridHeightPx }}
+										onClick={() => setSelectedDate(d)}
+									>
+										{/* hour lines */}
+										{hours.map((h) => (
+											<div
+												key={h}
+												className="absolute left-0 right-0 border-t"
+												style={{
+													top: ((h - START_HOUR) * 60) / MINUTES_PER_PIXEL,
+												}}
+											/>
+										))}
+
+										{/* events */}
+										{dayClasses.map((c) => {
+											const start = parseISO(c.startsAtIso)
+											const top = eventTopPx(start)
+											const height = eventHeightPx()
+											const time = toAmPm(format(start, 'HH:mm'))
+
+											// Hide events outside our visible window
+											const minutesFromStart =
+												minutesSinceMidnight(start) - START_HOUR * 60
+											if (
+												minutesFromStart < 0 ||
+												minutesFromStart > (END_HOUR - START_HOUR) * 60
+											) {
+												return null
+											}
+
+											return (
+												<button
+													key={c.id}
+													onClick={(e) => {
+														e.stopPropagation()
+														setSelectedDate(d)
+													}}
+													className={cn(
+														'absolute left-1 right-1 rounded border px-2 py-1 text-left text-[11px] overflow-hidden',
+														classColorClass(c.title),
+														c.isCanceled && 'line-through opacity-70'
+													)}
+													style={{ top, height }}
+													title={`${time} — ${c.title}`}
+												>
+													<div className="font-medium truncate">{c.title}</div>
+													<div className="text-[10px] opacity-80 truncate">
+														{time}
+													</div>
+												</button>
+											)
+										})}
+									</div>
+								)
+							})}
+						</div>
+					</div>
+				</div>
+			</div>
+		)
+	}
+
+	const DayView = () => {
+		// In day view, "viewDate" is the day being shown
+		const day = startOfDay(viewDate)
+		const key = ymd(day)
+		const dayClasses = classesByDate.get(key) ?? []
+
+		return (
+			<div className="rounded-md border bg-card overflow-hidden ">
+				<div className="p-3 border-b flex items-center justify-between bg-primary/70">
+					<div className="font-medium">{format(day, 'EEEE, MMM d, yyyy')}</div>
+					{getDayInfo(day).isClosed && (
+						<Badge variant="destructive" className="h-6">
+							Closed
+						</Badge>
+					)}
+				</div>
+
+				<div className="grid grid-cols-[56px_1fr]">
+					{/* time axis */}
+					<div className="relative border-r">
+						<div style={{ height: gridHeightPx }} className="relative">
+							{hours.map((h) => (
+								<div
+									key={h}
+									className="absolute left-0 w-full text-[10px] text-muted-foreground"
+									style={{
+										top: ((h - START_HOUR) * 60) / MINUTES_PER_PIXEL - 6,
+									}}
+								>
+									<div className="px-4 py-3">{formatHourShort(h)}</div>
+								</div>
+							))}
+						</div>
+					</div>
+
+					{/* day column */}
+					<div
+						className="relative"
+						style={{ height: gridHeightPx }}
+						onClick={() => setSelectedDate(day)}
+					>
+						{hours.map((h) => (
+							<div
+								key={h}
+								className="absolute left-0 right-0 border-t"
+								style={{ top: ((h - START_HOUR) * 60) / MINUTES_PER_PIXEL }}
+							/>
+						))}
+
+						{dayClasses.map((c) => {
+							const start = parseISO(c.startsAtIso)
+							const top = eventTopPx(start)
+							const height = eventHeightPx()
+							const time = toAmPm(format(start, 'HH:mm'))
+
+							const minutesFromStart =
+								minutesSinceMidnight(start) - START_HOUR * 60
+							if (
+								minutesFromStart < 0 ||
+								minutesFromStart > (END_HOUR - START_HOUR) * 60
+							) {
+								return null
+							}
+
+							return (
+								<button
+									key={c.id}
+									onClick={(e) => {
+										e.stopPropagation()
+										setSelectedDate(day)
+									}}
+									className={cn(
+										'absolute left-2 right-2 rounded border px-3 py-2 text-left text-[12px] overflow-hidden',
+										classColorClass(c.title),
+										c.isCanceled && 'line-through opacity-70'
+									)}
+									style={{ top, height }}
+									title={`${time} — ${c.title}`}
+								>
+									<div className="font-medium truncate">{c.title}</div>
+									<div className="text-[11px] opacity-80 truncate">
+										{time} • {c.location}
+									</div>
+								</button>
+							)
+						})}
+					</div>
+				</div>
+			</div>
+		)
+	}
+
+	/* ============================
+	   VIEW SWITCHER (Apple-ish)
+	============================ */
+
+	const ViewSwitcher = () => (
+		<div className="flex items-center gap-2">
+			<Button
+				variant={view === 'day' ? 'default' : 'outline'}
+				size="sm"
+				onClick={() => setView('day')}
+				className="gap-2"
+			>
+				<CalendarIcon className="h-4 w-4" />
+				<span className="hidden sm:inline">Day</span>
+			</Button>
+
+			<Button
+				variant={view === 'week' ? 'default' : 'outline'}
+				size="sm"
+				onClick={() => setView('week')}
+				className="gap-2"
+			>
+				<CalendarRange className="h-4 w-4" />
+				<span className="hidden sm:inline">Week</span>
+			</Button>
+
+			<Button
+				variant={view === 'month' ? 'default' : 'outline'}
+				size="sm"
+				onClick={() => setView('month')}
+				className="gap-2"
+			>
+				<CalendarDays className="h-4 w-4" />
+				<span className="hidden sm:inline">Month</span>
+			</Button>
+		</div>
+	)
+
 	/* ============================
 	   RENDER
 	============================ */
 
 	return (
-		<div className="flex flex-col gap-6">
-			<Calendar
-				month={viewDate}
-				onMonthChange={setViewDate}
-				mode="single"
-				selected={selectedDate ?? undefined}
-				onSelect={(d) => d && setSelectedDate(d)}
-				className="rounded-md border w-full bg-white"
-				modifiers={modifiers}
-				modifiersClassNames={modifiersClassNames}
-			/>
+		<div className="flex flex-col gap-4">
+			{/* Toolbar */}
+			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+				<div className="flex items-center gap-2">
+					<Button
+						variant="outline"
+						size="icon"
+						onClick={goPrev}
+						aria-label="Previous"
+					>
+						<ChevronLeft className="h-4 w-4" />
+					</Button>
+
+					<Button
+						variant="outline"
+						size="icon"
+						onClick={goNext}
+						aria-label="Next"
+					>
+						<ChevronRight className="h-4 w-4" />
+					</Button>
+
+					<Button variant="outline" size="sm" onClick={goToday}>
+						Today
+					</Button>
+
+					<div className="ml-2 text-base sm:text-lg font-semibold">
+						{headerLabel}
+					</div>
+				</div>
+
+				<ViewSwitcher />
+			</div>
+
+			{/* Animated view container */}
+			<div
+				key={view + ':' + ymd(viewDate)}
+				className="animate-in fade-in-0 duration-300"
+			>
+				{view === 'month' && <MonthView />}
+				{view === 'week' && <WeekView />}
+				{view === 'day' && <DayView />}
+			</div>
 
 			{/* DESKTOP PANEL */}
 			{!isMobile && selectedDate && (
 				<Card>
 					<CardHeader>
-						<CardTitle>
-							{formatLongDate(format(selectedDate, 'yyyy-MM-dd'))}
-						</CardTitle>
+						<CardTitle>{formatLongDate(ymd(selectedDate))}</CardTitle>
 					</CardHeader>
-
 					<CardContent>
-						{(() => {
-							const info = getDayInfo(selectedDate)
-							const ymd = format(selectedDate, 'yyyy-MM-dd')
-							const dayClasses = classesByDate.get(ymd) ?? []
-
-							if (info.source === 'special') {
-								return (
-									<p className="text-red-600 font-semibold">
-										{info.reason ? `Closed for ${info.reason}` : 'Closed'}
-									</p>
-								)
-							}
-
-							if (info.isClosed) {
-								return (
-									<>
-										<p className="text-neutral-700 font-semibold">
-											Open By Appointment Only
-										</p>
-										{renderClasses(dayClasses)}
-									</>
-								)
-							}
-
-							return (
-								<>
-									<p>
-										Open: {toAmPm(info.opensAt)} <br />
-										Close: {toAmPm(info.closesAt)}
-									</p>
-									{renderClasses(dayClasses)}
-								</>
-							)
-						})()}
+						<DayDetails date={selectedDate} />
 					</CardContent>
 				</Card>
 			)}
@@ -271,45 +824,9 @@ export default function CenterCalendar({
 				<Dialog open onOpenChange={() => setSelectedDate(null)}>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>
-								{formatLongDate(format(selectedDate, 'yyyy-MM-dd'))}
-							</DialogTitle>
+							<DialogTitle>{formatLongDate(ymd(selectedDate))}</DialogTitle>
 						</DialogHeader>
-
-						{(() => {
-							const info = getDayInfo(selectedDate)
-							const ymd = format(selectedDate, 'yyyy-MM-dd')
-							const dayClasses = classesByDate.get(ymd) ?? []
-
-							if (info.source === 'special') {
-								return (
-									<p className="text-red-600 font-semibold">
-										{info.reason ? `Closed for ${info.reason}` : 'Closed'}
-									</p>
-								)
-							}
-
-							if (info.isClosed) {
-								return (
-									<>
-										<p className="text-neutral-700 font-semibold">
-											Open By Appointment Only
-										</p>
-										{renderClasses(dayClasses)}
-									</>
-								)
-							}
-
-							return (
-								<>
-									<p>
-										Open: {toAmPm(info.opensAt)} <br />
-										Close: {toAmPm(info.closesAt)}
-									</p>
-									{renderClasses(dayClasses)}
-								</>
-							)
-						})()}
+						<DayDetails date={selectedDate} />
 					</DialogContent>
 				</Dialog>
 			)}

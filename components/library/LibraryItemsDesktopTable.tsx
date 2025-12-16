@@ -97,10 +97,10 @@ export function LibraryItemsDesktopTable({
 							<TableCell>
 								<div className="flex gap-2 flex-wrap">
 									<Badge variant="outline">Total {item.counts.total}</Badge>
-									<Badge className="bg-green-600">
+									<Badge className="bg-(--green-logo)">
 										Avail {item.counts.available}
 									</Badge>
-									<Badge className="bg-amber-500">
+									<Badge className="bg-(--orange-accent)">
 										Out {item.counts.checkedOut}
 									</Badge>
 								</div>

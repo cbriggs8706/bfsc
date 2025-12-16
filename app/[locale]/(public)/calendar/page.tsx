@@ -10,9 +10,9 @@ export default async function Page() {
 	const year = today.getFullYear()
 	const month = today.getMonth()
 
-	// Load specials for prev + current + next month
-	const rangeStart = new Date(year, month - 1, 1)
-	const rangeEnd = new Date(year, month + 2, 0)
+	// Load a wider range so month navigation works without refetching
+	const rangeStart = new Date(year, month - 3, 1)
+	const rangeEnd = new Date(year, month + 4, 0)
 
 	const firstStr = toLocalYMD(rangeStart)
 	const lastStr = toLocalYMD(rangeEnd)
@@ -34,7 +34,6 @@ export default async function Page() {
 	}))
 
 	const weeklyRaw = await db.select().from(operatingHours)
-
 	const weekly = weeklyRaw.map((w) => ({
 		weekday: w.weekday,
 		opensAt: w.opensAt,
@@ -52,6 +51,7 @@ export default async function Page() {
 					Normal Operating Hours and Class Schedule
 				</p>
 			</div>
+
 			<CenterCalendar
 				specials={specials}
 				weekly={weekly}

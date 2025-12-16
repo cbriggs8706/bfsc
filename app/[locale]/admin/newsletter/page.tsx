@@ -30,15 +30,20 @@ export default async function AdminNewsletterListPage() {
 		.orderBy(desc(newsletterPosts.createdAt))
 
 	return (
-		<div className="space-y-6">
-			<div className="flex justify-between items-center">
-				<h1 className="text-xl font-semibold">Newsletters</h1>
-				<Button asChild>
-					<Link href="./newsletter/create">New Newsletter</Link>
-				</Button>
+		<div className="p-4 space-y-4">
+			<div>
+				<div className="flex justify-between items-center">
+					<h1 className="text-3xl font-bold">Newsletters</h1>
+					<Button asChild>
+						<Link href="./newsletter/create">New Newsletter</Link>
+					</Button>
+				</div>
+				<p className="text-sm text-muted-foreground">
+					Create, edit or delete newsletters.
+				</p>
 			</div>
 
-			<div className="border rounded-md divide-y">
+			<div className="border rounded-md divide-y bg-card">
 				{posts.map((post) => (
 					<div
 						key={post.id}
