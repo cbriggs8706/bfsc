@@ -8,8 +8,10 @@ export * from './tables/classes'
 export * from './tables/cases'
 export * from './tables/library'
 export * from './tables/newsletters'
+export * from './tables/faith'
 
 export * from './relations/auth.relations'
 export * from './relations/kiosk.relations'
+export * from './relations/faith.relations'
 
 // export * from './enums'

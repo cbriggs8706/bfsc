@@ -4,12 +4,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import type { IdentifyResponse } from '@/app/api/kiosk/identify/route'
-import {
-	PersonSummary,
-	OnShiftConsultant,
-	Purpose,
-	KioskStep,
-} from '@/types/kiosk'
+import { PersonSummary, OnShiftConsultant, Purpose } from '@/types/kiosk'
 import { IdentifyStep } from '@/components/kiosk/IdentifyStep'
 import { ChoosePersonStep } from '@/components/kiosk/ChoosePersonStep'
 import { NewPersonStep } from '@/components/kiosk/NewPersonStep'
@@ -19,11 +14,13 @@ import { VisitStep } from '@/components/kiosk/VisitStep'
 import { RoleChoiceStep } from '@/components/kiosk/RoleChoiceStep'
 import { ActionChoiceStep } from '@/components/kiosk/ActionChoiceStep'
 import { CheckoutStep } from '@/components/kiosk/CheckoutStep'
+import { NotFoundStep } from '@/components/kiosk/NotFoundStep'
 
 export default function KioskPage() {
 	const [step, setStep] = useState<
 		| 'identify'
 		| 'choosePerson'
+		| 'notFound'
 		| 'newPerson'
 		| 'roleChoice'
 		| 'visit'
@@ -39,12 +36,9 @@ export default function KioskPage() {
 		null
 	)
 	const [purposes, setPurposes] = useState<Purpose[]>([])
-	const [selectedPurposeId, setSelectedPurposeId] = useState<string>('')
+	const [selectedPurposeId, setSelectedPurposeId] = useState('')
 	const [mailingOptIn, setMailingOptIn] = useState(false)
 	const [expectedDeparture, setExpectedDeparture] = useState('')
-	const [newName, setNewName] = useState('')
-	const [newEmail, setNewEmail] = useState('')
-	const [wantsPasscode, setWantsPasscode] = useState(true)
 	const [serverMessage, setServerMessage] = useState<string | null>(null)
 
 	const [suggestions, setSuggestions] = useState<PersonSummary[]>([])
@@ -55,53 +49,48 @@ export default function KioskPage() {
 		OnShiftConsultant[]
 	>([])
 
+	// New person form
+	const [newName, setNewName] = useState('')
+	const [newEmail, setNewEmail] = useState('')
+	const [newPhone, setNewPhone] = useState('')
+	const [faiths, setFaiths] = useState<{ id: string; name: string }[]>([])
+	const [wards, setWards] = useState<
+		{
+			stakeId: string
+			stakeName: string
+			wards: { id: string; name: string }[]
+		}[]
+	>([])
+	const [positions, setPositions] = useState<{ id: string; name: string }[]>([])
+	const [faithId, setFaithId] = useState('')
+	const [wardId, setWardId] = useState('')
+	const [selectedPositionIds, setSelectedPositionIds] = useState<string[]>([])
+
+	// ──────────────────────────────
+	// LOAD WARDS
+	// ──────────────────────────────
+	// Load faiths once
 	useEffect(() => {
-		if (step !== 'shift') return
+		fetch('/api/faiths')
+			.then((r) => r.json())
+			.then((d) => setFaiths(d.faiths))
+	}, [])
 
-		let isMounted = true
+	// Load wards when faith changes
+	useEffect(() => {
+		if (!faithId) return
 
-		;(async () => {
-			const res = await fetch('/api/kiosk/hours/today')
-			const data = await res.json()
-			if (!isMounted) return
+		fetch(`/api/faiths/wards?faithId=${faithId}`)
+			.then((r) => r.json())
+			.then((d) => setWards(d.wards))
+	}, [faithId])
 
-			if (data.isClosed) {
-				setTimeSlots([])
-				return
-			}
-
-			const now = new Date()
-			const [closeHr, closeMin] = data.closesAt.split(':').map(Number)
-
-			const closingTime = new Date(
-				now.getFullYear(),
-				now.getMonth(),
-				now.getDate(),
-				closeHr,
-				closeMin
-			)
-
-			const slots: string[] = []
-			const cursor = new Date(now)
-
-			// Round UP to the next 15-min interval
-			const remainder = 15 - (cursor.getMinutes() % 15)
-			cursor.setMinutes(cursor.getMinutes() + remainder)
-			cursor.setSeconds(0)
-			cursor.setMilliseconds(0)
-
-			while (cursor < closingTime) {
-				slots.push(cursor.toTimeString().slice(0, 5)) // HH:MM (24-hour)
-				cursor.setMinutes(cursor.getMinutes() + 15)
-			}
-
-			setTimeSlots(slots)
-		})()
-
-		return () => {
-			isMounted = false
-		}
-	}, [step])
+	// Load positions once
+	useEffect(() => {
+		fetch('/api/faiths/positions')
+			.then((r) => r.json())
+			.then((d) => setPositions(d.positions))
+	}, [])
 
 	// ──────────────────────────────
 	// LIVE SEARCH
@@ -110,6 +99,7 @@ export default function KioskPage() {
 	const performSearch = async (query: string) => {
 		const res = await fetch(`/api/kiosk/search?q=${encodeURIComponent(query)}`)
 		if (!res.ok) return
+
 		const data: { people: PersonSummary[] } = await res.json()
 		setSuggestions(data.people)
 	}
@@ -118,7 +108,9 @@ export default function KioskPage() {
 		setInput(value)
 		setSelectedPerson(null)
 
-		if (searchTimeout.current) clearTimeout(searchTimeout.current)
+		if (searchTimeout.current) {
+			clearTimeout(searchTimeout.current)
+		}
 
 		if (value.length < 2) {
 			setSuggestions([])
@@ -133,9 +125,19 @@ export default function KioskPage() {
 	}
 
 	// ──────────────────────────────
-	// IDENTIFY HANDLER (Continue)
+	// LOAD PURPOSES
 	// ──────────────────────────────
 
+	const loadPurposes = async () => {
+		if (purposes.length) return
+		const res = await fetch('/api/kiosk/purposes')
+		const data = await res.json()
+		setPurposes(data.purposes)
+	}
+
+	// ──────────────────────────────
+	// IDENTIFY
+	// ──────────────────────────────
 	const handleIdentify = async () => {
 		setServerMessage(null)
 
@@ -159,7 +161,7 @@ export default function KioskPage() {
 
 		if (data.status === 'notFound') {
 			setNewName(data.suggestedName ?? input.trim())
-			setStep('newPerson')
+			setStep('notFound')
 			return
 		}
 
@@ -182,16 +184,12 @@ export default function KioskPage() {
 		}
 	}
 
-	// ──────────────────────────────
-	// LOAD PURPOSES
-	// ──────────────────────────────
-
-	const loadPurposes = async () => {
-		if (purposes.length > 0) return
-		const res = await fetch('/api/kiosk/purposes')
-		const data = await res.json()
-		setPurposes(data.purposes as Purpose[])
-	}
+	// New but don't think it's working
+	// 	setSelectedPerson(data.person)
+	// 	data.person.isConsultant
+	// 		? setStep('roleChoice')
+	// 		: (await loadPurposes(), setStep('visit'))
+	// }
 
 	// ──────────────────────────────
 	// CHOOSE PERSON FROM MULTIPLE
@@ -208,33 +206,34 @@ export default function KioskPage() {
 	}
 
 	// ──────────────────────────────
-	// NEW PERSON FLOW
+	// CREATE PERSON (guest or profile)
 	// ──────────────────────────────
-
-	const handleCreateNewPerson = async () => {
+	const createPerson = async (wantsPasscode: boolean) => {
 		const res = await fetch('/api/kiosk/people', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				fullName: newName,
-				email: newEmail || undefined,
+				email: wantsPasscode ? newEmail : null,
+				phone: wantsPasscode ? newPhone : null,
+
+				faithId: wantsPasscode ? faithId : undefined,
+				wardId: wantsPasscode ? wardId : undefined,
+				positionIds: wantsPasscode ? selectedPositionIds : undefined,
+
 				wantsPasscode,
 			}),
 		})
-		const data: { person: PersonSummary; passcode?: string } = await res.json()
 
+		const data = await res.json()
 		setSelectedPerson(data.person)
 
 		if (data.passcode) {
-			setServerMessage(`Your fast login code is ${data.passcode}`)
+			setServerMessage(`Your new fast check-in code is ${data.passcode}`)
 		}
 
-		if (data.person.isConsultant) {
-			setStep('roleChoice')
-		} else {
-			await loadPurposes()
-			setStep('visit')
-		}
+		await loadPurposes()
+		setStep('visit')
 	}
 
 	// ──────────────────────────────
@@ -253,7 +252,6 @@ export default function KioskPage() {
 				mailingListOptIn: mailingOptIn,
 			}),
 		})
-
 		if (!res.ok) {
 			setServerMessage('Sorry, something went wrong recording your visit.')
 			return
@@ -264,12 +262,11 @@ export default function KioskPage() {
 	}
 
 	// ──────────────────────────────
-	// SHIFT SUBMIT
+	// VISIT SUBMIT
 	// ──────────────────────────────
 
 	const handleSubmitShift = async () => {
 		if (!selectedPerson || !expectedDeparture) return
-
 		const res = await fetch('/api/kiosk/shift', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -278,15 +275,18 @@ export default function KioskPage() {
 				expectedDepartureAt: expectedDeparture,
 			}),
 		})
-
 		if (!res.ok) {
 			setServerMessage('Sorry, something went wrong starting your shift.')
 			return
 		}
-
 		setServerMessage('Your shift has been logged.')
+
 		resetForm()
 	}
+
+	// ──────────────────────────────
+	// RESET
+	// ──────────────────────────────
 
 	const resetForm = () => {
 		setStep('identify')
@@ -299,16 +299,15 @@ export default function KioskPage() {
 		setExpectedDeparture('')
 		setNewName('')
 		setNewEmail('')
-		setWantsPasscode(true)
+		// setWantsPasscode(true)
+		setNewPhone('')
+		setServerMessage(null)
 	}
 
 	useEffect(() => {
 		;(async () => {
-			const res = await fetch('/api/kiosk/on-shift', {
-				cache: 'no-store',
-			})
+			const res = await fetch('/api/kiosk/on-shift', { cache: 'no-store' })
 			if (!res.ok) return
-
 			const data: { consultants: OnShiftConsultant[] } = await res.json()
 			setOnShiftConsultants(data.consultants)
 		})()
@@ -317,7 +316,6 @@ export default function KioskPage() {
 	// ──────────────────────────────
 	// RENDER
 	// ──────────────────────────────
-
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-muted">
 			<Card className="w-full max-w-md">
@@ -328,7 +326,6 @@ export default function KioskPage() {
 				</CardHeader>
 
 				<CardContent className="space-y-4">
-					{/* STEP: IDENTIFY */}
 					{step === 'identify' && (
 						<IdentifyStep
 							input={input}
@@ -339,29 +336,60 @@ export default function KioskPage() {
 							onSelectSuggestion={(p) => {
 								setSelectedPerson(p)
 								setInput(p.fullName)
+								setSuggestions([])
 							}}
 						/>
 					)}
 
-					{/* STEP: MULTIPLE MATCHES */}
 					{step === 'choosePerson' && (
 						<ChoosePersonStep
 							matches={matches}
-							onChoose={handleChoosePerson}
+							onChoose={(p) => {
+								setSelectedPerson(p)
+								p.isConsultant
+									? setStep('roleChoice')
+									: (loadPurposes(), setStep('visit'))
+							}}
 							onCreateNew={() => setStep('newPerson')}
 						/>
 					)}
 
-					{/* STEP: NEW PERSON */}
+					{step === 'notFound' && (
+						<NotFoundStep
+							name={newName}
+							onGuest={() => createPerson(false)}
+							onCreateProfile={() => setStep('newPerson')}
+						/>
+					)}
+
 					{step === 'newPerson' && (
 						<NewPersonStep
-							newName={newName}
-							newEmail={newEmail}
-							wantsPasscode={wantsPasscode}
-							setNewName={setNewName}
-							setNewEmail={setNewEmail}
-							setWantsPasscode={setWantsPasscode}
-							onSubmit={handleCreateNewPerson}
+							name={newName}
+							email={newEmail}
+							phone={newPhone}
+							faithId={faithId}
+							wardId={wardId}
+							selectedPositionIds={selectedPositionIds}
+							faiths={faiths}
+							wards={wards}
+							positions={positions}
+							setFaithId={setFaithId}
+							setWardId={setWardId}
+							setSelectedPositionIds={setSelectedPositionIds}
+							setEmail={setNewEmail}
+							setPhone={setNewPhone}
+							onSubmit={() => createPerson(true)}
+						/>
+					)}
+
+					{step === 'visit' && (
+						<VisitStep
+							purposes={purposes}
+							selectedPurposeId={selectedPurposeId}
+							mailingOptIn={mailingOptIn}
+							setSelectedPurposeId={setSelectedPurposeId}
+							setMailingOptIn={setMailingOptIn}
+							onSubmit={resetForm}
 						/>
 					)}
 
@@ -374,18 +402,6 @@ export default function KioskPage() {
 								setStep('visit')
 							}}
 							onShift={() => setStep('shift')}
-						/>
-					)}
-
-					{/* STEP: VISIT */}
-					{step === 'visit' && (
-						<VisitStep
-							purposes={purposes}
-							selectedPurposeId={selectedPurposeId}
-							mailingOptIn={mailingOptIn}
-							setSelectedPurposeId={setSelectedPurposeId}
-							setMailingOptIn={setMailingOptIn}
-							onSubmit={handleSubmitVisit}
 						/>
 					)}
 
@@ -430,9 +446,15 @@ export default function KioskPage() {
 					)}
 
 					{serverMessage && (
-						<p className="mt-2 text-center text-sm text-muted-foreground">
-							{serverMessage}
-						</p>
+						<>
+							<p className="text-center text-xl text-muted-foreground">
+								{serverMessage}.
+							</p>
+							<p className="text-center text-md text-muted-foreground">
+								You&apos;ll be able to view this code later when you login and
+								access your dashboard.
+							</p>
+						</>
 					)}
 				</CardContent>
 			</Card>

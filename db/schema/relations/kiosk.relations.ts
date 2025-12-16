@@ -4,8 +4,10 @@ import {
 	kioskVisitPurposes,
 	kioskVisitLogs,
 	kioskShiftLogs,
+	kioskPersonPositions,
 } from '../tables/kiosk'
 import { user } from '../tables/auth'
+import { faiths, positions, wards } from '../tables/faith'
 
 // ──────────────────────────────────────────────
 // kiosk_people relations
@@ -18,6 +20,16 @@ export const kioskPeopleRelations = relations(kioskPeople, ({ one, many }) => ({
 
 	visitLogs: many(kioskVisitLogs),
 	shiftLogs: many(kioskShiftLogs),
+
+	faith: one(faiths, {
+		fields: [kioskPeople.faithId],
+		references: [faiths.id],
+	}),
+	ward: one(wards, {
+		fields: [kioskPeople.wardId],
+		references: [wards.id],
+	}),
+	positions: many(kioskPersonPositions),
 }))
 
 // ──────────────────────────────────────────────
@@ -64,3 +76,17 @@ export const kioskShiftLogsRelations = relations(kioskShiftLogs, ({ one }) => ({
 		references: [user.id],
 	}),
 }))
+
+export const kioskPersonPositionsRelations = relations(
+	kioskPersonPositions,
+	({ one }) => ({
+		person: one(kioskPeople, {
+			fields: [kioskPersonPositions.personId],
+			references: [kioskPeople.id],
+		}),
+		position: one(positions, {
+			fields: [kioskPersonPositions.positionId],
+			references: [positions.id],
+		}),
+	})
+)

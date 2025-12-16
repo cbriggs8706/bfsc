@@ -134,6 +134,13 @@
       "when": 1765776610226,
       "tag": "0018_far_patch",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1765917960989,
+      "tag": "0019_busy_gladiator",
+      "breakpoints": true
     }
   ]
 }

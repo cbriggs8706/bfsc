@@ -7,19 +7,28 @@ import {
 	timestamp,
 	boolean,
 	integer,
+	unique,
 } from 'drizzle-orm/pg-core'
 import { InferInsertModel, InferSelectModel, sql } from 'drizzle-orm'
 import { user } from './auth' // your existing user table
+import { faiths, positions, wards } from './faith'
 
 export const kioskPeople = pgTable('kiosk_people', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	userId: uuid('user_id').references(() => user.id, { onDelete: 'set null' }),
 	fullName: text('full_name').notNull(),
 	email: text('email'),
+	phone: text('phone'),
 	// 6-digit passcode, optional, must be numeric if present
 	passcode: varchar('passcode', { length: 6 }).unique(),
 	isConsultantCached: boolean('is_consultant_cached').notNull().default(false), // derived from user.role but cached for quick kiosk logic
 	profileImageUrl: text('profile_image_url'),
+
+	faithId: uuid('faith_id').references(() => faiths.id, {
+		onDelete: 'set null',
+	}),
+	wardId: uuid('ward_id').references(() => wards.id, { onDelete: 'set null' }),
+	notes: text('notes'),
 
 	createdAt: timestamp('created_at', { withTimezone: true })
 		.notNull()
@@ -94,3 +103,26 @@ export const kioskShiftLogs = pgTable('kiosk_shift_logs', {
 		.defaultNow(),
 	notes: text('notes'),
 })
+
+export const kioskPersonPositions = pgTable(
+	'kiosk_person_positions',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => kioskPeople.id, { onDelete: 'cascade' }),
+
+		positionId: uuid('position_id')
+			.notNull()
+			.references(() => positions.id, { onDelete: 'cascade' }),
+
+		// Optional but VERY useful
+		sustainedAt: timestamp('sustained_at', { withTimezone: true }),
+		releasedAt: timestamp('released_at', { withTimezone: true }),
+	},
+	(table) => ({
+		// Prevent duplicate assignments
+		uniqueAssignment: unique().on(table.personId, table.positionId),
+	})
+)
