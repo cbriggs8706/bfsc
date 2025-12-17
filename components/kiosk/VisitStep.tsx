@@ -2,61 +2,68 @@
 'use client'
 
 import { Label } from '@/components/ui/label'
-import {
-	Select,
-	SelectTrigger,
-	SelectContent,
-	SelectValue,
-	SelectItem,
-} from '@/components/ui/select'
-import { Purpose } from '@/types/kiosk'
+import { PersonSummary, Purpose } from '@/types/kiosk'
 import { KioskButton } from './KioskButton'
+import { cn } from '@/lib/utils'
 
 type Props = {
+	person: PersonSummary
 	purposes: Purpose[]
 	selectedPurposeId: string
-	mailingOptIn: boolean
 	setSelectedPurposeId: (v: string) => void
-	setMailingOptIn: (v: boolean) => void
 	onSubmit: () => void
 }
 
 export function VisitStep({
+	person,
 	purposes,
 	selectedPurposeId,
-	mailingOptIn,
 	setSelectedPurposeId,
-	setMailingOptIn,
 	onSubmit,
 }: Props) {
 	return (
 		<div className="space-y-4">
 			<div>
-				<Label className="text-lg">Reason for your visit</Label>
-				<Select value={selectedPurposeId} onValueChange={setSelectedPurposeId}>
-					<SelectTrigger className="h-14 text-lg rounded-xl">
-						<SelectValue placeholder="Choose one" />
-					</SelectTrigger>
-					<SelectContent>
-						{purposes.map((p) => (
-							<SelectItem key={p.id} value={String(p.id)}>
-								{p.name}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
+				<p className="text-xl font-semibold">Welcome, {person.fullName}!</p>
+
+				<div className="space-y-3">
+					<Label className="text-lg">What would you like to do today?</Label>
+
+					<div className="grid gap-3">
+						{purposes.map((p) => {
+							const isSelected = selectedPurposeId === String(p.id)
+
+							return (
+								<KioskButton
+									key={p.id}
+									variant={isSelected ? 'default' : 'secondary'}
+									className={cn(
+										'h-14 text-lg justify-start',
+										isSelected && 'ring-2 ring-primary'
+									)}
+									onClick={() => {
+										setSelectedPurposeId(String(p.id))
+										onSubmit()
+									}}
+								>
+									{p.name}
+								</KioskButton>
+							)
+						})}
+					</div>
+				</div>
 			</div>
 
-			<label className="flex items-center gap-3 text-lg">
+			{/* <label className="flex items-center gap-3 text-lg">
 				<input
 					type="checkbox"
 					checked={mailingOptIn}
 					onChange={(e) => setMailingOptIn(e.target.checked)}
 				/>
 				I’d like to receive emails about classes and events
-			</label>
+			</label> */}
 
-			<KioskButton onClick={onSubmit}>Sign me in</KioskButton>
+			{/* <KioskButton onClick={onSubmit}>Sign me in</KioskButton> */}
 		</div>
 	)
 }

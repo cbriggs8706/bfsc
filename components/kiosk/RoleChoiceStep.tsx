@@ -8,9 +8,15 @@ type Props = {
 	person: PersonSummary
 	onVisit: () => void
 	onShift: () => void
+	onCheckout: () => void
 }
 
-export function RoleChoiceStep({ person, onVisit, onShift }: Props) {
+export function RoleChoiceStep({
+	person,
+	onVisit,
+	onShift,
+	onCheckout,
+}: Props) {
 	return (
 		<div className="space-y-4 text-center">
 			<p className="text-xl font-semibold">Hi {person.fullName}!</p>
@@ -24,6 +30,10 @@ export function RoleChoiceStep({ person, onVisit, onShift }: Props) {
 
 			<KioskButton variant="outline" onClick={onShift}>
 				I’m here for my shift
+			</KioskButton>
+
+			<KioskButton variant="outline" onClick={onCheckout}>
+				Check out / Return books or equipment
 			</KioskButton>
 		</div>
 	)

@@ -12,9 +12,9 @@ import { ShiftStep } from '@/components/kiosk/ShiftStep'
 import { ConsultantsStep } from '@/components/kiosk/ConsultantsStep'
 import { VisitStep } from '@/components/kiosk/VisitStep'
 import { RoleChoiceStep } from '@/components/kiosk/RoleChoiceStep'
-import { ActionChoiceStep } from '@/components/kiosk/ActionChoiceStep'
 import { CheckoutStep } from '@/components/kiosk/CheckoutStep'
 import { NotFoundStep } from '@/components/kiosk/NotFoundStep'
+import { Announcement } from '@/db'
 
 export default function KioskPage() {
 	const [step, setStep] = useState<
@@ -65,6 +65,7 @@ export default function KioskPage() {
 	const [faithId, setFaithId] = useState('')
 	const [wardId, setWardId] = useState('')
 	const [selectedPositionIds, setSelectedPositionIds] = useState<string[]>([])
+	const [announcements, setAnnouncements] = useState<Announcement[]>([])
 
 	// ──────────────────────────────
 	// LOAD WARDS
@@ -195,15 +196,15 @@ export default function KioskPage() {
 	// CHOOSE PERSON FROM MULTIPLE
 	// ──────────────────────────────
 
-	const handleChoosePerson = async (person: PersonSummary) => {
-		setSelectedPerson(person)
-		if (person.isConsultant) {
-			setStep('roleChoice')
-		} else {
-			await loadPurposes()
-			setStep('visit')
-		}
-	}
+	// const handleChoosePerson = async (person: PersonSummary) => {
+	// 	setSelectedPerson(person)
+	// 	if (person.isConsultant) {
+	// 		setStep('roleChoice')
+	// 	} else {
+	// 		await loadPurposes()
+	// 		setStep('visit')
+	// 	}
+	// }
 
 	// ──────────────────────────────
 	// CREATE PERSON (guest or profile)
@@ -240,26 +241,26 @@ export default function KioskPage() {
 	// VISIT SUBMIT
 	// ──────────────────────────────
 
-	const handleSubmitVisit = async () => {
-		if (!selectedPerson) return
-		const res = await fetch('/api/kiosk/visit', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				personId: selectedPerson.id,
-				userId: selectedPerson.userId,
-				purposeId: selectedPurposeId ? Number(selectedPurposeId) : null,
-				mailingListOptIn: mailingOptIn,
-			}),
-		})
-		if (!res.ok) {
-			setServerMessage('Sorry, something went wrong recording your visit.')
-			return
-		}
+	// const handleSubmitVisit = async () => {
+	// 	if (!selectedPerson) return
+	// 	const res = await fetch('/api/kiosk/visit', {
+	// 		method: 'POST',
+	// 		headers: { 'Content-Type': 'application/json' },
+	// 		body: JSON.stringify({
+	// 			personId: selectedPerson.id,
+	// 			userId: selectedPerson.userId,
+	// 			purposeId: selectedPurposeId ? Number(selectedPurposeId) : null,
+	// 			mailingListOptIn: mailingOptIn,
+	// 		}),
+	// 	})
+	// 	if (!res.ok) {
+	// 		setServerMessage('Sorry, something went wrong recording your visit.')
+	// 		return
+	// 	}
 
-		setServerMessage(null)
-		setStep('actionChoice')
-	}
+	// 	setServerMessage(null)
+	// 	setStep('actionChoice')
+	// }
 
 	// ──────────────────────────────
 	// VISIT SUBMIT
@@ -313,6 +314,18 @@ export default function KioskPage() {
 		})()
 	}, [])
 
+	useEffect(() => {
+		;(async () => {
+			const res = await fetch('/api/announcements', {
+				cache: 'no-store',
+			})
+			if (!res.ok) return
+
+			const data: { announcements: Announcement[] } = await res.json()
+			setAnnouncements(data.announcements)
+		})()
+	}, [])
+
 	// ──────────────────────────────
 	// RENDER
 	// ──────────────────────────────
@@ -341,7 +354,7 @@ export default function KioskPage() {
 						/>
 					)}
 
-					{step === 'choosePerson' && (
+					{/* {step === 'choosePerson' && (
 						<ChoosePersonStep
 							matches={matches}
 							onChoose={(p) => {
@@ -352,7 +365,7 @@ export default function KioskPage() {
 							}}
 							onCreateNew={() => setStep('newPerson')}
 						/>
-					)}
+					)} */}
 
 					{step === 'notFound' && (
 						<NotFoundStep
@@ -382,14 +395,13 @@ export default function KioskPage() {
 						/>
 					)}
 
-					{step === 'visit' && (
+					{step === 'visit' && selectedPerson && (
 						<VisitStep
+							person={selectedPerson}
 							purposes={purposes}
 							selectedPurposeId={selectedPurposeId}
-							mailingOptIn={mailingOptIn}
 							setSelectedPurposeId={setSelectedPurposeId}
-							setMailingOptIn={setMailingOptIn}
-							onSubmit={resetForm}
+							onSubmit={() => setStep('consultants')}
 						/>
 					)}
 
@@ -402,33 +414,21 @@ export default function KioskPage() {
 								setStep('visit')
 							}}
 							onShift={() => setStep('shift')}
-						/>
-					)}
-
-					{/* STEP: ACTION CHOICE */}
-
-					{step === 'actionChoice' && selectedPerson && (
-						<ActionChoiceStep
-							person={selectedPerson}
-							onResearch={() => setStep('consultants')}
 							onCheckout={() => setStep('checkout')}
-							onFinish={resetForm}
 						/>
 					)}
 
 					{/* STEP: CHECKOUT */}
 
 					{step === 'checkout' && selectedPerson && (
-						<CheckoutStep
-							person={selectedPerson}
-							onDone={() => setStep('actionChoice')}
-						/>
+						<CheckoutStep person={selectedPerson} onDone={resetForm} />
 					)}
 
 					{/* STEP: CONSULTANTS */}
 
 					{step === 'consultants' && (
 						<ConsultantsStep
+							announcements={announcements}
 							consultants={onShiftConsultants}
 							onDone={resetForm}
 						/>

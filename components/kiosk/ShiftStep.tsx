@@ -1,6 +1,7 @@
 // components/kiosk/ShiftStep.tsx
 'use client'
 
+import { cn } from '@/lib/utils'
 import { KioskButton } from './KioskButton'
 
 type Props = {
@@ -17,24 +18,52 @@ export function ShiftStep({
 	onSubmit,
 }: Props) {
 	return (
-		<div className="space-y-4">
+		<div className="space-y-6">
 			<p className="text-xl text-center font-semibold">
 				What time do you expect to leave today?
 			</p>
 
-			<div className="max-h-64 overflow-y-auto grid grid-cols-3 gap-3">
-				{timeSlots.map((t) => (
-					<KioskButton
-						key={t}
-						variant={expectedDeparture === t ? 'default' : 'outline'}
-						onClick={() => setExpectedDeparture(t)}
-					>
-						{t}
-					</KioskButton>
-				))}
+			{/* Preset time buttons */}
+			<div className="max-h-56 overflow-y-auto grid grid-cols-3 gap-3">
+				{timeSlots.map((t) => {
+					const selected = expectedDeparture === t
+
+					return (
+						<KioskButton
+							key={t}
+							variant={selected ? 'default' : 'outline'}
+							className={cn(selected && 'ring-2 ring-primary')}
+							onClick={() => setExpectedDeparture(t)}
+						>
+							{t}
+						</KioskButton>
+					)
+				})}
 			</div>
 
-			<KioskButton disabled={!expectedDeparture} onClick={onSubmit}>
+			{/* Divider */}
+			<div className="flex items-center gap-3">
+				<div className="h-px flex-1 bg-border" />
+				<span className="text-sm text-muted-foreground">or</span>
+				<div className="h-px flex-1 bg-border" />
+			</div>
+
+			{/* Manual time entry */}
+			<div className="space-y-2">
+				<label className="text-sm font-medium">Enter a custom time</label>
+				<input
+					type="time"
+					className="w-full h-14 rounded-xl border px-4 text-lg"
+					value={expectedDeparture}
+					onChange={(e) => setExpectedDeparture(e.target.value)}
+				/>
+			</div>
+
+			<KioskButton
+				disabled={!expectedDeparture}
+				onClick={onSubmit}
+				className="h-14 text-lg"
+			>
 				Start my shift
 			</KioskButton>
 		</div>
