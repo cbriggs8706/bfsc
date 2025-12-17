@@ -67,9 +67,9 @@ export function LoginForm() {
 			const role = session?.user?.role
 
 			if (role === 'Admin') {
-				router.push(`/${locale}/admin-dashboard`)
+				router.push(`/${locale}/home`)
 			} else {
-				router.push(`/${locale}/dashboard`)
+				router.push(`/${locale}/home`)
 			}
 		} catch {
 			toast.error(t('networkError') || 'Network error. Please try again.')
@@ -115,9 +115,7 @@ export function LoginForm() {
 					<Button
 						type="button"
 						className="w-full gap-3 mb-6"
-						onClick={() =>
-							signIn('google', { callbackUrl: `/${locale}/dashboard` })
-						}
+						onClick={() => signIn('google', { callbackUrl: `/${locale}/home` })}
 					>
 						<GoogleLogo />
 						{t('googleButton')}

@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { getPublicNewsletters } from '@/db/queries/newsletters'
 import { NewsletterLocale } from '@/types/newsletters'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import {
 	BadgeQuestionMark,
@@ -91,6 +91,78 @@ export default async function HomePage({ params }: Props) {
 
 	return (
 		<div className="space-y-20">
+			{/* =============================
+   CENTER INTRO / BUILDING INFO
+============================= */}
+			<section className="max-w-6xl mx-auto px-4">
+				<div className="flex flex-col gap-6 md:gap-8">
+					{/* Building Image */}
+					<div className="relative w-full aspect-video rounded-xl overflow-hidden">
+						<Image
+							src="/900px-Idahoburleyfhc.jpg"
+							alt="Burley FamilySearch Center building"
+							fill
+							className="object-cover"
+							priority
+						/>
+					</div>
+
+					{/* Center Info */}
+					<div className="space-y-4 md:space-y-5">
+						<h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center whitespace-nowrap">
+							Burley FamilySearch Center
+						</h1>
+
+						<div className="space-y-2 text-lg md:text-xl text-muted-foreground text-center justify-center">
+							<p>224 East 14th Street, Burley, ID</p>
+
+							<Button
+								asChild
+								size="lg"
+								className="text-2xl px-8 py-6"
+								aria-label="Call the Burley FamilySearch Center"
+							>
+								<a href="tel:+12088787286">208-878-7286</a>
+							</Button>
+						</div>
+
+						<div className="flex flex-col md:flex-row gap-2">
+							<Card className="flex w-full md:w-1/2">
+								<CardHeader className="font-semibold text-lg md:text-xl">
+									Hours of Operation
+								</CardHeader>
+								<CardContent>
+									<ul className="text-base lg:text-lg">
+										<li>Sunday: 2pm – 6pm</li>
+										<li>Monday: 12pm – 4pm</li>
+										<li>Tuesday: 10am – 6pm</li>
+										<li>Wednesday: 10am – 6pm</li>
+										<li>Thursday: 10am – 8pm</li>
+										<li>Friday: By Appointment</li>
+										<li>Saturday: By Appointment</li>
+									</ul>
+								</CardContent>
+							</Card>
+							<Card className="flex w-full md:w-1/2">
+								<CardHeader className="font-semibold text-lg md:text-xl">
+									Appointments
+								</CardHeader>
+								<CardContent className="space-y-2">
+									<p className="text-base lg:text-lg">
+										We can open the center for individuals or groups by
+										appointment outside of our normal operating hours.
+									</p>{' '}
+									<p className="text-base lg:text-lg">
+										Many youth groups schedule for Wednesday evenings from 6-8pm
+										for guided activities and classes.
+									</p>{' '}
+								</CardContent>
+							</Card>
+						</div>
+					</div>
+				</div>
+			</section>
+
 			{/* =============================
 			   HERO — Latest Newsletter
 			============================= */}

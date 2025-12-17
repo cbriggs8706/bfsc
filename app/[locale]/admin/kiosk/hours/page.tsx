@@ -28,11 +28,49 @@ const weekdayNames = [
 export default function KioskHoursAdmin() {
 	const [rows, setRows] = useState<DayRow[]>([])
 	const [loading, setLoading] = useState(false)
+	const [drafts, setDrafts] = useState<Record<string, Partial<DayRow>>>({})
 
 	const load = async () => {
 		const res = await fetch('/api/admin/kiosk/hours')
 		const data = await res.json()
 		setRows(data.hours)
+	}
+
+	const getValue = <K extends keyof DayRow>(row: DayRow, key: K): DayRow[K] => {
+		return (drafts[row.id]?.[key] ?? row[key]) as DayRow[K]
+	}
+
+	const updateDraft = (id: string, update: Partial<DayRow>) => {
+		setDrafts((prev) => ({
+			...prev,
+			[id]: {
+				...prev[id],
+				...update,
+			},
+		}))
+	}
+
+	const saveDraft = async (id: string) => {
+		const update = drafts[id]
+		if (!update || Object.keys(update).length === 0) return
+
+		setLoading(true)
+
+		await fetch(`/api/admin/kiosk/hours/${id}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(update),
+		})
+
+		await load()
+
+		setDrafts((prev) => {
+			const copy = { ...prev }
+			delete copy[id]
+			return copy
+		})
+
+		setLoading(false)
 	}
 
 	useEffect(() => {
@@ -97,18 +135,20 @@ export default function KioskHoursAdmin() {
 									<Input
 										type="time"
 										className="w-28"
-										value={r.opensAt}
+										value={getValue(r, 'opensAt')}
 										onChange={(e) =>
-											updateRow(r.id, { opensAt: e.target.value })
+											updateDraft(r.id, { opensAt: e.target.value })
 										}
+										onBlur={() => saveDraft(r.id)}
 									/>
 									<Input
 										type="time"
 										className="w-28"
-										value={r.closesAt}
+										value={getValue(r, 'closesAt')}
 										onChange={(e) =>
-											updateRow(r.id, { closesAt: e.target.value })
+											updateDraft(r.id, { closesAt: e.target.value })
 										}
+										onBlur={() => saveDraft(r.id)}
 									/>
 								</>
 							)}

@@ -34,6 +34,52 @@ type Props = {
 export function ShiftDefinitionsManager({ days, shifts }: Props) {
 	const [localShifts, setLocalShifts] = useState<Shift[]>(shifts)
 	const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set())
+	const [drafts, setDrafts] = useState<Record<string, Partial<Shift>>>({})
+
+	const getValue = <K extends keyof Shift>(shift: Shift, key: K): Shift[K] => {
+		return (drafts[shift.id]?.[key] ?? shift[key]) as Shift[K]
+	}
+
+	const updateDraft = (shiftId: string, updates: Partial<Shift>) => {
+		setDrafts((prev) => ({
+			...prev,
+			[shiftId]: {
+				...prev[shiftId],
+				...updates,
+			},
+		}))
+
+		setLocalShifts((prev) =>
+			prev.map((s) => (s.id === shiftId ? { ...s, ...updates } : s))
+		)
+	}
+
+	const saveDraft = async (shiftId: string) => {
+		const update = drafts[shiftId]
+		if (!update || Object.keys(update).length === 0) return
+
+		setLoading(shiftId, true)
+
+		try {
+			const res = await fetch('/api/shifts/definitions', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ id: shiftId, ...update }),
+			})
+
+			if (!res.ok) throw new Error('Failed to update shift')
+
+			setDrafts((prev) => {
+				const copy = { ...prev }
+				delete copy[shiftId]
+				return copy
+			})
+		} catch (err) {
+			console.error(err)
+		} finally {
+			setLoading(shiftId, false)
+		}
+	}
 
 	const setLoading = (id: string, isLoading: boolean) => {
 		setLoadingIds((prev) => {
@@ -214,14 +260,16 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 												<Label className="text-[10px]">Start</Label>
 												<Input
 													type="time"
-													value={shift.startTime}
+													value={getValue(shift, 'startTime')}
 													className="h-8 text-xs"
 													disabled={busy}
 													onChange={(e) =>
-														handleUpdateShift(shift.id, {
-															startTime: e.target.value,
-														})
+														updateDraft(shift.id, { startTime: e.target.value })
 													}
+													onBlur={() => saveDraft(shift.id)}
+													onKeyDown={(e) => {
+														if (e.key === 'Enter') e.currentTarget.blur()
+													}}
 												/>
 											</div>
 
@@ -229,14 +277,16 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 												<Label className="text-[10px]">End</Label>
 												<Input
 													type="time"
-													value={shift.endTime}
+													value={getValue(shift, 'endTime')}
 													className="h-8 text-xs"
 													disabled={busy}
 													onChange={(e) =>
-														handleUpdateShift(shift.id, {
-															endTime: e.target.value,
-														})
+														updateDraft(shift.id, { endTime: e.target.value })
 													}
+													onBlur={() => saveDraft(shift.id)}
+													onKeyDown={(e) => {
+														if (e.key === 'Enter') e.currentTarget.blur()
+													}}
 												/>
 											</div>
 										</div>
@@ -262,15 +312,17 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 										<div>
 											<Label className="text-[10px]">Notes</Label>
 											<Input
-												value={shift.notes ?? ''}
+												value={getValue(shift, 'notes') ?? ''}
 												className="h-8 text-xs"
 												disabled={busy}
 												placeholder="Optional"
 												onChange={(e) =>
-													handleUpdateShift(shift.id, {
-														notes: e.target.value,
-													})
+													updateDraft(shift.id, { notes: e.target.value })
 												}
+												onBlur={() => saveDraft(shift.id)}
+												onKeyDown={(e) => {
+													if (e.key === 'Enter') e.currentTarget.blur()
+												}}
 											/>
 										</div>
 									</Card>

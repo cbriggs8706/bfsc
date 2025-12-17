@@ -48,6 +48,18 @@ export default async function Page({ params }: PageProps) {
 						<Button>Define Case Types</Button>
 					</Link>
 				</li>
+				<li>
+					{' '}
+					<Link href={`/${locale}/admin/center/faiths`}>
+						<Button>Define Faiths</Button>
+					</Link>
+				</li>
+				<li>
+					{' '}
+					<Link href={`/${locale}/admin/center/positions`}>
+						<Button>Define Positions</Button>
+					</Link>
+				</li>
 			</ul>
 		</div>
 	)

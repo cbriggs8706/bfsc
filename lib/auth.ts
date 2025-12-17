@@ -128,7 +128,7 @@ export const authOptions: NextAuthOptions = {
 			if (url.includes('/api/auth/callback')) return url
 
 			// After successful login, just go to /en/dashboard for now
-			return `${baseUrl}/en/dashboard`
+			return `${baseUrl}/en/home`
 		},
 	},
 }
