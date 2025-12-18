@@ -10,7 +10,7 @@ export async function sendNewsletterConfirmationEmail(
 	const confirmUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${locale}/newsletter/confirm?token=${token}`
 
 	await resend.emails.send({
-		from: 'Burley FamilySearch Center <no-reply@burleyfhc.org>',
+		from: 'Burley FamilySearch Center <no-reply@burleyfamilysearchcenter.com>',
 		to: email,
 		subject: 'Confirm your newsletter subscription',
 		html: `
