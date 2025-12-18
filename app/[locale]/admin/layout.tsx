@@ -19,6 +19,7 @@ import {
 import { AppSidebar } from '@/components/nav/AppSidebar'
 import { db, operatingHours, specialHours } from '@/db'
 import { eq } from 'drizzle-orm'
+import { redirect } from 'next/navigation'
 
 export default async function Layout({
 	children,
@@ -26,7 +27,7 @@ export default async function Layout({
 	children: React.ReactNode
 }) {
 	const session = await getServerSession(authOptions)
-	// if (!session) redirect(`/`)
+	// if (session?.user.role !== 'Admin') redirect(`/`)
 
 	const weekly = await db.select().from(operatingHours)
 	const specials = await db

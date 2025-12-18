@@ -19,14 +19,18 @@ import {
 	Facebook,
 	Instagram,
 } from 'lucide-react'
+import { SubscribeNewsletterCTA } from '@/components/newsletters/SubscribeNewsletterCTA'
 
 type Props = {
 	params: Promise<{ locale: NewsletterLocale }>
+	searchParams?: Promise<{ subscribed?: string }>
 }
 
-export default async function HomePage({ params }: Props) {
+export default async function HomePage({ params, searchParams }: Props) {
 	const { locale } = await params
+	const sp = (await searchParams) ?? {}
 
+	const subscribed = sp.subscribed === '1'
 	const posts = await getPublicNewsletters(locale)
 
 	const [latest, ...rest] = posts
@@ -91,9 +95,21 @@ export default async function HomePage({ params }: Props) {
 
 	return (
 		<div className="space-y-20">
-			{/* =============================
-   CENTER INTRO / BUILDING INFO
-============================= */}
+			{subscribed && (
+				<div className="max-w-4xl mx-auto px-4">
+					<div className="rounded-lg border border-(--green-logo) bg-(--green-logo-soft) p-4 ">
+						<div className="flex items-start gap-3">
+							<span className="text-lg">✅</span>
+							<p className="text-sm">
+								<strong>You&apos;re subscribed to our newsletter!</strong> Stay
+								tuned towards the end of the month. In the meantime, previous
+								newsletters can be found below.
+							</p>
+						</div>
+					</div>
+				</div>
+			)}
+
 			<section className="max-w-6xl mx-auto px-4">
 				<div className="flex flex-col gap-6 md:gap-8">
 					{/* Building Image */}
@@ -308,7 +324,7 @@ export default async function HomePage({ params }: Props) {
 				</p>
 
 				<div className="flex flex-col items-center gap-4">
-					<Button size="lg">Subscribe to our Monthly Newsletter</Button>
+					<SubscribeNewsletterCTA />
 
 					<div className="flex items-center gap-4">
 						<Link

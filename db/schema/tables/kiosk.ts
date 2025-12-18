@@ -19,8 +19,8 @@ export const kioskPeople = pgTable('kiosk_people', {
 	fullName: text('full_name').notNull(),
 	email: text('email'),
 	phone: text('phone'),
-	// 6-digit passcode, optional, must be numeric if present
-	passcode: varchar('passcode', { length: 6 }).unique(),
+
+	passcode: varchar('passcode', { length: 6 }).unique(), // 6-digit passcode, optional, must be numeric if present
 	isConsultantCached: boolean('is_consultant_cached').notNull().default(false), // derived from user.role but cached for quick kiosk logic
 	profileImageUrl: text('profile_image_url'),
 

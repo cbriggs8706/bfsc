@@ -1,5 +1,5 @@
 // db/queries/kiosk-consultants.ts
-import { db } from '@/db/client'
+import { db } from '@/db'
 import { kioskPeople, kioskShiftLogs } from '@/db/schema/tables/kiosk'
 import { eq, gt } from 'drizzle-orm'
 

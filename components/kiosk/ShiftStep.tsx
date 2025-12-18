@@ -3,6 +3,7 @@
 
 import { cn } from '@/lib/utils'
 import { KioskButton } from './KioskButton'
+import { toAmPm } from '@/utils/time'
 
 type Props = {
 	timeSlots: string[]
@@ -32,10 +33,9 @@ export function ShiftStep({
 						<KioskButton
 							key={t}
 							variant={selected ? 'default' : 'outline'}
-							className={cn(selected && 'ring-2 ring-primary')}
-							onClick={() => setExpectedDeparture(t)}
+							onClick={() => setExpectedDeparture(t)} // ✅ keep HH:MM
 						>
-							{t}
+							{toAmPm(t)} {/* ✅ display only */}
 						</KioskButton>
 					)
 				})}

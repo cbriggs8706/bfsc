@@ -18,12 +18,14 @@ export async function POST(req: Request) {
 			{ status: 400 }
 		)
 	}
+	console.log('SHIFT BODY:', body)
 
 	// 1. Get userId from kiosk_people
 	const person = await db.query.kioskPeople.findFirst({
 		columns: { userId: true },
 		where: eq(kioskPeople.id, body.personId),
 	})
+	console.log('PERSON LOOKUP RESULT:', person)
 
 	if (!person || !person.userId) {
 		return NextResponse.json(

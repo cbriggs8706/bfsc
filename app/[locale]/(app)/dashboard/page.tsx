@@ -7,6 +7,8 @@ import { getTranslations } from 'next-intl/server'
 import { announcement, db } from '@/db'
 import { sql } from 'drizzle-orm'
 import { AnnouncementBanner } from '@/components/custom/AnnouncementBanner'
+import { CertificatesGrid } from '@/components/training/user/CertificatesGrid'
+import { getUserCertificates } from '@/db/queries/training'
 
 interface DashboardPageProps {
 	params: Promise<{ locale: string }>
@@ -32,6 +34,8 @@ export default async function Page({ params }: DashboardPageProps) {
 		)
 		.orderBy(announcement.createdAt)
 
+	const certificates = await getUserCertificates(session.user.id)
+
 	return (
 		<div className="p-4 space-y-4">
 			{announcements.length > 0 && (
@@ -46,9 +50,12 @@ export default async function Page({ params }: DashboardPageProps) {
 					{role === 'admin' ? 'Admin Dashboard' : 'User Dashboard'}
 				</h1>
 
-				<p className="text-sm text-muted-foreground">
-					Dashboard Coming Soon...
-				</p>
+				{/* 🎓 Certificates section */}
+				<div className="space-y-3">
+					<h2 className="text-xl font-semibold">Training Certificates</h2>
+
+					<CertificatesGrid certificates={certificates} locale={locale} />
+				</div>
 			</div>
 		</div>
 	)

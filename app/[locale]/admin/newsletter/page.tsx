@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import { stripHtml } from '@/utils/strip-html'
 import { desc, eq } from 'drizzle-orm'
 import Image from 'next/image'
+import { getNewsletterEmailList } from '@/db/queries/newsletters'
+import { Label } from '@/components/ui/label'
+import { CopyEmailList } from '@/components/newsletters/CopyEmailList'
 
 export default async function AdminNewsletterListPage() {
 	const posts = await db
@@ -29,11 +32,15 @@ export default async function AdminNewsletterListPage() {
 		.where(eq(newsletterTranslations.locale, 'en'))
 		.orderBy(desc(newsletterPosts.createdAt))
 
+	// const emailString = await getNewsletterEmailList()
+	const emailString = (await getNewsletterEmailList()).join(', ')
+
 	return (
 		<div className="p-4 space-y-4">
 			<div>
 				<div className="flex justify-between items-center">
 					<h1 className="text-3xl font-bold">Newsletters</h1>
+
 					<Button asChild>
 						<Link href="./newsletter/create">New Newsletter</Link>
 					</Button>
@@ -115,6 +122,17 @@ export default async function AdminNewsletterListPage() {
 					</div>
 				))}
 			</div>
+			<Label>Latest Email List</Label>
+
+			<div className="flex justify-end">
+				<CopyEmailList text={emailString} />
+			</div>
+
+			<textarea
+				readOnly
+				className="w-full min-h-[120px] rounded-md border p-3 font-mono text-sm"
+				value={emailString}
+			/>
 		</div>
 	)
 }

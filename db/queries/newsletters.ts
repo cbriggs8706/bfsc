@@ -1,13 +1,14 @@
 // db/queries/newsletters.ts
-import { db } from '@/db'
+import { db, kioskPeople, user } from '@/db'
 import {
 	newsletterPosts,
 	newsletterTranslations,
 	newsletterPostTags,
 	newsletterPostCategories,
 	newsletterTags,
+	newsletterSubscribers,
 } from '@/db/schema/tables/newsletters'
-import { and, desc, eq, sql } from 'drizzle-orm'
+import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm'
 import { NewsletterFormData, NewsletterLocale } from '@/types/newsletters'
 
 export async function getNewsletterForForm(
@@ -123,4 +124,31 @@ export async function getPublicNewsletterBySlug(
 		.limit(1)
 
 	return row[0] ?? null
+}
+
+export async function getNewsletterEmailList() {
+	const users = db
+		.select({ email: user.email })
+		.from(user)
+		.where(isNotNull(user.email))
+
+	const kiosk = db
+		.select({ email: kioskPeople.email })
+		.from(kioskPeople)
+		.where(isNotNull(kioskPeople.email))
+
+	const subs = db
+		.select({ email: newsletterSubscribers.email })
+		.from(newsletterSubscribers)
+		.where(
+			and(
+				eq(newsletterSubscribers.isConfirmed, true),
+				isNull(newsletterSubscribers.unsubscribedAt)
+			)
+		)
+
+	const merged = [...(await users), ...(await kiosk), ...(await subs)]
+
+	const emails = [...new Set(merged.map((e) => e.email!.toLowerCase()))]
+	return emails
 }

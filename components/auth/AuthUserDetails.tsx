@@ -262,7 +262,7 @@ export default function UserDetails() {
 						{/* Avatar */}
 						<div className="flex flex-col items-center gap-4">
 							<Image
-								src={resolvedImageUrl ?? '/mascot.svg'}
+								src={resolvedImageUrl ?? '/user.svg'}
 								alt="Preview"
 								width={120}
 								height={120}

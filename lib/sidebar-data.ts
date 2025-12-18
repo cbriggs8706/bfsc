@@ -192,6 +192,11 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				url: `/${locale}/library/create`,
 				icon: PlusCircle,
 			},
+			{
+				name: 'Training',
+				url: `/${locale}/admin/training`,
+				icon: GraduationCap,
+			},
 		],
 
 		consultant: [

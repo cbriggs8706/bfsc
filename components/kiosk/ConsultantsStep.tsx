@@ -6,14 +6,21 @@ import { OnShiftConsultant } from '@/types/kiosk'
 import { KioskButton } from './KioskButton'
 import { AnnouncementBanner } from '../custom/AnnouncementBanner'
 import { Announcement } from '@/db'
+import { CertificateSummary } from '@/types/training'
 
 type Props = {
 	announcements: Announcement[]
 	consultants: OnShiftConsultant[]
+	certificatesByUser: Record<string, CertificateSummary[]>
 	onDone: () => void
 }
 
-export function ConsultantsStep({ announcements, consultants, onDone }: Props) {
+export function ConsultantsStep({
+	announcements,
+	consultants,
+	certificatesByUser,
+	onDone,
+}: Props) {
 	return (
 		<div className="space-y-4">
 			<p className="text-xl text-center font-semibold">You’re signed in!</p>
@@ -25,13 +32,22 @@ export function ConsultantsStep({ announcements, consultants, onDone }: Props) {
 					</p>
 
 					<div className="grid grid-cols-2 gap-3">
-						{consultants.map((c) => (
-							<ConsultantCard
-								key={c.personId}
-								name={c.fullName}
-								imageUrl={c.profileImageUrl}
-							/>
-						))}
+						{consultants.map((c) => {
+							const certificates = c.userId
+								? (certificatesByUser[c.userId] ?? []).filter(
+										(cert) => cert.status === 'current'
+								  )
+								: []
+
+							return (
+								<ConsultantCard
+									key={c.personId}
+									name={c.fullName}
+									imageUrl={c.profileImageUrl}
+									certificates={certificates}
+								/>
+							)
+						})}
 					</div>
 				</>
 			) : (
@@ -43,7 +59,9 @@ export function ConsultantsStep({ announcements, consultants, onDone }: Props) {
 			<p className="text-center text-muted-foreground">
 				No classes are scheduled for today.
 			</p>
+
 			<p className="text-center text-muted-foreground">Announcements:</p>
+
 			{announcements.length > 0 && (
 				<div className="space-y-3">
 					{announcements.map((a) => (

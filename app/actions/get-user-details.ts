@@ -1,6 +1,6 @@
 'use server'
 
-import { db } from '@/db/client'
+import { db } from '@/db'
 import { user, account } from '@/db/schema/tables/auth'
 import { kioskPeople } from '@/db'
 import { eq } from 'drizzle-orm'

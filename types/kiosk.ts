@@ -13,6 +13,7 @@ export type PersonSummary = {
 
 export type OnShiftConsultant = {
 	personId: string
+	userId: string | null
 	fullName: string
 	profileImageUrl: string | null
 }

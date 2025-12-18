@@ -114,3 +114,29 @@ export const newsletterPostCategories = pgTable(
 		pk: [t.postId, t.categoryId],
 	})
 )
+
+export const newsletterSubscribers = pgTable(
+	'newsletter_subscribers',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+
+		email: text('email').notNull(),
+
+		// double opt-in
+		isConfirmed: boolean('is_confirmed').notNull().default(false),
+		confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+
+		// confirmation flow
+		confirmToken: text('confirm_token').notNull(),
+
+		// optional unsubscribe support
+		unsubscribedAt: timestamp('unsubscribed_at', { withTimezone: true }),
+
+		source: text('source'), // 'homepage', 'event', 'manual', etc.
+
+		createdAt: timestamp('created_at', { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(table) => [index('newsletter_email_unique').on(table.email)]
+)

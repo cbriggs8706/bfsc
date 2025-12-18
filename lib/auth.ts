@@ -5,7 +5,7 @@ import GoogleProvider from 'next-auth/providers/google'
 import CredentialsProvider from 'next-auth/providers/credentials'
 
 import { DrizzleAdapter } from '@auth/drizzle-adapter'
-import { db } from '@/db/client'
+import { db } from '@/db'
 
 import {
 	user as userTable,

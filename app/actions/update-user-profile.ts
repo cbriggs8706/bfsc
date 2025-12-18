@@ -3,8 +3,7 @@
 
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/db/client'
-import { user } from '@/db/schema/tables/auth'
+import { db, user } from '@/db'
 import { eq } from 'drizzle-orm'
 
 /**

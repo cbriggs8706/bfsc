@@ -15,6 +15,7 @@ import { RoleChoiceStep } from '@/components/kiosk/RoleChoiceStep'
 import { CheckoutStep } from '@/components/kiosk/CheckoutStep'
 import { NotFoundStep } from '@/components/kiosk/NotFoundStep'
 import { Announcement } from '@/db'
+import { CertificateSummary } from '@/types/training'
 
 export default function KioskPage() {
 	const [step, setStep] = useState<
@@ -30,6 +31,26 @@ export default function KioskPage() {
 		| 'checkout'
 	>('identify')
 
+	function generateTimeSlots(
+		startHour = 9,
+		endHour = 21,
+		intervalMinutes = 30
+	): string[] {
+		const slots: string[] = []
+
+		for (let h = startHour; h <= endHour; h++) {
+			for (let m = 0; m < 60; m += intervalMinutes) {
+				if (h === endHour && m > 0) break
+
+				const hh = String(h).padStart(2, '0')
+				const mm = String(m).padStart(2, '0')
+				slots.push(`${hh}:${mm}`)
+			}
+		}
+
+		return slots
+	}
+
 	const [input, setInput] = useState('')
 	const [matches, setMatches] = useState<PersonSummary[]>([])
 	const [selectedPerson, setSelectedPerson] = useState<PersonSummary | null>(
@@ -44,7 +65,7 @@ export default function KioskPage() {
 	const [suggestions, setSuggestions] = useState<PersonSummary[]>([])
 	const [searching, setSearching] = useState(false)
 	const searchTimeout = useRef<NodeJS.Timeout | null>(null)
-	const [timeSlots, setTimeSlots] = useState<string[]>([])
+	const [timeSlots] = useState<string[]>(() => generateTimeSlots())
 	const [onShiftConsultants, setOnShiftConsultants] = useState<
 		OnShiftConsultant[]
 	>([])
@@ -66,6 +87,9 @@ export default function KioskPage() {
 	const [wardId, setWardId] = useState('')
 	const [selectedPositionIds, setSelectedPositionIds] = useState<string[]>([])
 	const [announcements, setAnnouncements] = useState<Announcement[]>([])
+	const [certificatesByUser, setCertificatesByUser] = useState<
+		Record<string, CertificateSummary[]>
+	>({})
 
 	// ──────────────────────────────
 	// LOAD WARDS
@@ -267,6 +291,7 @@ export default function KioskPage() {
 	// ──────────────────────────────
 
 	const handleSubmitShift = async () => {
+		console.log(expectedDeparture)
 		if (!selectedPerson || !expectedDeparture) return
 		const res = await fetch('/api/kiosk/shift', {
 			method: 'POST',
@@ -280,9 +305,9 @@ export default function KioskPage() {
 			setServerMessage('Sorry, something went wrong starting your shift.')
 			return
 		}
-		setServerMessage('Your shift has been logged.')
-
-		resetForm()
+		setServerMessage(null)
+		await refreshOnShift()
+		setStep('consultants')
 	}
 
 	// ──────────────────────────────
@@ -309,10 +334,31 @@ export default function KioskPage() {
 		;(async () => {
 			const res = await fetch('/api/kiosk/on-shift', { cache: 'no-store' })
 			if (!res.ok) return
-			const data: { consultants: OnShiftConsultant[] } = await res.json()
+			const data: {
+				consultants: OnShiftConsultant[]
+				certificatesByUser: Record<string, CertificateSummary[]>
+			} = await res.json()
 			setOnShiftConsultants(data.consultants)
+			setCertificatesByUser(data.certificatesByUser)
 		})()
 	}, [])
+
+	const refreshOnShift = async () => {
+		const res = await fetch('/api/kiosk/on-shift', { cache: 'no-store' })
+		if (!res.ok) return
+		const data: {
+			consultants: OnShiftConsultant[]
+			certificatesByUser: Record<string, CertificateSummary[]>
+		} = await res.json()
+
+		setOnShiftConsultants(data.consultants)
+		setCertificatesByUser(data.certificatesByUser)
+	}
+
+	useEffect(() => {
+		if (step !== 'consultants') return
+		refreshOnShift()
+	}, [step])
 
 	useEffect(() => {
 		;(async () => {
@@ -430,6 +476,7 @@ export default function KioskPage() {
 						<ConsultantsStep
 							announcements={announcements}
 							consultants={onShiftConsultants}
+							certificatesByUser={certificatesByUser}
 							onDone={resetForm}
 						/>
 					)}

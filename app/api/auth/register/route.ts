@@ -1,7 +1,7 @@
 // app/api/auth/register/route.ts
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { db } from '@/db/client'
+import { db } from '@/db'
 import { user } from '@/db/schema/tables/auth'
 import { eq } from 'drizzle-orm'
 
