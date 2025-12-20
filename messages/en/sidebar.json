@@ -74,7 +74,8 @@
 		"title": "Consultant",
 		"shiftReport": "Shift Report",
 		"teachClass": "Teach A Class",
-		"library": "Library"
+		"library": "Library",
+		"training": "Training"
 	},
 	"patron": {
 		"title": "Patron"

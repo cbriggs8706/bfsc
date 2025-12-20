@@ -11,9 +11,14 @@ import {
 	TRAINING_GUIDE_INTRO,
 	TRAINING_GUIDE_SECTIONS,
 	type TrainingResource,
+	TRAINING_GUIDE_NOTE,
 } from '@/lib/training-guide-data'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+
+type Props = {
+	params: Promise<{ locale: string }>
+}
 
 function ResourceList({ items }: { items: TrainingResource[] }) {
 	return (
@@ -30,14 +35,14 @@ function ResourceList({ items }: { items: TrainingResource[] }) {
 						{it.href ? (
 							<a
 								href={it.href}
-								className="text-primary font-medium hover:underline break-words"
+								className="text-primary font-medium hover:underline wrap-break-words"
 								target="_blank"
 								rel="noreferrer"
 							>
 								{it.label}
 							</a>
 						) : (
-							<span className="break-words">{it.label}</span>
+							<span className="wrap-break-words">{it.label}</span>
 						)}
 					</div>
 				</li>
@@ -46,7 +51,9 @@ function ResourceList({ items }: { items: TrainingResource[] }) {
 	)
 }
 
-export default function TrainingGuidePage() {
+export default async function TrainingGuidePage({ params }: Props) {
+	const { locale } = await params
+
 	return (
 		<div className="p-4 space-y-6">
 			{/* Header */}
@@ -67,13 +74,28 @@ export default function TrainingGuidePage() {
 					))}
 				</CardContent>
 			</Card>
+			{/* Intro / notes */}
+			<Card>
+				<CardContent className="space-y-3 pt-6">
+					{TRAINING_GUIDE_NOTE.map((p, idx) => (
+						<p key={idx} className="text-sm">
+							{p}
+						</p>
+					))}
+				</CardContent>
+			</Card>
 
 			{/* Sections */}
 			<Card>
-				<CardContent className="space-y-4 pt-6">
-					<h2 className="text-xl font-semibold">Training Sections</h2>
+				<CardContent className="flex flex-col space-y-4 pt-6">
+					<h2 className="text-xl font-semibold">
+						Consultant Training Sections
+					</h2>
 					<Link href="https://docs.google.com/document/d/1mYsK_qqDQfFNSpGZIsGK7Icg_6Hyd6WVkFQA6Vt2tvA/edit?usp=sharing">
-						<Button variant="default">Download this for printing</Button>
+						<Button variant="default">Download this list for printing</Button>
+					</Link>
+					<Link href={`/${locale}/training`} className="">
+						<Button variant="default">Become certified in each</Button>
 					</Link>
 					<Accordion type="multiple" className="w-full">
 						{TRAINING_GUIDE_SECTIONS.map((section) => (

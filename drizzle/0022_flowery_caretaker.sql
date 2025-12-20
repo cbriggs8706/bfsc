@@ -1,0 +1,1 @@
+ALTER TABLE "shift_assignments" ADD COLUMN "week_of_month" integer;

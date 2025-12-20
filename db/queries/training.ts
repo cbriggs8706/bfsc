@@ -16,6 +16,7 @@ import {
 	UserLesson,
 	UserUnit,
 } from '@/types/training'
+import { getCourseBadgeUrl } from '@/lib/storage/courseBadges.server'
 
 //TODO use these to replace defaults in various pages that were created
 /**
@@ -29,6 +30,7 @@ export type CertificateStatus =
 
 export type UserCertificateWithStatus = UserCertificate & {
 	status: CertificateStatus
+	badgeImageUrl?: string | null
 }
 
 export async function getUserCertificates(
@@ -49,6 +51,7 @@ export async function getUserCertificates(
 
 			currentCourseVersion: learningCourses.contentVersion,
 			isPublished: learningCourses.isPublished,
+			badgeImagePath: learningCourses.badgeImagePath,
 		})
 		.from(userCertificates)
 		.leftJoin(
@@ -83,6 +86,7 @@ export async function getUserCertificates(
 			issuedAt: row.issuedAt,
 			verifyUrl: row.verifyUrl,
 			status,
+			badgeImageUrl: getCourseBadgeUrl(row.badgeImagePath),
 		}
 	})
 }
@@ -144,6 +148,7 @@ export async function getPublishedCoursesWithProgress(
 			id: course.id,
 			title: course.title,
 			description: course.description,
+			sortOrder: course.sortOrder,
 			contentVersion: course.contentVersion,
 			units,
 			completedLessonCount,
@@ -215,6 +220,7 @@ export async function getPublishedCourseForUser(
 		id: course.id,
 		title: course.title,
 		description: course.description,
+		sortOrder: course.sortOrder,
 		contentVersion: course.contentVersion,
 		units,
 		completedLessonCount,

@@ -35,10 +35,29 @@ const formSchema = z.object({
 	password: z.string().min(8, 'Password must be at least 8 characters long.'),
 })
 
-export function LoginForm() {
+type Props = {
+	redirectTo: string
+}
+
+function safeRedirect(path: string, locale: string) {
+	try {
+		const decoded = decodeURIComponent(path)
+
+		if (!decoded.startsWith(`/${locale}`)) {
+			return `/${locale}/home`
+		}
+
+		return decoded
+	} catch {
+		return `/${locale}/home`
+	}
+}
+
+export function LoginForm({ redirectTo }: Props) {
 	const router = useRouter()
 	const { locale } = useParams() as { locale: string }
 	const t = useTranslations('auth.login')
+	const safeRedirectTo = safeRedirect(redirectTo, locale)
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
@@ -54,6 +73,7 @@ export function LoginForm() {
 				username: data.username,
 				password: data.password,
 				redirect: false,
+				callbackUrl: safeRedirectTo,
 			})
 
 			if (res?.error) {
@@ -63,14 +83,15 @@ export function LoginForm() {
 
 			toast.success(t('success') || '✅ Logged in!')
 
-			const session = await getSession()
-			const role = session?.user?.role
+			// const session = await getSession()
+			// const role = session?.user?.role
 
-			if (role === 'Admin') {
-				router.push(`/${locale}/home`)
-			} else {
-				router.push(`/${locale}/home`)
-			}
+			// if (role === 'Admin') {
+			// 	router.push(`/${locale}/home`)
+			// } else {
+			// 	router.push(`/${locale}/home`)
+			// }
+			router.replace(res?.url ?? `/${locale}/home`)
 		} catch {
 			toast.error(t('networkError') || 'Network error. Please try again.')
 		}
@@ -115,7 +136,7 @@ export function LoginForm() {
 					<Button
 						type="button"
 						className="w-full gap-3 mb-6"
-						onClick={() => signIn('google', { callbackUrl: `/${locale}/home` })}
+						onClick={() => signIn('google', { callbackUrl: safeRedirectTo })}
 					>
 						<GoogleLogo />
 						{t('googleButton')}

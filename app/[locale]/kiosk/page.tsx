@@ -6,7 +6,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import type { IdentifyResponse } from '@/app/api/kiosk/identify/route'
 import { PersonSummary, OnShiftConsultant, Purpose } from '@/types/kiosk'
 import { IdentifyStep } from '@/components/kiosk/IdentifyStep'
-import { ChoosePersonStep } from '@/components/kiosk/ChoosePersonStep'
 import { NewPersonStep } from '@/components/kiosk/NewPersonStep'
 import { ShiftStep } from '@/components/kiosk/ShiftStep'
 import { ConsultantsStep } from '@/components/kiosk/ConsultantsStep'
@@ -214,20 +213,6 @@ export default function KioskPage() {
 	// 	data.person.isConsultant
 	// 		? setStep('roleChoice')
 	// 		: (await loadPurposes(), setStep('visit'))
-	// }
-
-	// ──────────────────────────────
-	// CHOOSE PERSON FROM MULTIPLE
-	// ──────────────────────────────
-
-	// const handleChoosePerson = async (person: PersonSummary) => {
-	// 	setSelectedPerson(person)
-	// 	if (person.isConsultant) {
-	// 		setStep('roleChoice')
-	// 	} else {
-	// 		await loadPurposes()
-	// 		setStep('visit')
-	// 	}
 	// }
 
 	// ──────────────────────────────

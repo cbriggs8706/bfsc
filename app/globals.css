@@ -242,6 +242,58 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 } */
+/* ------------------------------
+   Screen (desktop + mobile)
+--------------------------------*/
+/* Hide on mobile */
+.print-only {
+	display: none;
+}
+
+/* Show preview on large screens */
+@media screen and (min-width: 1024px) {
+	.print-only {
+		display: block;
+	}
+}
+
+/* ------------------------------
+   Print
+--------------------------------*/
+@media print {
+	@page {
+		size: landscape;
+		margin: 0.5in;
+	}
+
+	/* Hide everything by default */
+	body * {
+		visibility: hidden;
+	}
+
+	/* Show only the print-only subtree */
+	.print-only,
+	.print-only * {
+		visibility: visible;
+	}
+
+	/* Ensure print layout is visible */
+	.print-only {
+		display: block;
+		position: static;
+	}
+
+	/* Hide interactive UI */
+	.no-print {
+		display: none !important;
+	}
+
+	/* Prevent cards/rows from splitting */
+	.print-card {
+		break-inside: avoid;
+		page-break-inside: avoid;
+	}
+}
 
 @layer base {
 	* {

@@ -7,8 +7,12 @@ import {
 	timestamp,
 	boolean,
 	integer,
+	index,
+	uniqueIndex,
+	check,
 } from 'drizzle-orm/pg-core'
 import { user } from './auth' // your existing user table
+import { sql } from 'drizzle-orm'
 
 export const operatingHours = pgTable('operating_hours', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -34,47 +38,107 @@ export const specialHours = pgTable('special_hours', {
 	updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
-export const weeklyShifts = pgTable('weekly_shifts', {
-	id: uuid('id').defaultRandom().primaryKey(),
+export const weeklyShifts = pgTable(
+	'weekly_shifts',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
 
-	weekday: integer('weekday').notNull(), // 0-6
+		weekday: integer('weekday').notNull(), // 0-6
 
-	startTime: varchar('start_time', { length: 5 }).notNull(), // "10:00"
-	endTime: varchar('end_time', { length: 5 }).notNull(), // "14:00"
+		startTime: varchar('start_time', { length: 5 }).notNull(), // "10:00"
+		endTime: varchar('end_time', { length: 5 }).notNull(), // "14:00"
 
-	isActive: boolean('is_active').notNull().default(true),
+		isActive: boolean('is_active').notNull().default(true),
 
-	notes: varchar('notes', { length: 255 }),
+		notes: varchar('notes', { length: 255 }),
 
-	createdAt: timestamp('created_at', { withTimezone: true })
-		.defaultNow()
-		.notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 
-	updatedAt: timestamp('updated_at', { withTimezone: true })
-		.defaultNow()
-		.notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 
-	sortOrder: integer('sort_order').notNull().default(0),
-})
+		sortOrder: integer('sort_order').notNull().default(0),
+	},
+	(t) => ({
+		weekdayIdx: index('weekly_shifts_weekday_idx').on(t.weekday),
+	})
+)
 
-export const shiftAssignments = pgTable('shift_assignments', {
-	id: uuid('id').defaultRandom().primaryKey(),
+export const shiftRecurrences = pgTable(
+	'shift_recurrences',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
 
-	shiftId: uuid('shift_id')
-		.notNull()
-		.references(() => weeklyShifts.id, { onDelete: 'cascade' }),
+		shiftId: uuid('shift_id')
+			.notNull()
+			.references(() => weeklyShifts.id, { onDelete: 'cascade' }),
 
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => user.id, { onDelete: 'cascade' }),
+		label: varchar('label', { length: 50 }).notNull(),
+		// "Every Sunday", "1st Sunday", "Youth Sunday", etc.
 
-	// Mark the main scheduled worker (as opposed to a substitute)
-	isPrimary: boolean('is_primary').notNull().default(true),
+		weekOfMonth: integer('week_of_month'),
+		// null = every week
+		// 1–5 = ordinal weeks
 
-	createdAt: timestamp('created_at', { withTimezone: true })
-		.notNull()
-		.defaultNow(),
-})
+		isActive: boolean('is_active').notNull().default(true),
+
+		sortOrder: integer('sort_order').notNull().default(0),
+	},
+	(t) => ({
+		shiftIdx: index('shift_recurrences_shift_idx').on(t.shiftId),
+
+		// Prevent duplicate labels per shift
+		uniqLabelPerShift: uniqueIndex('shift_recurrences_shift_label_uq').on(
+			t.shiftId,
+			t.label
+		),
+
+		// Prevent duplicate ordinal weeks per shift
+		uniqWeekPerShift: uniqueIndex('shift_recurrences_shift_week_uq')
+			.on(t.shiftId, t.weekOfMonth)
+			.where(sql`${t.weekOfMonth} is not null`),
+
+		// Only one "every week" recurrence per shift
+		uniqEveryWeekPerShift: uniqueIndex('shift_recurrences_shift_everyweek_uq')
+			.on(t.shiftId)
+			.where(sql`${t.weekOfMonth} is null`),
+
+		// Enforce valid week range
+		weekRange: check(
+			'shift_recurrences_week_range_ck',
+			sql`${t.weekOfMonth} is null or (${t.weekOfMonth} between 1 and 5)`
+		),
+	})
+)
+
+export const shiftAssignments = pgTable(
+	'shift_assignments',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+
+		shiftRecurrenceId: uuid('shift_recurrence_id')
+			.notNull()
+			.references(() => shiftRecurrences.id, { onDelete: 'cascade' }),
+
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+
+		isPrimary: boolean('is_primary').notNull().default(true),
+
+		createdAt: timestamp('created_at', { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(t) => ({
+		recurrenceIdx: index('shift_assignments_recurrence_idx').on(
+			t.shiftRecurrenceId
+		),
+	})
+)
 
 export const shiftExceptions = pgTable('shift_exceptions', {
 	id: uuid('id').defaultRandom().primaryKey(),

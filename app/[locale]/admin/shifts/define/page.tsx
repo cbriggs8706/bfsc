@@ -2,11 +2,16 @@
 import { Metadata } from 'next'
 import { db } from '@/db'
 import { inArray, eq } from 'drizzle-orm'
-import { operatingHours, weeklyShifts } from '@/db/schema/tables/shifts'
+import {
+	operatingHours,
+	shiftRecurrences,
+	weeklyShifts,
+} from '@/db/schema/tables/shifts'
 import { ShiftDefinitionsManager } from '@/components/admin/shift/ShiftDefinitions'
+import { Shift } from '@/types/shifts'
 
 type PageProps = {
-	params: { locale: string }
+	params: Promise<{ locale: string }>
 }
 
 export const metadata: Metadata = {
@@ -23,9 +28,8 @@ const WEEKDAY_LABELS = [
 	'Saturday',
 ]
 
-export default async function ManageShiftsPage({
-	params: { locale },
-}: PageProps) {
+export default async function ManageShiftsPage({ params }: PageProps) {
+	const { locale } = await params
 	// 1) Get active operating days (only show those)
 	const operating = await db
 		.select({
@@ -61,17 +65,64 @@ export default async function ManageShiftsPage({
 	}
 
 	// 2) Load existing weekly shifts for those days
-	const shifts = await db
+	// const shifts = await db
+	// 	.select({
+	// 		id: weeklyShifts.id,
+	// 		weekday: weeklyShifts.weekday,
+	// 		startTime: weeklyShifts.startTime,
+	// 		endTime: weeklyShifts.endTime,
+	// 		isActive: weeklyShifts.isActive,
+	// 		notes: weeklyShifts.notes,
+	// 	})
+	// 	.from(weeklyShifts)
+	// 	.where(inArray(weeklyShifts.weekday, activeWeekdayNumbers))
+
+	const rows = await db
 		.select({
-			id: weeklyShifts.id,
+			shiftId: weeklyShifts.id,
 			weekday: weeklyShifts.weekday,
 			startTime: weeklyShifts.startTime,
 			endTime: weeklyShifts.endTime,
 			isActive: weeklyShifts.isActive,
 			notes: weeklyShifts.notes,
+
+			recurrenceId: shiftRecurrences.id,
+			label: shiftRecurrences.label,
+			weekOfMonth: shiftRecurrences.weekOfMonth,
+			recurrenceActive: shiftRecurrences.isActive,
+			sortOrder: shiftRecurrences.sortOrder,
 		})
 		.from(weeklyShifts)
+		.leftJoin(shiftRecurrences, eq(shiftRecurrences.shiftId, weeklyShifts.id))
 		.where(inArray(weeklyShifts.weekday, activeWeekdayNumbers))
+
+	const shiftMap = new Map<string, Shift>()
+
+	for (const r of rows) {
+		if (!shiftMap.has(r.shiftId)) {
+			shiftMap.set(r.shiftId, {
+				id: r.shiftId,
+				weekday: r.weekday,
+				startTime: r.startTime,
+				endTime: r.endTime,
+				isActive: r.isActive,
+				notes: r.notes,
+				recurrences: [],
+			})
+		}
+
+		if (r.recurrenceId) {
+			shiftMap.get(r.shiftId)!.recurrences.push({
+				id: r.recurrenceId,
+				label: r.label!,
+				weekOfMonth: r.weekOfMonth,
+				isActive: r.recurrenceActive!,
+				sortOrder: r.sortOrder!,
+			})
+		}
+	}
+
+	const shifts = Array.from(shiftMap.values())
 
 	return (
 		<div className="p-4 space-y-4">

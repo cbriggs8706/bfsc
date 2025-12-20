@@ -1,4 +1,4 @@
-// app/[locale]/classes/update/[id]/page.tsx
+// app/[locale]/admin/announcements/delete/[id]/page.tsx
 
 import { notFound, redirect } from 'next/navigation'
 import {

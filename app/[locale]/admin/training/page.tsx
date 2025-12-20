@@ -1,3 +1,4 @@
+// app/[locale]/admin/training/page.tsx
 import { redirect } from 'next/navigation'
 
 type Props = {

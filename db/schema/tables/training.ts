@@ -30,7 +30,7 @@ export const learningCourses = pgTable(
 		contentVersion: integer('content_version').notNull().default(1),
 
 		// Optional image for the course card (supabase path/url)
-		coverImagePath: text('cover_image_path'),
+		badgeImagePath: text('badge_image_path'),
 
 		sortOrder: integer('sort_order').notNull().default(0),
 

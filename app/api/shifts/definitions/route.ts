@@ -1,7 +1,7 @@
 // app/api/shifts/definitions/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
-import { weeklyShifts } from '@/db/schema/tables/shifts'
+import { shiftRecurrences, weeklyShifts } from '@/db/schema/tables/shifts'
 import { eq } from 'drizzle-orm'
 
 export async function POST(req: NextRequest) {
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 			)
 		}
 
-		const [inserted] = await db
+		const [shift] = await db
 			.insert(weeklyShifts)
 			.values({
 				weekday,
@@ -30,7 +30,15 @@ export async function POST(req: NextRequest) {
 			})
 			.returning({ id: weeklyShifts.id })
 
-		return NextResponse.json({ id: inserted.id })
+		// 🔑 Auto-create default recurrence
+		await db.insert(shiftRecurrences).values({
+			shiftId: shift.id,
+			label: 'Every week',
+			weekOfMonth: null,
+			sortOrder: 0,
+		})
+
+		return NextResponse.json({ id: shift.id })
 	} catch (e) {
 		console.error(e)
 		return NextResponse.json(

@@ -1,3 +1,4 @@
+// components/admin/shift/ShiftDefinitions.tsx
 'use client'
 
 import { useState } from 'react'
@@ -9,22 +10,8 @@ import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { Trash2, Plus } from 'lucide-react'
 import { toAmPm } from '@/utils/time'
-
-type Day = {
-	weekday: number
-	label: string
-	opensAt: string
-	closesAt: string
-}
-
-type Shift = {
-	id: string
-	weekday: number
-	startTime: string
-	endTime: string
-	isActive: boolean
-	notes: string | null
-}
+import { Day, Recurrence, Shift } from '@/types/shifts'
+import { toast } from 'sonner'
 
 type Props = {
 	days: Day[]
@@ -102,6 +89,15 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 			endTime: day.closesAt,
 			isActive: true,
 			notes: '',
+			recurrences: [
+				{
+					id: 'temp',
+					label: 'Every week',
+					weekOfMonth: null,
+					isActive: true,
+					sortOrder: 0,
+				},
+			],
 		}
 
 		setLocalShifts((prev) => [...prev, newShift])
@@ -186,6 +182,131 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 		} finally {
 			setLoading(shiftId, false)
 		}
+	}
+
+	// ======================================================
+	// Recurrences
+	// ======================================================
+
+	const addRecurrence = async (shiftId: string) => {
+		const res = await fetch('/api/shifts/recurrences', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ shiftId }),
+		})
+
+		const recurrence = await res.json()
+
+		setLocalShifts((prev) =>
+			prev.map((s) =>
+				s.id === shiftId
+					? { ...s, recurrences: [...s.recurrences, recurrence] }
+					: s
+			)
+		)
+	}
+
+	const updateRecurrence = async (
+		recurrenceId: string,
+		updates: Partial<Recurrence>
+	) => {
+		setLocalShifts((prev) =>
+			prev.map((s) => ({
+				...s,
+				recurrences: s.recurrences.map((r) =>
+					r.id === recurrenceId ? { ...r, ...updates } : r
+				),
+			}))
+		)
+
+		await fetch('/api/shifts/recurrences', {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ id: recurrenceId, ...updates }),
+		})
+	}
+
+	const deleteRecurrence = async (shiftId: string, recurrenceId: string) => {
+		const shift = localShifts.find((s) => s.id === shiftId)
+		if (!shift) return
+
+		// Remove locally first
+		const remaining = shift.recurrences.filter((r) => r.id !== recurrenceId)
+
+		// Case: deleting last recurrence → auto-recreate
+		if (remaining.length === 0) {
+			toast.info('Recreated "Every week" recurrence')
+
+			// Optimistic local recreate
+			const tempId = `temp-every-${Date.now()}`
+
+			setLocalShifts((prev) =>
+				prev.map((s) =>
+					s.id === shiftId
+						? {
+								...s,
+								recurrences: [
+									{
+										id: tempId,
+										label: 'Every week',
+										weekOfMonth: null,
+										isActive: true,
+										sortOrder: 0,
+									},
+								],
+						  }
+						: s
+				)
+			)
+
+			// Delete old recurrence
+			await fetch('/api/shifts/recurrences', {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ id: recurrenceId }),
+			})
+
+			// Create replacement on server
+			const res = await fetch('/api/shifts/recurrences', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					shiftId,
+					label: 'Every week',
+					weekOfMonth: null,
+					sortOrder: 0,
+				}),
+			})
+
+			const created = await res.json()
+
+			// Swap temp ID
+			setLocalShifts((prev) =>
+				prev.map((s) =>
+					s.id === shiftId
+						? {
+								...s,
+								recurrences: s.recurrences.map((r) =>
+									r.id === tempId ? created : r
+								),
+						  }
+						: s
+				)
+			)
+
+			return
+		}
+
+		// Normal delete
+		setLocalShifts((prev) =>
+			prev.map((s) => (s.id === shiftId ? { ...s, recurrences: remaining } : s))
+		)
+
+		await fetch('/api/shifts/recurrences', {
+			method: 'DELETE',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ id: recurrenceId }),
+		})
 	}
 
 	// ======================================================
@@ -324,6 +445,89 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 													if (e.key === 'Enter') e.currentTarget.blur()
 												}}
 											/>
+										</div>
+										<div className="space-y-2 pt-2 border-t">
+											<div className="flex items-center justify-between">
+												<span className="text-xs font-semibold">
+													Recurrences
+												</span>
+
+												<Button
+													size="sm"
+													variant="outline"
+													onClick={() => addRecurrence(shift.id)}
+												>
+													<Plus className="h-3 w-3 mr-1" />
+													Add
+												</Button>
+											</div>
+
+											{shift.recurrences.map((r) => (
+												<div
+													key={r.id}
+													className="flex items-center gap-2 text-xs"
+												>
+													<Input
+														value={r.label}
+														onChange={(e) =>
+															setLocalShifts((prev) =>
+																prev.map((s) => ({
+																	...s,
+																	recurrences: s.recurrences.map((rec) =>
+																		rec.id === r.id
+																			? { ...rec, label: e.target.value }
+																			: rec
+																	),
+																}))
+															)
+														}
+														onBlur={(e) =>
+															updateRecurrence(r.id, { label: e.target.value })
+														}
+													/>
+
+													<Input
+														type="number"
+														min={1}
+														max={5}
+														placeholder="Week"
+														value={r.weekOfMonth ?? ''}
+														onChange={(e) =>
+															setLocalShifts((prev) =>
+																prev.map((s) => ({
+																	...s,
+																	recurrences: s.recurrences.map((rec) =>
+																		rec.id === r.id
+																			? {
+																					...rec,
+																					weekOfMonth: e.target.value
+																						? Number(e.target.value)
+																						: null,
+																			  }
+																			: rec
+																	),
+																}))
+															)
+														}
+														onBlur={(e) =>
+															updateRecurrence(r.id, {
+																weekOfMonth: e.target.value
+																	? Number(e.target.value)
+																	: null,
+															})
+														}
+													/>
+
+													<Button
+														size="icon"
+														variant="ghost"
+														className="h-7 w-7 text-destructive"
+														onClick={() => deleteRecurrence(shift.id, r.id)}
+													>
+														<Trash2 className="h-4 w-4" />
+													</Button>
+												</div>
+											))}
 										</div>
 									</Card>
 								)

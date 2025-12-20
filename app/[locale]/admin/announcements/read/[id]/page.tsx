@@ -1,3 +1,4 @@
+// app/[locale]/admin/announcements/read/[id]/page.tsx
 import { notFound } from 'next/navigation'
 import { getAnnouncementById } from '@/db/queries/announcements'
 import { AnnouncementForm } from '@/components/admin/announcements/AnnouncementForm'

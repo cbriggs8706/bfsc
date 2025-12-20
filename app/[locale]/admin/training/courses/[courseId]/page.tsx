@@ -1,3 +1,5 @@
+// app/[locale]/admin/training/courses/[courseId]/page.tsx
+
 import { db } from '@/db'
 import { eq, asc } from 'drizzle-orm'
 import {
@@ -7,7 +9,7 @@ import {
 	learningLessonBlocks,
 } from '@/db'
 import { notFound } from 'next/navigation'
-import { CourseEditor } from '@/components/training/admin/CourseEditor'
+import { CourseEditor } from '@/components/admin/training/CourseEditor'
 import { AdminCourse, AdminLesson, AdminUnit } from '@/types/training'
 import { mapLessonBlock } from '@/lib/training/block-mapper'
 

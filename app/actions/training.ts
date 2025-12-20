@@ -13,6 +13,7 @@ import {
 	userCertificates,
 } from '@/db'
 import { LessonBlockInput, LessonBlockTypeMap } from '@/types/training'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
 /* ============================================================
    ADMIN: COURSES
@@ -308,4 +309,45 @@ export async function getUserCertificates() {
 		where: eq(userCertificates.userId, user.id),
 		orderBy: (t, { desc }) => desc(t.issuedAt),
 	})
+}
+
+function sanitizeFilename(name: string) {
+	return name.replace(/[^a-zA-Z0-9._-]/g, '_')
+}
+
+export async function uploadCourseBadge(courseId: string, formData: FormData) {
+	const file = formData.get('file')
+
+	if (!file || !(file instanceof File)) {
+		throw new Error('No file uploaded')
+	}
+
+	// Optional: basic validation
+	if (!file.type.startsWith('image/')) {
+		throw new Error('File must be an image')
+	}
+
+	const ext = file.name.split('.').pop() || 'png'
+	const safeName = sanitizeFilename(file.name)
+	const path = `${courseId}/${Date.now()}-${safeName}` // stored inside bucket
+
+	const arrayBuffer = await file.arrayBuffer()
+	const buffer = Buffer.from(arrayBuffer)
+
+	const { error } = await supabaseAdmin.storage
+		.from('course-badges')
+		.upload(path, buffer, {
+			contentType: file.type,
+			upsert: true,
+		})
+
+	if (error) throw new Error(error.message)
+
+	// Save *path* in DB (bucket is implicit)
+	await db
+		.update(learningCourses)
+		.set({ badgeImagePath: path, updatedAt: new Date() })
+		.where(eq(learningCourses.id, courseId))
+
+	return { badgeImagePath: path }
 }

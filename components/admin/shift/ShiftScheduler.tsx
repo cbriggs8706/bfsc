@@ -1,3 +1,5 @@
+// components/admin/shift/ShiftScheduler.tsx
+// components/admin/shift/ShiftScheduler.tsx
 'use client'
 
 import { useMemo, useState } from 'react'
@@ -28,18 +30,27 @@ type Day = {
 	label: string
 }
 
+type Recurrence = {
+	id: string
+	label: string
+	isActive: boolean
+	sortOrder?: number
+	weekOfMonth?: number | null
+}
+
 type Shift = {
 	id: string
 	weekday: number
 	startTime: string
 	endTime: string
-	notes: string | null
 	isActive: boolean
+	notes: string | null
+	recurrences: Recurrence[]
 }
 
 type Assignment = {
 	id: string
-	shiftId: string
+	shiftRecurrenceId: string
 	userId: string
 	isPrimary: boolean
 	userName: string | null
@@ -55,82 +66,112 @@ type Consultant = {
 }
 
 type Props = {
-	days: Day[]
+	days: Day[] // you can keep passing this for ordering/grouping headers if you want
 	shifts: Shift[]
 	assignments: Assignment[]
 	consultants: Consultant[]
 }
 
-export function ShiftScheduler({
-	days,
-	shifts,
-	assignments,
-	consultants,
-}: Props) {
-	const [localAssignments, setLocalAssignments] = useState(assignments)
+type SchedulerCard = {
+	id: string // recurrence.id
+	shift: Shift
+	recurrence: Recurrence
+}
 
-	const assignmentsByShift = useMemo(() => {
+export function ShiftScheduler({ shifts, assignments, consultants }: Props) {
+	const [localAssignments, setLocalAssignments] =
+		useState<Assignment[]>(assignments)
+
+	// Build a flat list of recurrence “cards” to render
+	const cards = useMemo<SchedulerCard[]>(() => {
+		return shifts
+			.slice()
+			.sort(
+				(a, b) =>
+					a.weekday - b.weekday || a.startTime.localeCompare(b.startTime)
+			)
+			.flatMap((shift) => {
+				const recs = (shift.recurrences ?? [])
+					.slice()
+					.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+
+				return recs.map((recurrence) => ({
+					id: recurrence.id,
+					shift,
+					recurrence,
+				}))
+			})
+	}, [shifts])
+
+	// Group assignments by recurrence id
+	const assignmentsByRecurrence = useMemo(() => {
 		const map = new Map<string, Assignment[]>()
 		for (const a of localAssignments) {
-			const arr = map.get(a.shiftId) ?? []
+			const arr = map.get(a.shiftRecurrenceId) ?? []
 			arr.push(a)
-			map.set(a.shiftId, arr)
+			map.set(a.shiftRecurrenceId, arr)
 		}
 		return map
 	}, [localAssignments])
 
-	const handleDragEnd = async (event: DragEndEvent) => {
-		const { active, over } = event
+	const handleDragEnd = async ({ active, over }: DragEndEvent) => {
 		if (!over) return
 
 		const activeId = String(active.id)
-		const overId = String(over.id)
+		if (!activeId.startsWith('assign-')) return
 
-		if (!overId.startsWith('shift-')) return
-		const shiftId = overId.replace('shift-', '')
+		const assignmentId = activeId.replace('assign-', '')
+		const newShiftRecurrenceId = String(over.id)
 
-		// Move existing assignment
-		if (activeId.startsWith('assign-')) {
-			const assignmentId = activeId.replace('assign-', '')
-			const assignment = localAssignments.find((a) => a.id === assignmentId)
-			if (!assignment || assignment.shiftId === shiftId) return
+		const existing = localAssignments.find((a) => a.id === assignmentId)
+		if (!existing) return
+		if (existing.shiftRecurrenceId === newShiftRecurrenceId) return
 
-			setLocalAssignments((prev) =>
-				prev.map((a) => (a.id === assignmentId ? { ...a, shiftId } : a))
+		// optimistic
+		setLocalAssignments((prev) =>
+			prev.map((a) =>
+				a.id === assignmentId
+					? { ...a, shiftRecurrenceId: newShiftRecurrenceId }
+					: a
 			)
+		)
 
-			await fetch('/api/shifts/assignments', {
-				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ assignmentId, shiftId }),
-			})
+		const res = await fetch('/api/shifts/assignments', {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				assignmentId,
+				shiftRecurrenceId: newShiftRecurrenceId,
+			}),
+		})
 
-			return
+		// rollback if API fails
+		if (!res.ok) {
+			setLocalAssignments((prev) =>
+				prev.map((a) =>
+					a.id === assignmentId
+						? { ...a, shiftRecurrenceId: existing.shiftRecurrenceId }
+						: a
+				)
+			)
 		}
 	}
 
 	return (
 		<DndContext onDragEnd={handleDragEnd}>
 			<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-				{days.map((day) => {
-					const dayShifts = shifts
-						.filter((s) => s.weekday === day.weekday)
-						.sort((a, b) => a.startTime.localeCompare(b.startTime))
+				{cards.map((card) => {
+					const cardAssignments = assignmentsByRecurrence.get(card.id) ?? []
 
 					return (
-						<div key={day.weekday} className="space-y-3">
-							<h2 className="text-lg font-semibold">{day.label}</h2>
-
-							{dayShifts.map((shift) => (
-								<ShiftCard
-									key={shift.id}
-									shift={shift}
-									assignments={assignmentsByShift.get(shift.id) ?? []}
-									consultants={consultants}
-									setLocalAssignments={setLocalAssignments}
-								/>
-							))}
-						</div>
+						<ShiftCard
+							key={card.id}
+							shift={card.shift}
+							recurrence={card.recurrence}
+							assignments={cardAssignments}
+							consultants={consultants}
+							setLocalAssignments={setLocalAssignments}
+						/>
 					)
 				})}
 			</div>
@@ -140,17 +181,19 @@ export function ShiftScheduler({
 
 function ShiftCard({
 	shift,
+	recurrence,
 	assignments,
 	consultants,
 	setLocalAssignments,
 }: {
 	shift: Shift
+	recurrence: Recurrence
 	assignments: Assignment[]
 	consultants: Consultant[]
 	setLocalAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>
 }) {
 	const { setNodeRef, isOver } = useDroppable({
-		id: `shift-${shift.id}`,
+		id: recurrence.id, // droppable target is recurrence id
 	})
 
 	return (
@@ -159,15 +202,21 @@ function ShiftCard({
 			className={cn(
 				'p-3 border rounded-lg space-y-2 transition-colors',
 				isOver && 'border-primary bg-primary/5',
-				!shift.isActive && 'opacity-50'
+				(!shift.isActive || !recurrence.isActive) && 'opacity-50'
 			)}
 		>
-			<div className="flex items-center justify-between">
-				<div className="text-sm font-semibold">
-					{toAmPm(shift.startTime)} – {toAmPm(shift.endTime)}
+			<div className="flex items-center justify-between gap-2">
+				<div className="min-w-0">
+					<div className="text-sm font-semibold">
+						{toAmPm(shift.startTime)} – {toAmPm(shift.endTime)}
+					</div>
+					<div className="text-xs text-muted-foreground truncate">
+						{recurrence.label}
+					</div>
 				</div>
+
 				<AddConsultantDialog
-					shiftId={shift.id}
+					shiftRecurrenceId={recurrence.id}
 					consultants={consultants}
 					setLocalAssignments={setLocalAssignments}
 				/>
@@ -189,11 +238,11 @@ function ShiftCard({
 }
 
 function AddConsultantDialog({
-	shiftId,
+	shiftRecurrenceId,
 	consultants,
 	setLocalAssignments,
 }: {
-	shiftId: string
+	shiftRecurrenceId: string
 	consultants: Consultant[]
 	setLocalAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>
 }) {
@@ -214,7 +263,7 @@ function AddConsultantDialog({
 			...prev,
 			{
 				id: tempId,
-				shiftId,
+				shiftRecurrenceId,
 				userId: consultant.id,
 				isPrimary: true,
 				userName: consultant.name,
@@ -227,16 +276,21 @@ function AddConsultantDialog({
 			const res = await fetch('/api/shifts/assignments', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ userId: consultant.id, shiftId }),
+				body: JSON.stringify({ userId: consultant.id, shiftRecurrenceId }),
 			})
 
-			const data = await res.json()
+			if (!res.ok) throw new Error('Failed to create assignment')
+			const data: { id: string } = await res.json()
 
 			setLocalAssignments((prev) =>
 				prev.map((a) => (a.id === tempId ? { ...a, id: data.id } : a))
 			)
 
 			setOpen(false)
+		} catch (e) {
+			// rollback
+			setLocalAssignments((prev) => prev.filter((a) => a.id !== tempId))
+			console.error(e)
 		} finally {
 			setLoading(false)
 		}
@@ -304,7 +358,9 @@ function DraggableAssignmentChip({ assignment }: { assignment: Assignment }) {
 				isDragging && 'ring-2 ring-primary shadow-lg'
 			)}
 		>
-			<span className="truncate">{assignment.userName}</span>
+			<span className="truncate">
+				{assignment.userName ?? assignment.userEmail}
+			</span>
 			<Badge variant="outline" className="ml-2 text-[9px]">
 				{assignment.userRole}
 			</Badge>

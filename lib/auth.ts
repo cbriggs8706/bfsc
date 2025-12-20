@@ -124,10 +124,17 @@ export const authOptions: NextAuthOptions = {
 		},
 
 		async redirect({ url, baseUrl }) {
-			// Let provider callback URLs go unmodified
-			if (url.includes('/api/auth/callback')) return url
+			// Allow relative redirects
+			if (url.startsWith('/')) {
+				return `${baseUrl}${url}`
+			}
 
-			// After successful login, just go to /en/dashboard for now
+			// Allow same-origin absolute redirects
+			if (url.startsWith(baseUrl)) {
+				return url
+			}
+
+			// Fallback for anything unsafe
 			return `${baseUrl}/en/home`
 		},
 	},

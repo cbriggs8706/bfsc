@@ -1,4 +1,6 @@
-import { CoursesManager } from '@/components/training/admin/CoursesManager'
+// app/[locale]/admin/training/courses/page.tsx
+
+import { CoursesManager } from '@/components/admin/training/CoursesManager'
 import { db } from '@/db'
 import { learningCourses } from '@/db'
 import { asc } from 'drizzle-orm'
@@ -15,6 +17,7 @@ export default async function AdminCoursesPage({ params }: Props) {
 			id: learningCourses.id,
 			title: learningCourses.title,
 			slug: learningCourses.slug,
+			sortOrder: learningCourses.sortOrder,
 		})
 		.from(learningCourses)
 		.orderBy(asc(learningCourses.sortOrder))

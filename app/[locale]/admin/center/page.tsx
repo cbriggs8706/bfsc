@@ -1,4 +1,4 @@
-// app/[locale]/admin/shifts/define/page.tsx
+// app/[locale]/admin/center/page.tsx
 
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'

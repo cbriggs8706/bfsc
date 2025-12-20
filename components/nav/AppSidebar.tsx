@@ -25,7 +25,7 @@ import { NavConsultant } from './NavConsultant'
 import { NavMain } from './NavMain'
 import { SidebarLanguageSwitcher } from './SidebarLanguageSwitcher'
 import { NavPatron } from './NavPatron'
-import { SidebarCalendar } from '../custom/SidebarCalendar'
+import { SidebarCalendar } from './SidebarCalendar'
 
 type Weekly = {
 	id: string
@@ -84,12 +84,21 @@ export function AppSidebar({
 				</SidebarMenu>
 			</SidebarHeader>
 			<SidebarContent>
-				{['Admin', 'Director', 'Assistant Director'].includes(role) && (
+				<NavMain items={data.navMain} />
+				{/* {[
+					'Admin',
+					'Director',
+					'Assistant Director',
+					'High Councilman',
+					'Consultant',
+					'Shift Lead',
+					'Patron',
+				].includes(role) && (
 					<>
-						<NavAdmin admin={data.admin} label={t('sidebar.admin.title')} />
+						<NavPatron items={data.patron} label={t('sidebar.patron.title')} />
 						<Separator className="my-0" />
 					</>
-				)}
+				)} */}
 				{[
 					'Admin',
 					'Director',
@@ -106,24 +115,19 @@ export function AppSidebar({
 						<Separator className="my-0" />
 					</>
 				)}
-				{[
-					'Admin',
-					'Director',
-					'Assistant Director',
-					'High Councilman',
-					'Consultant',
-					'Shift Lead',
-					'Patron',
-				].includes(role) && (
+				{['Admin', 'Director', 'Assistant Director'].includes(role) && (
 					<>
-						<NavPatron items={data.patron} label={t('sidebar.patron.title')} />
+						<NavAdmin admin={data.admin} label={t('sidebar.admin.title')} />
 						<Separator className="my-0" />
 					</>
 				)}
-				<NavMain items={data.navMain} />
 			</SidebarContent>
 			<SidebarFooter>
-				<SidebarCalendar specials={specials} weekly={weekly} />
+				<SidebarCalendar
+					specials={specials}
+					weekly={weekly}
+					locale={locale as string}
+				/>
 				<SidebarLanguageSwitcher
 					locale={(locale as string) ?? 'en'}
 					label={t('sidebar.main.language')}

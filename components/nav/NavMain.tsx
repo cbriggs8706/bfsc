@@ -58,7 +58,7 @@ export function NavMain({
 							<SidebarMenuButton asChild tooltip={item.title}>
 								<a href={item.url}>
 									<item.icon />
-									<span className="text-lg">{item.title}</span>
+									<span className="text-sm">{item.title}</span>
 									{/* 🔴 Mention badge */}
 									{item.isMentionItem && count > 0 && (
 										<span className="absolute right-2 top-1 h-4 min-w-4 rounded-full bg-red-500 px-1 text-[10px] text-white flex items-center justify-center">
@@ -84,7 +84,7 @@ export function NavMain({
 															href={subItem.url}
 															className="flex items-center justify-between gap-2 w-full"
 														>
-															<span className="text-lg">{subItem.title}</span>
+															<span className="text-sm">{subItem.title}</span>
 
 															{subItem.badgeKey &&
 																counts[subItem.badgeKey] > 0 && (

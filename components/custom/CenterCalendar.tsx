@@ -47,6 +47,7 @@ import {
 
 import { toAmPm, formatLongDate } from '@/utils/time'
 import { formatHourShort } from '@/lib/date'
+import { getDayInfo } from '@/lib/calendar/day-info'
 
 /* ============================
    TYPES
@@ -176,41 +177,41 @@ export default function CenterCalendar({
 	   DAY INFO
 	============================ */
 
-	const getDayInfo = (date: Date) => {
-		const key = ymd(date)
-		const special = specialsMap.get(key)
+	// const getDayInfo = (date: Date) => {
+	// 	const key = ymd(date)
+	// 	const special = specialsMap.get(key)
 
-		if (special) {
-			return {
-				isClosed: special.isClosed,
-				opensAt: special.opensAt,
-				closesAt: special.closesAt,
-				reason: special.reason,
-				source: 'special' as const,
-			}
-		}
+	// 	if (special) {
+	// 		return {
+	// 			isClosed: special.isClosed,
+	// 			opensAt: special.opensAt,
+	// 			closesAt: special.closesAt,
+	// 			reason: special.reason,
+	// 			source: 'special' as const,
+	// 		}
+	// 	}
 
-		const weekday = date.getDay()
-		const w = weekly.find((w) => w.weekday === weekday)
+	// 	const weekday = date.getDay()
+	// 	const w = weekly.find((w) => w.weekday === weekday)
 
-		if (!w) {
-			return {
-				isClosed: true,
-				opensAt: null,
-				closesAt: null,
-				reason: null,
-				source: 'missing' as const,
-			}
-		}
+	// 	if (!w) {
+	// 		return {
+	// 			isClosed: true,
+	// 			opensAt: null,
+	// 			closesAt: null,
+	// 			reason: null,
+	// 			source: 'missing' as const,
+	// 		}
+	// 	}
 
-		return {
-			isClosed: w.isClosed,
-			opensAt: w.opensAt,
-			closesAt: w.closesAt,
-			reason: null,
-			source: 'weekly' as const,
-		}
-	}
+	// 	return {
+	// 		isClosed: w.isClosed,
+	// 		opensAt: w.opensAt,
+	// 		closesAt: w.closesAt,
+	// 		reason: null,
+	// 		source: 'weekly' as const,
+	// 	}
+	// }
 
 	/* ============================
 	   NAVIGATION
@@ -295,7 +296,7 @@ export default function CenterCalendar({
 	}
 
 	const DayDetails = ({ date }: { date: Date }) => {
-		const info = getDayInfo(date)
+		const info = getDayInfo(date, specials, weekly)
 		const key = ymd(date)
 		const dayClasses = classesByDate.get(key) ?? []
 
@@ -364,7 +365,7 @@ export default function CenterCalendar({
 					{days.map((d) => {
 						const key = ymd(d)
 						const dayClasses = classesByDate.get(key) ?? []
-						const info = getDayInfo(d)
+						const info = getDayInfo(d, specials, weekly)
 						const inMonth = isSameMonth(d, viewDate)
 
 						return (
@@ -509,7 +510,7 @@ export default function CenterCalendar({
 										<div className="font-medium">
 											{format(d, isMobile ? 'EEE d' : 'EEEE d')}
 										</div>
-										{getDayInfo(d).isClosed && (
+										{getDayInfo(d, specials, weekly).isClosed && (
 											<Badge
 												variant="destructive"
 												className="h-5 px-2 text-[10px]"
@@ -638,7 +639,7 @@ export default function CenterCalendar({
 			<div className="rounded-md border bg-card overflow-hidden ">
 				<div className="p-3 border-b flex items-center justify-between bg-primary/70">
 					<div className="font-medium">{format(day, 'EEEE, MMM d, yyyy')}</div>
-					{getDayInfo(day).isClosed && (
+					{getDayInfo(day, specials, weekly).isClosed && (
 						<Badge variant="destructive" className="h-6">
 							Closed
 						</Badge>

@@ -135,6 +135,11 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				icon: Newspaper,
 				items: [],
 			},
+			{
+				title: t('sidebar.consultant.library'),
+				url: `/${locale}/library`,
+				icon: Book,
+			},
 		],
 
 		navSecondary: [
@@ -202,7 +207,7 @@ export function buildSidebarData(t: TFunction, locale: string) {
 		consultant: [
 			{
 				name: t('sidebar.consultant.shiftReport'),
-				url: `/${locale}/dashboard/reports/shifts`,
+				url: `/${locale}/reports/shifts`,
 				icon: Users2Icon,
 			},
 			{
@@ -210,10 +215,8 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				url: `/${locale}/classes`,
 				icon: Lectern,
 			},
-		],
-		patron: [
 			{
-				title: t('sidebar.cases.title'),
+				name: t('sidebar.cases.title'),
 				url: `/${locale}/cases`,
 				icon: Ticket,
 				items: CASE_VIEWS.map((v) => ({
@@ -223,18 +226,21 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				})),
 			},
 			{
-				title: t('sidebar.cases.mentions'),
+				name: t('sidebar.cases.mentions'),
 				url: `/${locale}/cases/mentions`,
 				icon: AtSign,
 				isMentionItem: true,
 				items: [],
 			},
 			{
-				title: t('sidebar.consultant.library'),
-				url: `/${locale}/library`,
-				icon: Book,
+				name: t('sidebar.consultant.training'),
+				url: `/${locale}/training`,
+				icon: GraduationCap,
+				// isMentionItem: true,
+				items: [],
 			},
 		],
+		patron: [],
 
 		lesson: [{ name: t('sidebar.lesson.scripts'), url: '#', icon: LetterText }],
 	}

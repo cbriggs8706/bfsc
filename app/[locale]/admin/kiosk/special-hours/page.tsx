@@ -1,3 +1,5 @@
+// app/[locale]/admin/kiosk/special-hours/page.tsx
+
 'use client'
 
 import { useEffect, useState } from 'react'

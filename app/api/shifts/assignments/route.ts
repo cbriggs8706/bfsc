@@ -6,11 +6,11 @@ import { shiftAssignments } from '@/db/schema/tables/shifts'
 
 export async function POST(req: NextRequest) {
 	try {
-		const { userId, shiftId } = await req.json()
+		const { userId, shiftRecurrenceId } = await req.json()
 
-		if (!userId || !shiftId) {
+		if (!userId || !shiftRecurrenceId) {
 			return NextResponse.json(
-				{ error: 'userId and shiftId are required' },
+				{ error: 'userId and shiftRecurrenceId are required' },
 				{ status: 400 }
 			)
 		}
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 			.insert(shiftAssignments)
 			.values({
 				userId,
-				shiftId,
+				shiftRecurrenceId,
 				isPrimary: true,
 			})
 			.returning({ id: shiftAssignments.id })
@@ -36,18 +36,18 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
 	try {
-		const { assignmentId, shiftId } = await req.json()
+		const { assignmentId, shiftRecurrenceId } = await req.json()
 
-		if (!assignmentId || !shiftId) {
+		if (!assignmentId || !shiftRecurrenceId) {
 			return NextResponse.json(
-				{ error: 'assignmentId and shiftId are required' },
+				{ error: 'assignmentId and shiftRecurrenceId are required' },
 				{ status: 400 }
 			)
 		}
 
 		await db
 			.update(shiftAssignments)
-			.set({ shiftId })
+			.set({ shiftRecurrenceId })
 			.where(eq(shiftAssignments.id, assignmentId))
 
 		return NextResponse.json({ ok: true })

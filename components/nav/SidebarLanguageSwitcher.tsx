@@ -52,7 +52,7 @@ export function SidebarLanguageSwitcher({
 					<DropdownMenuTrigger asChild>
 						<SidebarMenuButton size="lg">
 							<Globe className="size-4" />
-							<span className="flex-1 text-left text-xl">{label}</span>
+							<span className="flex-1 text-left text-sm">{label}</span>
 						</SidebarMenuButton>
 					</DropdownMenuTrigger>
 

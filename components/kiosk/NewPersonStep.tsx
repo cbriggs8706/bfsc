@@ -37,16 +37,16 @@ export function NewPersonStep({
 	faiths,
 	faithId,
 	wardId,
-	positions,
 	wards,
-	selectedPositionIds,
 	setEmail,
 	setPhone,
 	setFaithId,
 	setWardId,
-	setSelectedPositionIds,
 	onSubmit,
 }: Props) {
+	const selectedFaith = faiths.find((f) => f.id === faithId)
+	const isLds =
+		selectedFaith?.name === 'Church of Jesus Christ of Latter-day Saints'
 	return (
 		<div className="space-y-4">
 			<div>
@@ -88,7 +88,7 @@ export function NewPersonStep({
 				</select>
 			</div>
 
-			{faithId && (
+			{isLds && (
 				<div>
 					<Label>Ward</Label>
 					<select
@@ -108,7 +108,7 @@ export function NewPersonStep({
 							</optgroup>
 						))}
 					</select>
-					<div>
+					{/* <div>
 						<Label>Positions (optional)</Label>
 						<div className="space-y-2">
 							{positions.map((p) => (
@@ -128,7 +128,7 @@ export function NewPersonStep({
 								</label>
 							))}
 						</div>
-					</div>
+					</div> */}
 				</div>
 			)}
 

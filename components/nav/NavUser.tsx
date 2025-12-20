@@ -187,10 +187,10 @@ export function NavUser({
 								<CreditCard />
 								Billing
 							</DropdownMenuItem> */}
-							<DropdownMenuItem>
+							{/* <DropdownMenuItem>
 								<Bell />
 								{notifications}
-							</DropdownMenuItem>
+							</DropdownMenuItem> */}
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>

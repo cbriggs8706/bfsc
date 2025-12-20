@@ -1,3 +1,4 @@
+// app/[locale]/admin/announcements/create/page.tsx
 import { AnnouncementForm } from '@/components/admin/announcements/AnnouncementForm'
 import { insertAnnouncement } from '@/db/queries/announcements'
 import { revalidatePath } from 'next/cache'
