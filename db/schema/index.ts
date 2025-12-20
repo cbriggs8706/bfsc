@@ -10,6 +10,8 @@ export * from './tables/library'
 export * from './tables/newsletters'
 export * from './tables/faith'
 export * from './tables/training'
+export * from './tables/substitutes'
+export * from './tables/notifications'
 
 export * from './relations/auth.relations'
 export * from './relations/kiosk.relations'

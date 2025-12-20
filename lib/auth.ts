@@ -135,7 +135,7 @@ export const authOptions: NextAuthOptions = {
 			}
 
 			// Fallback for anything unsafe
-			return `${baseUrl}/en/home`
+			return `${baseUrl}/en`
 		},
 	},
 }

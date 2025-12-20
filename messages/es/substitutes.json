@@ -1,0 +1,58 @@
+{
+	"openRequestsTitle": "Solicitudes de sustitución abiertas",
+	"openRequests": "Solicitudes de sustitución abiertas",
+	"openRequestsEmpty": "No hay solicitudes de sustitución abiertas.",
+	"nominatedTitle": "Te han pedido que cubras un turno",
+	"nominatedRequest": "Solicitud nominada",
+	"requestedBy": "Solicitado por",
+	"requestedByYou": "Solicitado por ti",
+	"respond": "Responder",
+	"view": "Ver",
+	"tradeRequest": "Solicitud de intercambio",
+	"substituteRequest": "Solicitud de sustitución",
+	"unknownUser": "Usuario desconocido",
+	"shiftOn": "{date} · {time}",
+	"statusLabel": "Estado",
+	"status": {
+		"open": "Abierta",
+		"awaiting_request_confirmation": "En espera de confirmación",
+		"accepted": "Aceptada",
+		"cancelled": "Cancelada",
+		"expired": "Expirada"
+	},
+	"statusAcceptedBy": "Aceptada por {name}",
+	"askedToCover": "{name} te pidió que cubrieras este turno.",
+	"youVolunteered": "Te ofreciste como voluntario para cubrir este turno.",
+	"availability": {
+		"usually": "Normalmente disponible",
+		"maybe": "Tal vez disponible"
+	},
+	"youCreatedRequest": "Creaste esta solicitud de sustitución",
+	"confirm": "Confirmar",
+	"decline": "Rechazar",
+	"withdrawOffer": "Retirar oferta",
+	"volunteer": "Ofrecerse como sustituto",
+	"youAreCovering": "Actualmente estás cubriendo este turno.",
+	"withdrawFromShift": "Retirarse del turno",
+	"availableConsultants": "Consultores disponibles",
+	"cancelRequest": "Cancelar solicitud",
+	"request": "Solicitar",
+
+	"myUpcomingShifts": "Mis próximos turnos",
+	"noUpcomingShifts": "No hay turnos próximos.",
+	"viewAllSubstituteRequests": "Ver todas las solicitudes de sustitución",
+
+	"findSubstitute": "Buscar sustituto",
+	"viewRequest": "Ver solicitud",
+
+	"requestSent": "Solicitud enviada",
+	"waitingForAcceptance": "Esperando aceptación",
+
+	"confirmedBy": "{name} confirmó",
+	"substituteConfirmed": "Sustituto confirmado",
+	"viewDetails": "Ver detalles",
+
+	"requestAgain": "Solicitar de nuevo",
+
+	"exceptionApplied": "Excepción aplicada ({type})"
+}

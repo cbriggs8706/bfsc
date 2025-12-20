@@ -9,6 +9,8 @@ import { sql } from 'drizzle-orm'
 import { AnnouncementBanner } from '@/components/custom/AnnouncementBanner'
 import { getUserCertificates } from '@/db/queries/training'
 import { CertificatesGrid } from '@/components/training/CertificatesGrid'
+import ConsultantShiftsDashboard from '@/components/shifts/ConsultantShifts'
+import { getUpcomingShiftInstances } from '@/db/queries/shift-instances'
 
 interface DashboardPageProps {
 	params: Promise<{ locale: string }>
@@ -35,6 +37,7 @@ export default async function Page({ params }: DashboardPageProps) {
 		.orderBy(announcement.createdAt)
 
 	const certificates = await getUserCertificates(session.user.id)
+	const shiftInstances = await getUpcomingShiftInstances(session.user.id)
 
 	return (
 		<div className="p-4 space-y-4">
@@ -53,8 +56,12 @@ export default async function Page({ params }: DashboardPageProps) {
 				{/* 🎓 Certificates section */}
 				<div className="space-y-3">
 					<h2 className="text-xl font-semibold">Training Certificates</h2>
-
 					<CertificatesGrid certificates={certificates} locale={locale} />
+					<ConsultantShiftsDashboard
+						shifts={shiftInstances}
+						currentUserId={session.user.id}
+						locale={locale}
+					/>{' '}
 				</div>
 			</div>
 		</div>

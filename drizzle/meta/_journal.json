@@ -169,6 +169,27 @@
       "when": 1766185981490,
       "tag": "0023_illegal_thanos",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1766197094744,
+      "tag": "0024_marvelous_professor_monster",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1766210307037,
+      "tag": "0025_known_the_call",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1766250277735,
+      "tag": "0026_brown_tiger_shark",
+      "breakpoints": true
     }
   ]
 }

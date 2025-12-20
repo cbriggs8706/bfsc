@@ -1,0 +1,50 @@
+// app/[locale]/(consultants)/substitutes/calendar/page.tsx
+
+import { SubstituteCalendarClient } from '@/components/shifts/SubstituteCalendar'
+import { getOpenSubstituteRequests } from '@/db/queries/shifts'
+import {
+	getAcceptedSubstituteRequests,
+	getMyNominatedRequests,
+} from '@/db/queries/substitutes'
+import { getCurrentUser } from '@/lib/auth'
+
+type Props = {
+	params: Promise<{ locale: string }>
+}
+
+export default async function SubstituteCalendarPage({ params }: Props) {
+	const { locale } = await params
+	const user = await getCurrentUser()
+
+	const openRequests = user ? await getOpenSubstituteRequests(user.id) : []
+	const myNominations = user ? await getMyNominatedRequests(user.id) : []
+	const acceptedRequests = user
+		? await getAcceptedSubstituteRequests(user.id)
+		: []
+
+	// console.log(
+	// 	'openRequests (calendar input):',
+	// 	openRequests.map((r) => ({
+	// 		id: r.id,
+	// 		hasVolunteeredByMe: (r as any).hasVolunteeredByMe,
+	// 	}))
+	// )
+
+	console.log('acceptedRequests', acceptedRequests)
+	return (
+		<div className="p-4 space-y-6">
+			<div>
+				<h1 className="text-3xl font-bold">Substitute Calendar</h1>
+				<p className="text-sm text-muted-foreground">Lorem ipsum</p>
+			</div>
+
+			<SubstituteCalendarClient
+				requests={openRequests}
+				nominations={myNominations}
+				acceptedRequests={acceptedRequests}
+				currentUserId={user?.id ?? null}
+				locale={locale}
+			/>
+		</div>
+	)
+}

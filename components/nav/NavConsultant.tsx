@@ -1,20 +1,13 @@
+// components/nav/NavConsultant.tsx
 'use client'
 
-import {
-	Folder,
-	MoreHorizontal,
-	Share,
-	Trash2,
-	type LucideIcon,
-} from 'lucide-react'
+import { ChevronRight, type LucideIcon } from 'lucide-react'
 
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import {
 	SidebarGroup,
 	SidebarGroupLabel,
@@ -22,69 +15,92 @@ import {
 	SidebarMenuAction,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	useSidebar,
+	SidebarMenuSub,
+	SidebarMenuSubButton,
+	SidebarMenuSubItem,
 } from '@/components/ui/sidebar'
+import { MentionCount } from '@/components/cases/MentionCount'
+import { useSession } from 'next-auth/react'
+import { CaseView } from '@/lib/cases/views'
+import { useCaseCounts } from '../cases/UseCaseCounts'
+import { CountBadge } from './CountBadge'
+
+type NavItem = {
+	title: string
+	url: string
+	icon: LucideIcon
+	isActive?: boolean
+	isMentionItem?: boolean
+	items?: {
+		title: string
+		url: string
+		badgeKey?: CaseView
+	}[]
+}
 
 export function NavConsultant({
-	consultant,
+	items,
 	label,
 }: {
-	label: string
-	consultant: {
-		name: string
-		url: string
-		icon: LucideIcon
-	}[]
+	label?: string
+	items: NavItem[]
 }) {
-	const { isMobile } = useSidebar()
+	const { data: session } = useSession()
+	const { count } = MentionCount(session?.user?.id)
+	const { counts } = useCaseCounts()
 
 	return (
-		<SidebarGroup className="group-data-[collapsible=icon]:hidden">
+		<SidebarGroup>
 			<SidebarGroupLabel>{label}</SidebarGroupLabel>
 			<SidebarMenu>
-				{consultant.map((item) => (
-					<SidebarMenuItem key={item.name}>
-						<SidebarMenuButton asChild>
-							<a href={item.url}>
-								<item.icon />
-								<span className="text-sm">{item.name}</span>
-							</a>
-						</SidebarMenuButton>
-						{/* <DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<SidebarMenuAction showOnHover>
-									<MoreHorizontal />
-									<span className="sr-only">More</span>
-								</SidebarMenuAction>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent
-								className="w-48"
-								side={isMobile ? 'bottom' : 'right'}
-								align={isMobile ? 'end' : 'start'}
-							>
-								<DropdownMenuItem>
-									<Folder className="text-muted-foreground" />
-									<span>View Project</span>
-								</DropdownMenuItem>
-								<DropdownMenuItem>
-									<Share className="text-muted-foreground" />
-									<span>Share Project</span>
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem>
-									<Trash2 className="text-muted-foreground" />
-									<span>Delete Project</span>
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu> */}
-					</SidebarMenuItem>
+				{items.map((item) => (
+					<Collapsible key={item.title} asChild defaultOpen={item.isActive}>
+						<SidebarMenuItem>
+							<SidebarMenuButton asChild tooltip={item.title}>
+								<a href={item.url}>
+									<item.icon />
+									<span className="text-sm">{item.title}</span>
+									{item.isMentionItem && count > 0 && (
+										<CountBadge count={count} />
+									)}
+								</a>
+							</SidebarMenuButton>
+							{item.items?.length ? (
+								<>
+									<CollapsibleTrigger asChild>
+										<SidebarMenuAction className="data-[state=open]:rotate-90">
+											<ChevronRight />
+											<span className="sr-only">Toggle</span>
+										</SidebarMenuAction>
+									</CollapsibleTrigger>
+									<CollapsibleContent>
+										<SidebarMenuSub>
+											{item.items?.map((subItem) => (
+												<SidebarMenuSubItem key={subItem.title}>
+													<SidebarMenuSubButton asChild>
+														<a
+															href={subItem.url}
+															className="flex items-center justify-between gap-2 w-full"
+														>
+															<span className="text-sm">{subItem.title}</span>
+
+															{subItem.badgeKey &&
+																counts[subItem.badgeKey] > 0 && (
+																	<span className="h-5 min-w-5 rounded-full bg-muted px-1 text-[11px] flex items-center justify-center">
+																		{counts[subItem.badgeKey]}
+																	</span>
+																)}
+														</a>
+													</SidebarMenuSubButton>
+												</SidebarMenuSubItem>
+											))}
+										</SidebarMenuSub>
+									</CollapsibleContent>
+								</>
+							) : null}
+						</SidebarMenuItem>
+					</Collapsible>
 				))}
-				{/* <SidebarMenuItem>
-					<SidebarMenuButton>
-						<MoreHorizontal />
-						<span>More</span>
-					</SidebarMenuButton>
-				</SidebarMenuItem> */}
 			</SidebarMenu>
 		</SidebarGroup>
 	)

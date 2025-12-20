@@ -24,3 +24,19 @@ export type Day = {
 	opensAt: string
 	closesAt: string
 }
+
+export type ShiftInstance = {
+	shiftId: string
+	shiftRecurrenceId: string
+	date: string // YYYY-MM-DD
+
+	startTime: string
+	endTime: string
+
+	assignedUserIds: string[] // after exceptions applied
+
+	isException: boolean
+	exceptionType?: 'remove' | 'add' | 'replace'
+
+	notes?: string
+}

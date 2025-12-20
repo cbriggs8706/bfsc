@@ -28,6 +28,8 @@ import { Session } from 'next-auth'
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { useUserProfile } from '@/hooks/use-user-profile'
+import { useNotificationCount } from '@/hooks/use-notification-count'
+import { CountBadge } from './CountBadge'
 
 export function NavUser({
 	session,
@@ -50,6 +52,8 @@ export function NavUser({
 }) {
 	const { isMobile } = useSidebar()
 	const { profile } = useUserProfile()
+	const userId = session?.user?.id
+	const { count: notificationCount } = useNotificationCount(userId)
 
 	// --------------------------
 	// GUEST MODE (no session)
@@ -187,10 +191,16 @@ export function NavUser({
 								<CreditCard />
 								Billing
 							</DropdownMenuItem> */}
-							{/* <DropdownMenuItem>
-								<Bell />
-								{notifications}
-							</DropdownMenuItem> */}
+							<Link href={`/${locale}/notifications`}>
+								<DropdownMenuItem className="flex items-center justify-between gap-2">
+									<div className="flex items-center gap-2">
+										<Bell />
+										{notifications}
+									</div>
+
+									<CountBadge count={notificationCount} />
+								</DropdownMenuItem>
+							</Link>
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>

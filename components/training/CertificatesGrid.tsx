@@ -69,7 +69,7 @@ export function CertificatesGrid({ certificates, locale }: Props) {
 				{visible.map((cert) => (
 					<div
 						key={cert.id}
-						className="border rounded-lg p-4 space-y-2 relative"
+						className="border bg-card rounded-lg p-4 space-y-2 relative"
 					>
 						<CertificateBadge status={cert.status} />
 						{cert.badgeImageUrl && (

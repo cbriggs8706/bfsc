@@ -44,12 +44,12 @@ function safeRedirect(path: string, locale: string) {
 		const decoded = decodeURIComponent(path)
 
 		if (!decoded.startsWith(`/${locale}`)) {
-			return `/${locale}/home`
+			return `/${locale}`
 		}
 
 		return decoded
 	} catch {
-		return `/${locale}/home`
+		return `/${locale}`
 	}
 }
 
@@ -87,11 +87,11 @@ export function LoginForm({ redirectTo }: Props) {
 			// const role = session?.user?.role
 
 			// if (role === 'Admin') {
-			// 	router.push(`/${locale}/home`)
+			// 	router.push(`/${locale}`)
 			// } else {
-			// 	router.push(`/${locale}/home`)
+			// 	router.push(`/${locale}`)
 			// }
-			router.replace(res?.url ?? `/${locale}/home`)
+			router.replace(res?.url ?? `/${locale}`)
 		} catch {
 			toast.error(t('networkError') || 'Network error. Please try again.')
 		}

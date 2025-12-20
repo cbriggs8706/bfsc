@@ -1,0 +1,65 @@
+{
+	"openRequestsTitle": "Open Substitute Requests",
+	"openRequests": "Open Substitute Requests",
+	"openRequestsEmpty": "No open substitute requests.",
+	"nominatedTitle": "You’ve been asked to cover a shift",
+	"nominatedRequest": "Nominated request",
+	"requestedBy": "Requested by",
+	"requestedByYou": "Requested by you",
+	"respond": "Respond",
+	"view": "View",
+	"tradeRequest": "Trade request",
+	"substituteRequest": "Substitute request",
+	"unknownUser": "Unknown user",
+	"shiftOn": "{date} · {time}",
+	"statusLabel": "Status",
+	"status": {
+		"open": "Open",
+		"awaiting_request_confirmation": "Awaiting request confirmation",
+		"awaiting_nomination_confirmation": "Awaiting nomination confirmation",
+		"nominated": "Nomination Sent",
+		"accepted": "Accepted",
+		"cancelled": "Cancelled",
+		"expired": "Expired"
+	},
+	"statusAcceptedBy": "Accepted by {name}",
+	"askedToCover": "{name} asked if you could cover this shift.",
+	"youVolunteered": "You’ve volunteered to cover this shift.  It has not been accepted by the requester yet.",
+	"waitingForRequester": "Waiting for requester to accept your offer.",
+	"waitingForRequesterTitle": "Waiting for acceptance",
+	"waitingForYourResponse": "Waiting for your response",
+	"haveVolunteers": "You have volunteers",
+	"availability": {
+		"usually": "Usually available",
+		"maybe": "Maybe available"
+	},
+	"youCreatedRequest": "You created this substitute request",
+	"confirm": "Confirm",
+	"decline": "Decline",
+	"withdrawOffer": "Withdraw offer",
+	"volunteer": "Volunteer to substitute",
+	"youAreCovering": "You are currently covering this shift.",
+	"withdrawFromShift": "Withdraw from shift",
+	"availableConsultants": "Available Consultants",
+	"cancelRequest": "Cancel request",
+	"request": "Request",
+	"myUpcomingShifts": "My Upcoming Shifts",
+	"noUpcomingShifts": "No upcoming shifts.",
+	"viewAllSubstituteRequests": "View All Substitute Requests",
+
+	"findSubstitute": "Find substitute",
+	"viewRequest": "View sub request",
+
+	"requestSent": "Request sent",
+	"waitingForAcceptance": "Waiting for acceptance",
+
+	"confirmedBy": "{name} confirmed",
+	"substituteConfirmed": "Nominations You've Accepted",
+	"viewDetails": "View details",
+
+	"requestAgain": "Request again",
+
+	"exceptionApplied": "Exception applied ({type})",
+	"volunteersAvailable": "Volunteers Available",
+	"accept": "Accept"
+}

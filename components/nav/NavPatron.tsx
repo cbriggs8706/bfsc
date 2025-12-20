@@ -1,4 +1,4 @@
-// components/nav/NavMain.tsx
+// components/nav/NavPatron.tsx
 'use client'
 
 import { ChevronRight, type LucideIcon } from 'lucide-react'
@@ -23,6 +23,7 @@ import { MentionCount } from '@/components/cases/MentionCount'
 import { useSession } from 'next-auth/react'
 import { CaseView } from '@/lib/cases/views'
 import { useCaseCounts } from '../cases/UseCaseCounts'
+import { CountBadge } from './CountBadge'
 
 type NavItem = {
 	title: string
@@ -59,11 +60,8 @@ export function NavPatron({
 								<a href={item.url}>
 									<item.icon />
 									<span className="text-sm">{item.title}</span>
-									{/* 🔴 Mention badge */}
 									{item.isMentionItem && count > 0 && (
-										<span className="absolute right-2 top-1 h-4 min-w-4 rounded-full bg-red-500 px-1 text-[10px] text-white flex items-center justify-center">
-											{count}
-										</span>
+										<CountBadge count={count} />
 									)}
 								</a>
 							</SidebarMenuButton>

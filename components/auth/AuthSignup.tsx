@@ -66,7 +66,7 @@ export function SignUpForm() {
 					password: data.password,
 				})
 
-				router.push(`/${locale}/home`)
+				router.push(`/${locale}`)
 			} else {
 				const result = await res.json()
 				toast.error(result.error || t('failure') || '❌ Registration failed.')
@@ -115,7 +115,7 @@ export function SignUpForm() {
 					<Button
 						type="button"
 						className="w-full gap-3 mb-6"
-						onClick={() => signIn('google', { callbackUrl: `/${locale}/home` })}
+						onClick={() => signIn('google', { callbackUrl: `/${locale}` })}
 					>
 						<GoogleLogo />
 						{t('googleButton')}
@@ -220,7 +220,7 @@ export function SignUpForm() {
 					<p className="text-sm text-center text-muted-foreground">
 						{t('alreadyHaveAccount')}{' '}
 						<Link
-							href={`/${locale}/home`}
+							href={`/${locale}`}
 							className="underline hover:text-foreground"
 						>
 							{t('loginLink')}

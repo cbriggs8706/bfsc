@@ -66,7 +66,7 @@ export function AppSidebar({
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<SidebarMenuButton size="lg" asChild>
-							<a href={`/${locale}/home`}>
+							<a href={`/${locale}`}>
 								<div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
 									<Heart className="size-4" />
 								</div>
@@ -109,7 +109,7 @@ export function AppSidebar({
 				].includes(role) && (
 					<>
 						<NavConsultant
-							consultant={data.consultant}
+							items={data.consultant}
 							label={t('sidebar.consultant.title')}
 						/>
 						<Separator className="my-0" />

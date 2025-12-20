@@ -1,0 +1,58 @@
+{
+	"openRequestsTitle": "Solicitações de substituição abertas",
+	"openRequests": "Solicitações de substituição abertas",
+	"openRequestsEmpty": "Não há solicitações de substituição abertas.",
+	"nominatedTitle": "Você foi solicitado a cobrir um turno",
+	"nominatedRequest": "Solicitação indicada",
+	"requestedBy": "Solicitado por",
+	"requestedByYou": "Solicitado por você",
+	"respond": "Responder",
+	"view": "Ver",
+	"tradeRequest": "Solicitação de troca",
+	"substituteRequest": "Solicitação de substituição",
+	"unknownUser": "Usuário desconhecido",
+	"shiftOn": "{date} · {time}",
+	"statusLabel": "Status",
+	"status": {
+		"open": "Aberta",
+		"awaiting_request_confirmation": "Aguardando confirmação",
+		"accepted": "Aceita",
+		"cancelled": "Cancelada",
+		"expired": "Expirada"
+	},
+	"statusAcceptedBy": "Aceita por {name}",
+	"askedToCover": "{name} perguntou se você poderia cobrir este turno.",
+	"youVolunteered": "Você se ofereceu para cobrir este turno.",
+	"availability": {
+		"usually": "Normalmente disponível",
+		"maybe": "Talvez disponível"
+	},
+	"youCreatedRequest": "Você criou esta solicitação de substituição",
+	"confirm": "Confirmar",
+	"decline": "Recusar",
+	"withdrawOffer": "Retirar oferta",
+	"volunteer": "Oferecer-se como substituto",
+	"youAreCovering": "Você está cobrindo este turno no momento.",
+	"withdrawFromShift": "Retirar-se do turno",
+	"availableConsultants": "Consultores disponíveis",
+	"cancelRequest": "Cancelar solicitação",
+	"request": "Solicitar",
+
+	"myUpcomingShifts": "Meus próximos turnos",
+	"noUpcomingShifts": "Não há turnos futuros.",
+	"viewAllSubstituteRequests": "Ver todas as solicitações de substituição",
+
+	"findSubstitute": "Encontrar substituto",
+	"viewRequest": "Ver solicitação",
+
+	"requestSent": "Solicitação enviada",
+	"waitingForAcceptance": "Aguardando aceitação",
+
+	"confirmedBy": "{name} confirmou",
+	"substituteConfirmed": "Substituto confirmado",
+	"viewDetails": "Ver detalhes",
+
+	"requestAgain": "Solicitar novamente",
+
+	"exceptionApplied": "Exceção aplicada ({type})"
+}
