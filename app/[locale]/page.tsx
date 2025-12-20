@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { LANGUAGES } from '@/i18n/languages'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 export default async function Page({
 	params,
@@ -11,8 +12,8 @@ export default async function Page({
 	params: Promise<{ locale: string }>
 }) {
 	const { locale } = await params
+	redirect(`/${locale}/home`)
 	const t = await getTranslations({ locale, namespace: 'common' })
-
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,var(--green-accent),var(--background))] px-4">
 			<div className="mx-auto flex w-full max-w-lg flex-col items-center rounded-2xl border border-border bg-card/90 p-8 shadow-sm backdrop-blur">
