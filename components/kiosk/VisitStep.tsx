@@ -4,23 +4,14 @@
 import { Label } from '@/components/ui/label'
 import { PersonSummary, Purpose } from '@/types/kiosk'
 import { KioskButton } from './KioskButton'
-import { cn } from '@/lib/utils'
 
 type Props = {
 	person: PersonSummary
 	purposes: Purpose[]
-	selectedPurposeId: string
-	setSelectedPurposeId: (v: string) => void
-	onSubmit: () => void
+	onSubmit: (purposeId: number) => void
 }
 
-export function VisitStep({
-	person,
-	purposes,
-	selectedPurposeId,
-	setSelectedPurposeId,
-	onSubmit,
-}: Props) {
+export function VisitStep({ person, purposes, onSubmit }: Props) {
 	return (
 		<div className="space-y-4">
 			<div>
@@ -30,26 +21,15 @@ export function VisitStep({
 					<Label className="text-lg">What would you like to do today?</Label>
 
 					<div className="grid gap-3">
-						{purposes.map((p) => {
-							const isSelected = selectedPurposeId === String(p.id)
-
-							return (
-								<KioskButton
-									key={p.id}
-									variant={isSelected ? 'default' : 'secondary'}
-									className={cn(
-										'h-14 text-lg justify-start',
-										isSelected && 'ring-2 ring-primary'
-									)}
-									onClick={() => {
-										setSelectedPurposeId(String(p.id))
-										onSubmit()
-									}}
-								>
-									{p.name}
-								</KioskButton>
-							)
-						})}
+						{purposes.map((p) => (
+							<KioskButton
+								key={p.id}
+								className="h-14 text-lg justify-start"
+								onClick={() => onSubmit(p.id)}
+							>
+								{p.name}
+							</KioskButton>
+						))}
 					</div>
 				</div>
 			</div>

@@ -24,6 +24,7 @@ import { useTranslations } from 'next-intl'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
+import { Card } from '../ui/card'
 
 type Props = {
 	request: RequestDetail
@@ -59,6 +60,8 @@ export function SubstituteRequest({
 	const isAcceptedByMe =
 		isAccepted && request.acceptedBy?.userId === currentUserId
 
+	const requestsLocked = request.status !== 'open'
+
 	function initials(name?: string | null) {
 		if (!name) return '?'
 		const parts = name.trim().split(/\s+/)
@@ -86,68 +89,93 @@ export function SubstituteRequest({
 	/* ---------------- Render ---------------- */
 
 	return (
-		<div className="space-y-6 max-w-3xl">
-			<header>
-				<h2 className="text-xl font-semibold">
-					{t('shiftOn', {
-						date: request.date,
-						time: `${toAmPm(request.startTime)}–${toAmPm(request.endTime)}`,
-					})}
-				</h2>
-			</header>
+		<div className="space-y-4">
+			<Card className="p-5 md:p-6">
+				<div className="flex flex-col gap-5">
+					{/* Top row: Who + Delete */}
+					<div className="flex items-start justify-between gap-4">
+						<div className="flex items-start gap-4">
+							<Avatar className="h-20 w-20">
+								<AvatarImage
+									src={request.requestedBy.imageUrl ?? undefined}
+									alt={request.requestedBy.name}
+								/>
+								<AvatarFallback className="text-lg">
+									{initials(request.requestedBy.name)}
+								</AvatarFallback>
+							</Avatar>
+
+							<div>
+								<p className="text-2xl font-semibold leading-tight">
+									{request.requestedBy.name}
+								</p>
+								<p className="text-base text-muted-foreground">
+									Needs a substitute
+								</p>
+
+								<p className="text-base font-semibold mt-1">
+									{t('shiftOn', {
+										date: request.date,
+										time: `${toAmPm(request.startTime)}–${toAmPm(
+											request.endTime
+										)}`,
+									})}
+								</p>
+							</div>
+						</div>
+
+						{/* Cancel button (requester only) */}
+						{isRequester &&
+							request.status !== 'accepted' &&
+							request.status !== 'cancelled' &&
+							request.status !== 'expired' && (
+								<Button
+									variant="destructive"
+									size="sm"
+									disabled={busy}
+									onClick={handleCancelRequest}
+								>
+									{t('deleteRequest')}
+								</Button>
+							)}
+					</div>
+
+					{/* Status row */}
+					<div className="flex items-center gap-2 text-sm">
+						<span className="text-muted-foreground">{t('statusLabel')}:</span>
+
+						{request.status === 'accepted' && request.acceptedBy ? (
+							<div className="flex items-center gap-2 font-medium">
+								<Avatar className="h-5 w-5">
+									<AvatarImage
+										src={request.acceptedBy.imageUrl ?? undefined}
+										alt={request.acceptedBy.name}
+									/>
+									<AvatarFallback className="text-[10px]">
+										{initials(request.acceptedBy.name)}
+									</AvatarFallback>
+								</Avatar>
+
+								<span>
+									{t('statusAcceptedBy', {
+										name: request.acceptedBy.name,
+									})}
+								</span>
+							</div>
+						) : (
+							<span className="font-medium">
+								{t(`status.${request.status}`)}
+							</span>
+						)}
+					</div>
+				</div>
+			</Card>
 
 			<Separator />
 
-			<div className="flex items-center gap-2 text-sm">
-				<span className="text-muted-foreground">{t('statusLabel')}:</span>
-
-				{request.status === 'accepted' && request.acceptedBy ? (
-					<div className="flex items-center gap-2 font-medium">
-						<Avatar className="h-5 w-5">
-							<AvatarImage
-								src={request.acceptedBy.imageUrl ?? undefined}
-								alt={request.acceptedBy.name}
-							/>
-							<AvatarFallback className="text-[10px]">
-								{initials(request.acceptedBy.name)}
-							</AvatarFallback>
-						</Avatar>
-
-						<span>
-							{t('statusAcceptedBy', {
-								name: request.acceptedBy.name,
-							})}
-						</span>
-					</div>
-				) : (
-					<span className="font-medium">{t(`status.${request.status}`)}</span>
-				)}
-			</div>
-
-			{/* ================= Requester: Cancel Request ================= */}
-			{isRequester &&
-				request.status !== 'accepted' &&
-				request.status !== 'cancelled' &&
-				request.status !== 'expired' && (
-					<div className="border rounded p-4 bg-red-50 space-y-2">
-						<div className="text-sm text-muted-foreground">
-							{t('youCreatedRequest')}
-						</div>
-
-						<Button
-							type="button"
-							variant="destructive"
-							disabled={busy}
-							onClick={handleCancelRequest}
-						>
-							Cancel request
-						</Button>
-					</div>
-				)}
-
 			{/* ================= Nominated Consultant ================= */}
 			{isNominated && (
-				<div className="border rounded p-4 space-y-2">
+				<div className="border rounded p-4 space-y-2 bg-(--orange-accent-soft) border-(--orange-accent)">
 					<div className="flex items-center gap-3">
 						<Avatar>
 							<AvatarImage
@@ -181,7 +209,7 @@ export function SubstituteRequest({
 
 						<Button
 							type="button"
-							variant="outline"
+							variant="destructive"
 							onClick={async () => {
 								setBusy(true)
 								await declineNominatedSub(request.id)
@@ -244,7 +272,7 @@ export function SubstituteRequest({
 			{request.status === 'open' && !isRequester && !isNominated && (
 				<div>
 					{hasVolunteered ? (
-						<div className="border rounded p-4 space-y-2 bg-blue-50">
+						<div className="border rounded p-4 space-y-2 bg-(--purple-accent-soft) border-(--purle-accent)">
 							<div className="font-medium">{t('youVolunteered')}</div>
 
 							<Button
@@ -261,17 +289,26 @@ export function SubstituteRequest({
 							</Button>
 						</div>
 					) : (
-						<Button
-							type="button"
-							disabled={busy}
-							onClick={async () => {
-								setBusy(true)
-								await volunteerForSub(request.id)
-								location.reload()
-							}}
-						>
-							{t('volunteer')}
-						</Button>
+						<div className="border rounded p-4 space-y-4 bg-(--blue-accent-soft) border-(--blue-accent)">
+							<p>
+								By clicking volunteer, you are adding your name to a list of
+								consultants who are willing to cover this shift. The requester
+								will then accept your offer to confirm. The status will remain
+								open in the meantime.
+							</p>
+							<Button
+								type="button"
+								size="lg"
+								disabled={busy}
+								onClick={async () => {
+									setBusy(true)
+									await volunteerForSub(request.id)
+									location.reload()
+								}}
+							>
+								{t('volunteer')}
+							</Button>
+						</div>
 					)}
 				</div>
 			)}
@@ -280,7 +317,7 @@ export function SubstituteRequest({
 			{isRequester &&
 				request.status === 'awaiting_request_confirmation' &&
 				volunteers.some((v) => v.status === 'offered') && (
-					<div className="border rounded p-4 space-y-3 bg-green-50">
+					<div className="border rounded p-4 space-y-3 bg-(--green-logo-soft) border-(--green-logo)">
 						<div className="font-medium">{t('volunteersAvailable')}</div>
 
 						<ul className="space-y-2">
@@ -324,7 +361,7 @@ export function SubstituteRequest({
 			{!isRequester &&
 				hasVolunteered &&
 				request.status === 'awaiting_request_confirmation' && (
-					<div className="border rounded p-4 space-y-2 bg-blue-50">
+					<div className="border rounded p-4 space-y-2 bg-(--purple-accent-soft) border-(--purple-accent)">
 						<div className="font-medium">{t('youVolunteered')}</div>
 
 						<div className="text-sm text-muted-foreground">
@@ -348,7 +385,7 @@ export function SubstituteRequest({
 
 			{/* ================= Accepted By Me ================= */}
 			{isAcceptedByMe && (
-				<div className="border rounded p-4 space-y-2 bg-yellow-50">
+				<div className="border rounded p-4 space-y-2 bg-(--green-logo-soft) border-(--green-logo)">
 					<div className="font-medium">{t('youAreCovering')}</div>
 
 					<Button
@@ -373,12 +410,20 @@ export function SubstituteRequest({
 				request.status !== 'expired' &&
 				availabilityMatches.length > 0 && (
 					<>
-						<h3 className="text-lg font-semibold">
-							{' '}
+						<h3 className="text-xl font-semibold">
 							{t('availableConsultants')}
 						</h3>
+						<p>
+							Requesting a consultant makes this request private. When you click
+							Request, the shift is removed from the public substitute calendar
+							and shown only to the consultant you selected. You may request one
+							consultant at a time. If you want the shift to remain visible to
+							all consultants, do not click Request below. If you have already
+							asked a consultant to cover your shift, this would be the place to
+							request it so that they show up in the system as your substitute.
+						</p>
 
-						<ul className="space-y-2">
+						<ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							{availabilityMatches.map((m) => {
 								const alreadyRequested =
 									request.status === 'awaiting_nomination_confirmation' &&
@@ -400,9 +445,11 @@ export function SubstituteRequest({
 
 											<span className="font-medium">{m.user.name}</span>
 
-											<span className="text-xs text-muted-foreground">
-												({t(`availability.${m.matchLevel}`)})
-											</span>
+											{m.matchLevel !== 'none' && (
+												<span className="text-sm text-muted-foreground">
+													({t(`availability.${m.matchLevel}`)})
+												</span>
+											)}
 										</div>
 
 										{alreadyRequested ? (
@@ -423,7 +470,7 @@ export function SubstituteRequest({
 											<Button
 												type="button"
 												size="sm"
-												disabled={busy}
+												disabled={busy || requestsLocked}
 												onClick={() => handleNominate(m.user.userId)}
 											>
 												{t('request')}

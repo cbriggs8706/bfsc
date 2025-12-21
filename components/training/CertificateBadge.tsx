@@ -6,8 +6,8 @@ export function CertificateBadge({ status }: { status: CertificateStatus }) {
 	const styles: Record<CertificateStatus, string> = {
 		current: 'bg-(--green-logo-soft) text-(--green-logo) border-(--green-logo)',
 		renewal:
-			'bg-(--purple-accent-soft) text-(--purle-accent) border-(--purple-accent)',
-		expired: 'bg-(--red-accent-soft) text-(--red-accent) border(--red-accent)',
+			'bg-(--purple-accent-soft) text-(--purple-accent) border-(--purple-accent)',
+		expired: 'bg-(--red-accent-soft) text-(--red-accent) border-(--red-accent)',
 		external: '',
 	}
 
@@ -20,7 +20,7 @@ export function CertificateBadge({ status }: { status: CertificateStatus }) {
 
 	return (
 		<span
-			className={`absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded-full border ${styles[status]}`}
+			className={`text-[10px] px-2 py-0.5 rounded-full border whitespace-nowrap ${styles[status]}`}
 		>
 			{labels[status]}
 		</span>

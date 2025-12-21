@@ -1,4 +1,4 @@
-// app/[locale]/(public)/dashboard/layout.tsx
+// app/[locale]/(consultants)/layout.tsx
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -8,15 +8,12 @@ import {
 	SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
-import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbPage,
-	BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
+import AppBreadcrumbs from '@/components/nav/AppBreadcrumbs'
+
 import { AppSidebar } from '@/components/nav/AppSidebar'
+import { ConsultantAlerts } from '@/components/consultant/ConsultantAlerts'
+import { redirect } from 'next/navigation'
+import { MentionAlerts } from '@/components/cases/MentionAlerts'
 import { db, operatingHours, specialHours } from '@/db'
 import { eq } from 'drizzle-orm'
 
@@ -27,6 +24,7 @@ export default async function Layout({
 }) {
 	const session = await getServerSession(authOptions)
 	// if (!session) redirect(`/`)
+
 	const weekly = await db.select().from(operatingHours)
 	const specials = await db
 		.select()
@@ -35,6 +33,7 @@ export default async function Layout({
 
 	return (
 		<SidebarProvider>
+			{' '}
 			<AppSidebar
 				session={session}
 				role={session?.user?.role ?? 'Patron'}
@@ -42,6 +41,9 @@ export default async function Layout({
 				specials={specials}
 			/>
 			<SidebarInset>
+				{/* 🔔 Consultant realtime alerts */}
+				<MentionAlerts />
+				{session?.user?.role !== 'Patron' ? <ConsultantAlerts /> : null}
 				<header className="flex h-16 shrink-0 items-center gap-2">
 					<div className="flex items-center gap-2 px-4">
 						<SidebarTrigger className="-ml-1" />
@@ -51,18 +53,7 @@ export default async function Layout({
 							className="mr-2 data-[orientation=vertical]:h-4"
 						/>
 
-						{/* Replace with your actual dashboard breadcrumbs */}
-						<Breadcrumb>
-							<BreadcrumbList>
-								<BreadcrumbItem className="hidden md:block">
-									<BreadcrumbLink href="#">Dashboard</BreadcrumbLink>
-								</BreadcrumbItem>
-								<BreadcrumbSeparator className="hidden md:block" />
-								<BreadcrumbItem>
-									<BreadcrumbPage>Home</BreadcrumbPage>
-								</BreadcrumbItem>
-							</BreadcrumbList>
-						</Breadcrumb>
+						<AppBreadcrumbs />
 					</div>
 				</header>
 

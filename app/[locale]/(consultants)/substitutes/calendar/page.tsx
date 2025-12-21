@@ -7,6 +7,7 @@ import {
 	getMyNominatedRequests,
 } from '@/db/queries/substitutes'
 import { getCurrentUser } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 
 type Props = {
 	params: Promise<{ locale: string }>
@@ -15,6 +16,9 @@ type Props = {
 export default async function SubstituteCalendarPage({ params }: Props) {
 	const { locale } = await params
 	const user = await getCurrentUser()
+	if (!user) {
+		redirect(`/${locale}`)
+	}
 
 	const openRequests = user ? await getOpenSubstituteRequests(user.id) : []
 	const myNominations = user ? await getMyNominatedRequests(user.id) : []
@@ -42,7 +46,7 @@ export default async function SubstituteCalendarPage({ params }: Props) {
 				requests={openRequests}
 				nominations={myNominations}
 				acceptedRequests={acceptedRequests}
-				currentUserId={user?.id ?? null}
+				currentUserId={user.id}
 				locale={locale}
 			/>
 		</div>

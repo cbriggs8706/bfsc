@@ -1,5 +1,7 @@
 // types/kiosk.ts
 
+import { CertificateSummary } from './training'
+
 export type PersonSource = 'kiosk' | 'user'
 
 export type PersonSummary = {
@@ -34,3 +36,14 @@ export type KioskStep =
 	| 'shift'
 	| 'consultants'
 	| 'checkout' // ← future
+
+export type CurrentPresence = {
+	consultants: OnShiftConsultant[]
+	patrons: {
+		personId: string
+		fullName: string
+		profileImageUrl: string | null
+		purposeName: string | null
+	}[]
+	certificatesByUser: Record<string, CertificateSummary[]>
+}

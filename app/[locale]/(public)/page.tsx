@@ -1,4 +1,4 @@
-// app/[locale]/page.tsx
+// app/[locale]/(public)/page.tsx
 import Link from 'next/link'
 import Image from 'next/image'
 import { getPublicNewsletters } from '@/db/queries/newsletters'

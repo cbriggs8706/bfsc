@@ -1,8 +1,8 @@
 {
-	"openRequestsTitle": "Open Substitute Requests",
-	"openRequests": "Open Substitute Requests",
+	"openRequestsTitle": "Substitute Needs Needing Filled",
+	"openRequests": "Substitute Needs Needing Filled",
 	"openRequestsEmpty": "No open substitute requests.",
-	"nominatedTitle": "You’ve been asked to cover a shift",
+	"nominatedTitle": "New Requests",
 	"nominatedRequest": "Nominated request",
 	"requestedBy": "Requested by",
 	"requestedByYou": "Requested by you",
@@ -15,9 +15,9 @@
 	"statusLabel": "Status",
 	"status": {
 		"open": "Open",
-		"awaiting_request_confirmation": "Awaiting request confirmation",
-		"awaiting_nomination_confirmation": "Awaiting nomination confirmation",
-		"nominated": "Nomination Sent",
+		"awaiting_request_confirmation": "Awaiting volunteer acceptance",
+		"awaiting_nomination_confirmation": "Awaiting request confirmation",
+		"nominated": "Request Sent",
 		"accepted": "Accepted",
 		"cancelled": "Cancelled",
 		"expired": "Expired"
@@ -30,36 +30,38 @@
 	"waitingForYourResponse": "Waiting for your response",
 	"haveVolunteers": "You have volunteers",
 	"availability": {
-		"usually": "Usually available",
-		"maybe": "Maybe available"
+		"usually": "Usually available for this shift",
+		"maybe": "Maybe available for this shift"
 	},
 	"youCreatedRequest": "You created this substitute request",
 	"confirm": "Confirm",
 	"decline": "Decline",
 	"withdrawOffer": "Withdraw offer",
 	"volunteer": "Volunteer to substitute",
-	"youAreCovering": "You are currently covering this shift.",
-	"withdrawFromShift": "Withdraw from shift",
-	"availableConsultants": "Available Consultants",
+	"youAreCovering": "You have accepted to cover this shift.",
+	"withdrawFromShift": "Cancel your acceptance",
+	"availableConsultants": "BFSC Consultants",
 	"cancelRequest": "Cancel request",
 	"request": "Request",
 	"myUpcomingShifts": "My Upcoming Shifts",
 	"noUpcomingShifts": "No upcoming shifts.",
-	"viewAllSubstituteRequests": "View All Substitute Requests",
+	"viewAllSubstituteRequests": "View All Substitute Needs",
 
-	"findSubstitute": "Find substitute",
+	"findSubstitute": "Ask for a sub",
 	"viewRequest": "View sub request",
 
 	"requestSent": "Request sent",
 	"waitingForAcceptance": "Waiting for acceptance",
 
 	"confirmedBy": "{name} confirmed",
-	"substituteConfirmed": "Nominations You've Accepted",
+	"substituteConfirmed": "Requests You've Accepted",
 	"viewDetails": "View details",
 
 	"requestAgain": "Request again",
 
 	"exceptionApplied": "Exception applied ({type})",
 	"volunteersAvailable": "Volunteers Available",
-	"accept": "Accept"
+	"accept": "Accept",
+	"pendingRequest": "Pending Requests",
+	"deleteRequest": "Delete this request"
 }

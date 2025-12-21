@@ -99,6 +99,15 @@ export function CaseThread({
 	const [caseStatus, setCaseStatus] = useState(status)
 	const [investigating, setInvestigating] = useState(isInvestigating)
 
+	const PID_REGEX = /##([a-z0-9-]{7,8})/gi
+
+	function normalizePid(raw: string): string | null {
+		const cleaned = raw.replace(/[^a-z0-9]/gi, '').toUpperCase()
+		if (cleaned.length !== 7) return null
+
+		return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`
+	}
+
 	function getStatusMeta(status: string) {
 		switch (status) {
 			case 'investigating':
@@ -107,6 +116,7 @@ export function CaseThread({
 					className:
 						'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
 				}
+			// TODO update these colors
 			case 'waiting':
 				return {
 					label: 'Waiting',
@@ -291,19 +301,57 @@ export function CaseThread({
 	}
 
 	/* ================= RENDER ================= */
+	// function renderBody(text: string) {
+	// 	return text.split(/(@[\w.-]+)/g).map((part, i) =>
+	// 		part.startsWith('@') ? (
+	// 			<span
+	// 				key={i}
+	// 				className="text-green-600 dark:text-green-400 font-medium"
+	// 			>
+	// 				{part}
+	// 			</span>
+	// 		) : (
+	// 			<span key={i}>{part}</span>
+	// 		)
+	// 	)
+	// }
+
 	function renderBody(text: string) {
-		return text.split(/(@[\w.-]+)/g).map((part, i) =>
-			part.startsWith('@') ? (
-				<span
-					key={i}
-					className="text-green-600 dark:text-green-400 font-medium"
-				>
-					{part}
-				</span>
-			) : (
-				<span key={i}>{part}</span>
-			)
-		)
+		const parts = text.split(/(\[\[PID:[A-Z0-9-]+\]\]|@[\w.-]+)/g)
+
+		return parts.map((part, i) => {
+			// PID token
+			if (part.startsWith('[[PID:')) {
+				const pid = part.slice(6, -2)
+				const url = `https://www.familysearch.org/en/tree/person/details/${pid}`
+
+				return (
+					<a
+						key={i}
+						href={url}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="text-(--blue-accent) dark:text-(--blue-accent-soft) underline font-medium"
+					>
+						{pid}
+					</a>
+				)
+			}
+
+			// Mention
+			if (part.startsWith('@')) {
+				return (
+					<span
+						key={i}
+						className="text-(--green-logo) dark:text-(--green-logo-soft) font-medium"
+					>
+						{part}
+					</span>
+				)
+			}
+
+			return <span key={i}>{part}</span>
+		})
 	}
 
 	function renderNode(node: CommentNode, depth = 0) {
@@ -332,10 +380,24 @@ export function CaseThread({
 
 						{editing?.id === node.id ? (
 							<>
-								<Textarea
+								{/* <Textarea
 									value={editDraft}
 									onChange={(e) => setEditDraft(e.target.value)}
+								/> */}
+								<Textarea
+									value={editDraft}
+									onChange={(e) => {
+										let value = e.target.value
+
+										value = value.replace(PID_REGEX, (_, raw) => {
+											const pid = normalizePid(raw)
+											return pid ? `[[PID:${pid}]]` : _
+										})
+
+										setEditDraft(value)
+									}}
 								/>
+
 								<div className="mt-1 flex gap-2 text-xs">
 									<button className="text-primary" onClick={submitEdit}>
 										Save
@@ -406,13 +468,21 @@ export function CaseThread({
 										autoFocus
 										value={inlineDraft}
 										onChange={(e) => {
-											setInlineDraft(e.target.value)
+											let value = e.target.value
+
+											value = value.replace(PID_REGEX, (_, raw) => {
+												const pid = normalizePid(raw)
+												return pid ? `[[PID:${pid}]]` : _
+											})
+
+											setInlineDraft(value)
+
 											inlineMentions.onChange(
-												e.target.value,
-												e.target.selectionStart ?? e.target.value.length
+												value,
+												e.target.selectionStart ?? value.length
 											)
 										}}
-										placeholder="Write a reply…"
+										placeholder="Write a reply…use @ to type a user's name, ## to type a PID that links to FamilySearch."
 									/>
 								</div>
 
@@ -638,13 +708,21 @@ export function CaseThread({
 						rows={3}
 						value={draft}
 						onChange={(e) => {
-							setDraft(e.target.value)
+							let value = e.target.value
+
+							value = value.replace(PID_REGEX, (_, raw) => {
+								const pid = normalizePid(raw)
+								return pid ? `[[PID:${pid}]]` : _
+							})
+
+							setDraft(value)
+
 							footerMentions.onChange(
-								e.target.value,
-								e.target.selectionStart ?? e.target.value.length
+								value,
+								e.target.selectionStart ?? value.length
 							)
 						}}
-						placeholder="Write a comment…"
+						placeholder="Write a comment…use @ to type a user's name, ## to type a PID that links to FamilySearch."
 					/>
 				</div>
 

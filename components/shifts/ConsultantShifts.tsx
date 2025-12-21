@@ -67,6 +67,25 @@ function getSubRequestUIState(
 	}
 }
 
+function getSubRequestContainerClasses(state: SubRequestUIState): string {
+	switch (state) {
+		case 'awaiting_request_confirmation':
+			return 'bg-[color:var(--purple-accent-soft)] border-[color:var(--purple-accent)]'
+
+		case 'awaiting_nomination_confirmation':
+			return 'bg-[color:var(--orange-accent-soft)] border-[color:var(--orange-accent)]'
+
+		case 'accepted':
+			return 'bg-[color:var(--green-logo-soft)] border-[color:var(--green-logo)]'
+
+		case 'open':
+			return 'bg-[color:var(--blue-accent-soft)] border-[color:var(--blue-accent)]'
+
+		default:
+			return 'bg-muted/30 border-border'
+	}
+}
+
 function SubstituteAction({
 	shift,
 	locale,
@@ -249,28 +268,41 @@ export default function ConsultantShiftsDashboard({
 								</CardHeader>
 
 								<CardContent className="space-y-2">
-									{shifts.map((shift) => (
-										<div
-											key={`${shift.shiftId}-${shift.date}`}
-											className="flex items-center justify-between gap-3"
-										>
-											<div className="min-w-0">
-												<div className="font-medium">
-													{format(parseISO(shift.date), 'EEE MMM d')} ·{' '}
-													{toAmPm(shift.startTime)}–{toAmPm(shift.endTime)}
-												</div>
+									{shifts.map((shift) => {
+										const state = getSubRequestUIState(shift.subRequest)
+										return (
+											<div
+												key={`${shift.shiftId}-${shift.date}`}
+												className={`rounded-lg border p-3 ${getSubRequestContainerClasses(
+													state
+												)}`}
+											>
+												<div className="grid gap-2 md:grid-cols-[1fr_auto] md:items-center">
+													{/* Left: shift info */}
+													<div className="min-w-0 space-y-1">
+														<div className="font-medium leading-tight">
+															{format(parseISO(shift.date), 'EEE MMM d')}
+														</div>
 
-												{shift.isException && (
-													<div className="text-xs text-muted-foreground">
-														Exception applied ({shift.exceptionType})
-														{/* {t('exceptionApplied', { type: shift.exceptionType })} */}
+														<div className="text-sm text-muted-foreground">
+															{toAmPm(shift.startTime)}–{toAmPm(shift.endTime)}
+														</div>
+
+														{shift.isException && (
+															<div className="text-xs text-muted-foreground">
+																Exception applied ({shift.exceptionType})
+															</div>
+														)}
 													</div>
-												)}
-											</div>
 
-											<SubstituteAction shift={shift} locale={locale} />
-										</div>
-									))}
+													{/* Right: actions */}
+													<div className="flex md:justify-end">
+														<SubstituteAction shift={shift} locale={locale} />
+													</div>
+												</div>
+											</div>
+										)
+									})}
 								</CardContent>
 							</Card>
 						)

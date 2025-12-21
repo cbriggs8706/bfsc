@@ -28,12 +28,13 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '../ui/card'
+import { OpenRequestsSection } from './OpenRequestsSection'
 
 type Props = {
 	requests: CalendarRequest[]
 	nominations: CalendarRequest[]
 	acceptedRequests: CalendarRequest[]
-	currentUserId: string | null
+	currentUserId: string
 	locale: string
 }
 
@@ -66,11 +67,6 @@ export function SubstituteCalendarClient({
 		return (first + last).toUpperCase() || '?'
 	}
 
-	function isMine(r: CalendarRequest) {
-		return !!currentUserId && r.requestedBy.userId === currentUserId
-	}
-
-	// ✅ CORRECTLY derived from server boolean
 	const waitingForAcceptance = requests.filter((r) => r.hasVolunteeredByMe)
 
 	const openRequests = requests.filter((r) => !r.hasVolunteeredByMe)
@@ -79,16 +75,15 @@ export function SubstituteCalendarClient({
 
 	return (
 		<div className="space-y-8">
-			{/* ================= Accepted ================= */}
-			{acceptedRequests.length > 0 && (
-				<div className="space-y-2">
-					<h2 className="text-2xl font-semibold">{t('substituteConfirmed')}</h2>
-
+			{/* ================= Nominated ================= */}
+			{nominations.length > 0 && (
+				<div>
+					<h2 className="text-2xl font-semibold">{t('nominatedTitle')}</h2>
 					<ul className="space-y-2">
-						{acceptedRequests.map((r) => (
+						{nominations.map((r) => (
 							<li
 								key={r.id}
-								className="flex items-center justify-between border rounded p-3 bg-green-50 border-green-300"
+								className="flex items-center justify-between border rounded p-3 bg-(--orange-accent-soft) border-(--orange-accent)"
 							>
 								<div>
 									<div className="font-medium">
@@ -97,7 +92,7 @@ export function SubstituteCalendarClient({
 									</div>
 
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">
-										<Avatar className="h-5 w-5">
+										<Avatar className="h-8 w-8">
 											<AvatarImage src={r.requestedBy.imageUrl ?? undefined} />
 											<AvatarFallback className="text-[10px]">
 												{initials(r.requestedBy.name)}
@@ -111,11 +106,11 @@ export function SubstituteCalendarClient({
 									</div>
 								</div>
 
-								<Link
-									href={`/${locale}/substitutes/request/${r.id}`}
-									className="text-sm underline text-green-700"
-								>
-									{t('viewDetails')}
+								<Link href={`/${locale}/substitutes/request/${r.id}`}>
+									<Button variant="default" size="sm">
+										{' '}
+										{t('respond')}
+									</Button>
 								</Link>
 							</li>
 						))}
@@ -123,55 +118,43 @@ export function SubstituteCalendarClient({
 				</div>
 			)}
 
-			{/* ================= Nominated ================= */}
-			{nominations.length > 0 && (
-				<div className="border rounded p-4 bg-yellow-50 space-y-2">
-					<h2 className="font-semibold text-yellow-800">
-						{t('nominatedTitle')}
-					</h2>
+			{/* ================= Accepted ================= */}
+			{acceptedRequests.length > 0 && (
+				<div className="space-y-2">
+					<h2 className="text-2xl font-semibold">{t('substituteConfirmed')}</h2>
 
 					<ul className="space-y-2">
-						{nominations.map((r) => (
+						{acceptedRequests.map((r) => (
 							<li
 								key={r.id}
-								className="flex items-center justify-between border rounded p-3 bg-yellow-100 border-yellow-300"
+								className="flex items-center justify-between border rounded p-3 bg-(--green-logo-soft) border-(--green-logo)"
 							>
-								<div className="flex items-center gap-2 text-sm text-muted-foreground">
-									<span>{t('requestedBy')}</span>
+								<div>
+									<div className="font-medium">
+										{format(parseISO(r.date), 'EEE MMM d')} ·{' '}
+										{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
+									</div>
 
-									<HoverCard>
-										<HoverCardTrigger asChild>
-											<span className="underline decoration-dotted cursor-help">
-												{r.requestedBy.name}
-											</span>
-										</HoverCardTrigger>
-										<HoverCardContent className="w-64">
-											<div className="flex items-center gap-3">
-												<Avatar className="h-6 w-6">
-													<AvatarFallback className="text-[10px]">
-														{initials(r.requestedBy.name)}
-													</AvatarFallback>
-												</Avatar>
+									<div className="flex items-center gap-2 text-sm text-muted-foreground">
+										<Avatar className="h-8 w-8">
+											<AvatarImage src={r.requestedBy.imageUrl ?? undefined} />
+											<AvatarFallback className="text-[10px]">
+												{initials(r.requestedBy.name)}
+											</AvatarFallback>
+										</Avatar>
 
-												<div>
-													<div className="font-medium">
-														{r.requestedBy.name}
-													</div>
-													<div className="text-xs text-muted-foreground">
-														{format(parseISO(r.date), 'MMMM d, yyyy')} ·{' '}
-														{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
-													</div>
-												</div>
-											</div>
-										</HoverCardContent>
-									</HoverCard>
+										<span>
+											{t('requestedBy')}{' '}
+											<span className="font-medium">{r.requestedBy.name}</span>
+										</span>
+									</div>
 								</div>
 
-								<Link
-									href={`/${locale}/substitutes/request/${r.id}`}
-									className="text-sm underline font-medium text-yellow-700"
-								>
-									{t('respond')}
+								<Link href={`/${locale}/substitutes/request/${r.id}`}>
+									<Button variant="default" size="sm">
+										{' '}
+										{t('viewDetails')}
+									</Button>
 								</Link>
 							</li>
 						))}
@@ -181,18 +164,17 @@ export function SubstituteCalendarClient({
 
 			{/* ================= Waiting for Acceptance ================= */}
 			{waitingForAcceptance.length > 0 && (
-				<div className="border rounded p-4 bg-blue-50 space-y-2">
-					<h2 className="font-semibold text-blue-800">
-						{t('waitingForRequesterTitle')}
+				<div className="space-y-2">
+					<h2 className="text-2xl font-semibold">
+						{t('pendingRequest')} - {t('waitingForRequesterTitle')}
 					</h2>
-
 					<ul className="space-y-2">
 						{waitingForAcceptance.map((r) => (
 							<li
 								key={r.id}
-								className="flex items-center justify-between border rounded p-3 bg-blue-100 border-blue-300"
+								className="flex items-center justify-between border rounded p-3 bg-(--purple-accent-soft) border-(--purple-accent)"
 							>
-								<div>
+								{/* <div>
 									<div className="font-medium">
 										{format(parseISO(r.date), 'EEE MMM d')} ·{' '}
 										{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
@@ -208,6 +190,35 @@ export function SubstituteCalendarClient({
 									className="text-sm underline text-blue-700"
 								>
 									{t('viewDetails')}
+								</Link> */}
+								<div>
+									<div className="font-medium">
+										{format(parseISO(r.date), 'EEE MMM d')} ·{' '}
+										{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
+									</div>
+
+									<div className="flex items-center gap-2 text-sm text-muted-foreground">
+										<Avatar className="h-8 w-8">
+											<AvatarImage src={r.requestedBy.imageUrl ?? undefined} />
+											<AvatarFallback className="text-[10px]">
+												{initials(r.requestedBy.name)}
+											</AvatarFallback>
+										</Avatar>
+
+										<span>
+											{t('requestedBy')}{' '}
+											<span className="font-medium">
+												{r.requestedBy.name}. {t('waitingForRequester')}
+											</span>
+										</span>
+									</div>
+								</div>
+
+								<Link href={`/${locale}/substitutes/request/${r.id}`}>
+									<Button variant="default" size="sm">
+										{' '}
+										{t('viewDetails')}
+									</Button>
 								</Link>
 							</li>
 						))}
@@ -216,74 +227,31 @@ export function SubstituteCalendarClient({
 			)}
 
 			{/* ================= Open Requests ================= */}
-			<h2 className="text-2xl font-semibold">{t('openRequests')}</h2>
 
 			{openRequests.length === 0 ? (
-				<div className="text-sm text-muted-foreground">
-					{t('openRequestsEmpty')}
+				<div className="space-y-4">
+					<h2 className="text-2xl font-semibold">{t('openRequests')}</h2>
+					<div className="text-sm text-muted-foreground">
+						{t('openRequestsEmpty')}
+					</div>
 				</div>
 			) : (
-				<Card className="p-6">
-					<MonthCalendar
-						month={activeMonth}
-						onPrev={() => setActiveMonth((m) => subMonths(m, 1))}
-						onNext={() => setActiveMonth((m) => addMonths(m, 1))}
-						requestsByDay={openByDay}
+				<div className="space-y-4">
+					<OpenRequestsSection
+						openRequests={openRequests}
+						currentUserId={currentUserId}
 						locale={locale}
 					/>
-				</Card>
-			)}
-
-			{openRequests.length === 0 ? (
-				<div className="text-sm text-muted-foreground">
-					{t('openRequestsEmpty')}
+					<Card className="hidden md:block p-6">
+						<MonthCalendar
+							month={activeMonth}
+							onPrev={() => setActiveMonth((m) => subMonths(m, 1))}
+							onNext={() => setActiveMonth((m) => addMonths(m, 1))}
+							requestsByDay={openByDay}
+							locale={locale}
+						/>
+					</Card>
 				</div>
-			) : (
-				<ul className="space-y-2">
-					{openRequests.map((r) => (
-						<li
-							key={r.id}
-							className={
-								`flex items-center justify-between border rounded p-3 ` +
-								(isMine(r) ? 'bg-primary/5 border-primary/30' : '')
-							}
-						>
-							<div>
-								<div className="font-medium">
-									{format(parseISO(r.date), 'EEE MMM d')} ·{' '}
-									{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
-								</div>
-
-								<div className="flex items-center gap-2 text-sm text-muted-foreground">
-									<Avatar className="h-5 w-5">
-										<AvatarImage src={r.requestedBy.imageUrl ?? undefined} />
-										<AvatarFallback className="text-[10px]">
-											{initials(r.requestedBy.name)}
-										</AvatarFallback>
-									</Avatar>
-
-									<span>
-										{t('requestedBy')}{' '}
-										<span className="font-medium">
-											{r.requestedBy.name || t('unknownUser')}
-										</span>
-									</span>
-
-									{isMine(r) && (
-										<Badge variant="secondary">{t('requestedByYou')}</Badge>
-									)}
-								</div>
-							</div>
-
-							<Link
-								href={`/${locale}/substitutes/request/${r.id}`}
-								className="text-sm underline"
-							>
-								{t('view')}
-							</Link>
-						</li>
-					))}
-				</ul>
 			)}
 		</div>
 	)
@@ -352,7 +320,7 @@ export function MonthCalendar({
 						<div
 							key={key}
 							className={[
-								'min-h-[110px] bg-(--green-logo-soft) p-2 text-sm',
+								'min-h-20 bg-(--green-logo-soft) p-2 text-sm',
 								!inMonth && 'opacity-40',
 								isToday(day) && 'ring-1 ring-primary',
 							].join(' ')}
@@ -373,7 +341,7 @@ export function MonthCalendar({
 										<HoverCardTrigger asChild>
 											<Link
 												href={`/${locale}/substitutes/request/${r.id}`}
-												className="block truncate rounded bg-(--blue-accent) px-1 py-0.5 text-[11px] hover:bg-primary/20"
+												className="block truncate rounded bg-(--blue-accent) text-card px-1 py-0.5 text-[11px] hover:bg-(--green-logo)"
 											>
 												{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
 											</Link>

@@ -69,7 +69,7 @@ export type CalendarRequest = {
 
 export type AvailabilityMatch = {
 	user: UserSummary
-	matchLevel: 'usually' | 'maybe'
+	matchLevel: 'usually' | 'maybe' | 'none'
 }
 
 export type NotificationType =

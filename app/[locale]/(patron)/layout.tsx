@@ -1,4 +1,4 @@
-// app/[locale]/(consultants)/layout.tsx
+// app/[locale]/(patron)/layout.tsx
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -8,14 +8,8 @@ import {
 	SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
-import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbPage,
-	BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
+import AppBreadcrumbs from '@/components/nav/AppBreadcrumbs'
+
 import { AppSidebar } from '@/components/nav/AppSidebar'
 import { ConsultantAlerts } from '@/components/consultant/ConsultantAlerts'
 import { redirect } from 'next/navigation'
@@ -59,18 +53,7 @@ export default async function Layout({
 							className="mr-2 data-[orientation=vertical]:h-4"
 						/>
 
-						{/* Replace with your actual dashboard breadcrumbs */}
-						<Breadcrumb>
-							<BreadcrumbList>
-								<BreadcrumbItem className="hidden md:block">
-									<BreadcrumbLink href="#">Dashboard</BreadcrumbLink>
-								</BreadcrumbItem>
-								<BreadcrumbSeparator className="hidden md:block" />
-								<BreadcrumbItem>
-									<BreadcrumbPage>Home</BreadcrumbPage>
-								</BreadcrumbItem>
-							</BreadcrumbList>
-						</Breadcrumb>
+						<AppBreadcrumbs />
 					</div>
 				</header>
 

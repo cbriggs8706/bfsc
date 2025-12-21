@@ -11,6 +11,9 @@ import { getUserCertificates } from '@/db/queries/training'
 import { CertificatesGrid } from '@/components/training/CertificatesGrid'
 import ConsultantShiftsDashboard from '@/components/shifts/ConsultantShifts'
 import { getUpcomingShiftInstances } from '@/db/queries/shift-instances'
+import { OpenRequestsSection } from '@/components/shifts/OpenRequestsSection'
+import { getOpenSubstituteRequests } from '@/db/queries/shifts'
+import { CurrentShiftPanel } from '@/components/shifts/CurrentShiftPanel'
 
 interface DashboardPageProps {
 	params: Promise<{ locale: string }>
@@ -24,7 +27,7 @@ export default async function Page({ params }: DashboardPageProps) {
 	if (!session) redirect(`/${locale}`)
 
 	const role = session.user.role ?? 'Patron'
-
+	const user = session.user.id
 	// Fetch announcements visible to the user role and not expired
 	const announcements = await db
 		.select()
@@ -38,31 +41,32 @@ export default async function Page({ params }: DashboardPageProps) {
 
 	const certificates = await getUserCertificates(session.user.id)
 	const shiftInstances = await getUpcomingShiftInstances(session.user.id)
+	const requests = user ? await getOpenSubstituteRequests(user) : []
+	const openRequests = requests.filter((r) => !r.hasVolunteeredByMe)
 
 	return (
 		<div className="p-4 space-y-4">
-			{announcements.length > 0 && (
-				<div className="space-y-3">
-					{announcements.map((a) => (
-						<AnnouncementBanner key={a.id} announcement={a} />
-					))}
-				</div>
-			)}
-			<div>
-				<h1 className="text-3xl font-bold">
-					{role === 'admin' ? 'Admin Dashboard' : 'User Dashboard'}
-				</h1>
-
-				{/* 🎓 Certificates section */}
-				<div className="space-y-3">
-					<h2 className="text-xl font-semibold">Training Certificates</h2>
-					<CertificatesGrid certificates={certificates} locale={locale} />
-					<ConsultantShiftsDashboard
-						shifts={shiftInstances}
-						currentUserId={session.user.id}
-						locale={locale}
-					/>{' '}
-				</div>
+			<div className="space-y-8">
+				<h1 className="text-3xl font-bold">Dashboard</h1>
+				{announcements.length > 0 && (
+					<div className="space-y-3 mt-4">
+						{announcements.map((a) => (
+							<AnnouncementBanner key={a.id} announcement={a} />
+						))}
+					</div>
+				)}
+				<CurrentShiftPanel />
+				<CertificatesGrid certificates={certificates} locale={locale} />
+				<OpenRequestsSection
+					openRequests={openRequests}
+					currentUserId={session.user.id}
+					locale={locale}
+				/>
+				<ConsultantShiftsDashboard
+					shifts={shiftInstances}
+					currentUserId={session.user.id}
+					locale={locale}
+				/>{' '}
 			</div>
 		</div>
 	)

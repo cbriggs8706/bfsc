@@ -31,7 +31,7 @@ export function ConsultantCard({
 
 			{certificates.length > 0 && (
 				<>
-					<span className="font-medium text-sm">Can assist you with:</span>
+					<span className="font-medium text-sm">Can assist with:</span>
 
 					<div className="flex flex-wrap gap-1 justify-center">
 						{certificates.map((c) => (

@@ -56,7 +56,6 @@ export default function KioskPage() {
 		null
 	)
 	const [purposes, setPurposes] = useState<Purpose[]>([])
-	const [selectedPurposeId, setSelectedPurposeId] = useState('')
 	const [mailingOptIn, setMailingOptIn] = useState(false)
 	const [expectedDeparture, setExpectedDeparture] = useState('')
 	const [serverMessage, setServerMessage] = useState<string | null>(null)
@@ -250,26 +249,28 @@ export default function KioskPage() {
 	// VISIT SUBMIT
 	// ──────────────────────────────
 
-	// const handleSubmitVisit = async () => {
-	// 	if (!selectedPerson) return
-	// 	const res = await fetch('/api/kiosk/visit', {
-	// 		method: 'POST',
-	// 		headers: { 'Content-Type': 'application/json' },
-	// 		body: JSON.stringify({
-	// 			personId: selectedPerson.id,
-	// 			userId: selectedPerson.userId,
-	// 			purposeId: selectedPurposeId ? Number(selectedPurposeId) : null,
-	// 			mailingListOptIn: mailingOptIn,
-	// 		}),
-	// 	})
-	// 	if (!res.ok) {
-	// 		setServerMessage('Sorry, something went wrong recording your visit.')
-	// 		return
-	// 	}
+	const handleSubmitVisit = async (purposeId: number) => {
+		if (!selectedPerson) return
 
-	// 	setServerMessage(null)
-	// 	setStep('actionChoice')
-	// }
+		const res = await fetch('/api/kiosk/visit', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				personId: selectedPerson.id,
+				userId: selectedPerson.userId,
+				purposeId,
+				mailingListOptIn: mailingOptIn,
+			}),
+		})
+
+		if (!res.ok) {
+			setServerMessage('Sorry, something went wrong recording your visit.')
+			return
+		}
+
+		setServerMessage(null)
+		setStep('consultants')
+	}
 
 	// ──────────────────────────────
 	// VISIT SUBMIT
@@ -305,7 +306,6 @@ export default function KioskPage() {
 		setSuggestions([])
 		setMatches([])
 		setSelectedPerson(null)
-		setSelectedPurposeId('')
 		setMailingOptIn(false)
 		setExpectedDeparture('')
 		setNewName('')
@@ -430,9 +430,7 @@ export default function KioskPage() {
 						<VisitStep
 							person={selectedPerson}
 							purposes={purposes}
-							selectedPurposeId={selectedPurposeId}
-							setSelectedPurposeId={setSelectedPurposeId}
-							onSubmit={() => setStep('consultants')}
+							onSubmit={handleSubmitVisit}
 						/>
 					)}
 

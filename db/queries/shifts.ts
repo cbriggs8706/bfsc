@@ -16,6 +16,8 @@ import type {
 } from '@/types/substitutes'
 import { getAvailabilityMatchesForRequest } from './get-availability-matches'
 import { alias } from 'drizzle-orm/pg-core'
+import { OnShiftConsultant } from '@/types/kiosk'
+import { CertificateSummary } from '@/types/training'
 
 export async function getAvailabilityData(userId: string) {
 	// 1️⃣ Load shifts
@@ -257,12 +259,45 @@ export async function getSubstituteRequestDetail(requestId: string): Promise<{
 		status: v.status === 'withdrawn' ? 'withdrawn' : 'offered',
 	}))
 
+	const allConsultants = await getAllConsultants()
 	const availabilityMatches = await getAvailabilityMatchesForRequest(requestId)
+
+	// Build lookup table
+	const matchMap = new Map(
+		availabilityMatches.map((m) => [m.user.userId, m.matchLevel])
+	)
+
+	const consultants: AvailabilityMatch[] = allConsultants
+		.filter((c) => c.userId !== request.requestedBy.userId) // exclude requester
+		.map(
+			(c): AvailabilityMatch => ({
+				user: {
+					userId: c.userId,
+					name: c.name,
+					imageUrl: c.imageUrl,
+				},
+				matchLevel: matchMap.get(c.userId) ?? 'none',
+			})
+		)
+
+		.sort((a, b) => {
+			// 1️⃣ Availability rank
+			const rank = (m: AvailabilityMatch['matchLevel']) =>
+				m === 'usually' ? 0 : m === 'maybe' ? 1 : 2
+
+			const rankDiff = rank(a.matchLevel) - rank(b.matchLevel)
+			if (rankDiff !== 0) return rankDiff
+
+			// 2️⃣ Alphabetical by name (locale-aware)
+			return a.user.name.localeCompare(b.user.name, undefined, {
+				sensitivity: 'base',
+			})
+		})
 
 	return {
 		request,
 		volunteers,
-		availabilityMatches,
+		availabilityMatches: consultants,
 	}
 }
 
@@ -316,4 +351,26 @@ export async function findExistingSubRequest(input: {
 			)
 		)
 		.then((rows) => rows[0] ?? null)
+}
+
+export async function getAllConsultants(): Promise<
+	{ userId: string; name: string; imageUrl: string | null }[]
+> {
+	const rows = await db
+		.select({
+			userId: user.id,
+			name: sql<string>`COALESCE(${kioskPeople.fullName}, ${user.name})`,
+			imageUrl: sql<string | null>`
+				COALESCE(${kioskPeople.profileImageUrl}, ${user.image})
+			`,
+		})
+		.from(user)
+		.leftJoin(kioskPeople, eq(kioskPeople.userId, user.id))
+		.where(eq(user.role, 'Consultant'))
+
+	return rows.map((r) => ({
+		userId: r.userId,
+		name: r.name ?? 'Unknown',
+		imageUrl: r.imageUrl ?? null,
+	}))
 }
