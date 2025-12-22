@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { getLibraryItemById, deleteLibraryItem } from '@/db/queries/library'
 import { requireCurrentUser } from '@/utils/require-current-user'
+import { getTranslations } from 'next-intl/server'
 
 interface Props {
 	params: Promise<{ locale: string; id: string }>
@@ -14,6 +15,7 @@ interface Props {
 
 export default async function DeleteLibraryItemPage({ params }: Props) {
 	const { locale, id } = await params
+	const t = await getTranslations({ locale, namespace: 'common' })
 
 	const currentUser = await requireCurrentUser()
 
@@ -29,9 +31,11 @@ export default async function DeleteLibraryItemPage({ params }: Props) {
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">Delete {data.name}</h1>
+				<h1 className="text-3xl font-bold">
+					{t('delete')} {data.name}
+				</h1>
 				<p className="text-sm text-muted-foreground">
-					This permanently deletes the item and all copies.
+					{t('library.deleteSub')}
 				</p>
 			</div>
 
@@ -39,12 +43,12 @@ export default async function DeleteLibraryItemPage({ params }: Props) {
 				<CardContent className="space-y-4">
 					<form action={deleteAction}>
 						<Button variant="destructive" className="w-full" type="submit">
-							Delete
+							{t('delete')}
 						</Button>
 					</form>
 
 					<Button variant="secondary" className="w-full" asChild>
-						<Link href={`/${locale}/library/update/${id}`}>Cancel</Link>
+						<Link href={`/${locale}/library/update/${id}`}>{t('cancel')}</Link>
 					</Button>
 				</CardContent>
 			</Card>

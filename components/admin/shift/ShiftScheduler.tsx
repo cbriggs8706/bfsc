@@ -1,5 +1,4 @@
 // components/admin/shift/ShiftScheduler.tsx
-// components/admin/shift/ShiftScheduler.tsx
 'use client'
 
 import { useMemo, useState } from 'react'
@@ -48,11 +47,14 @@ type Shift = {
 	recurrences: Recurrence[]
 }
 
+type AssignmentRole = 'consultant' | 'shift_lead' | 'trainer'
+
 type Assignment = {
 	id: string
 	shiftRecurrenceId: string
 	userId: string
-	isPrimary: boolean
+	assignmentRole: AssignmentRole
+	notes: string | null
 	userName: string | null
 	userRole: string
 	userEmail: string
@@ -66,10 +68,11 @@ type Consultant = {
 }
 
 type Props = {
-	days: Day[] // you can keep passing this for ordering/grouping headers if you want
+	days: Day[]
 	shifts: Shift[]
 	assignments: Assignment[]
 	consultants: Consultant[]
+	canEdit: boolean
 }
 
 type SchedulerCard = {
@@ -78,9 +81,76 @@ type SchedulerCard = {
 	recurrence: Recurrence
 }
 
-export function ShiftScheduler({ shifts, assignments, consultants }: Props) {
+function UnassignedBin({ canEdit }: { canEdit: boolean }) {
+	const { setNodeRef, isOver } = useDroppable({ id: 'unassigned' })
+	if (!canEdit) return null
+
+	return (
+		<div
+			ref={setNodeRef}
+			className={cn(
+				'rounded-lg bg-(--green-logo-soft)/70 border border-dashed p-3 text-sm text-muted-foreground',
+				isOver && 'border-primary bg-primary/5'
+			)}
+		>
+			Drop here to unassign
+		</div>
+	)
+}
+
+function RoleBucket({
+	title,
+	droppableId,
+	assignments,
+	canEdit,
+	onEdit,
+}: {
+	title: string
+	droppableId: string
+	assignments: Assignment[]
+	canEdit: boolean
+	onEdit: (a: Assignment) => void
+}) {
+	const { setNodeRef, isOver } = useDroppable({ id: droppableId })
+
+	return (
+		<div
+			ref={setNodeRef}
+			className={cn(
+				'rounded-md border p-2 space-y-1 transition-colors',
+				isOver && canEdit && 'border-primary bg-primary/5'
+			)}
+		>
+			<div className="text-[11px] font-semibold text-muted-foreground flex items-center justify-between">
+				<span>{title}</span>
+				<span className="text-[10px]">{assignments.length}</span>
+			</div>
+
+			{assignments.length === 0 ? (
+				<p className="text-xs text-muted-foreground">—</p>
+			) : (
+				assignments.map((a) => (
+					<DraggableAssignmentChip
+						key={a.id}
+						assignment={a}
+						canEdit={canEdit}
+						onClick={() => onEdit(a)}
+					/>
+				))
+			)}
+		</div>
+	)
+}
+
+export function ShiftScheduler({
+	shifts,
+	assignments,
+	consultants,
+	canEdit,
+}: Props) {
 	const [localAssignments, setLocalAssignments] =
 		useState<Assignment[]>(assignments)
+	const [printHeader, setPrintHeader] = useState('BFSC Shift Assignments')
 
 	// Build a flat list of recurrence “cards” to render
 	const cards = useMemo<SchedulerCard[]>(() => {
@@ -115,23 +185,52 @@ export function ShiftScheduler({ shifts, assignments, consultants }: Props) {
 	}, [localAssignments])
 
 	const handleDragEnd = async ({ active, over }: DragEndEvent) => {
-		if (!over) return
+		if (!over || !canEdit) return
 
 		const activeId = String(active.id)
 		if (!activeId.startsWith('assign-')) return
 
 		const assignmentId = activeId.replace('assign-', '')
-		const newShiftRecurrenceId = String(over.id)
+		const overId = String(over.id)
 
 		const existing = localAssignments.find((a) => a.id === assignmentId)
 		if (!existing) return
-		if (existing.shiftRecurrenceId === newShiftRecurrenceId) return
+
+		// drop into "unassigned" bin => delete
+		if (overId === 'unassigned') {
+			setLocalAssignments((prev) => prev.filter((a) => a.id !== assignmentId))
+
+			const res = await fetch('/api/shifts/assignments', {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ assignmentId }),
+			})
+
+			if (!res.ok) {
+				// rollback
+				setLocalAssignments((prev) => [...prev, existing])
+			}
+			return
+		}
+
+		const [newShiftRecurrenceId, newRoleRaw] = overId.split('|')
+		const newRole = newRoleRaw as AssignmentRole
+
+		const noChange =
+			existing.shiftRecurrenceId === newShiftRecurrenceId &&
+			existing.assignmentRole === newRole
+
+		if (noChange) return
 
 		// optimistic
 		setLocalAssignments((prev) =>
 			prev.map((a) =>
 				a.id === assignmentId
-					? { ...a, shiftRecurrenceId: newShiftRecurrenceId }
+					? {
+							...a,
+							shiftRecurrenceId: newShiftRecurrenceId,
+							assignmentRole: newRole,
+					  }
 					: a
 			)
 		)
@@ -142,40 +241,78 @@ export function ShiftScheduler({ shifts, assignments, consultants }: Props) {
 			body: JSON.stringify({
 				assignmentId,
 				shiftRecurrenceId: newShiftRecurrenceId,
+				assignmentRole: newRole,
 			}),
 		})
 
-		// rollback if API fails
 		if (!res.ok) {
+			// rollback
 			setLocalAssignments((prev) =>
-				prev.map((a) =>
-					a.id === assignmentId
-						? { ...a, shiftRecurrenceId: existing.shiftRecurrenceId }
-						: a
-				)
+				prev.map((a) => (a.id === assignmentId ? existing : a))
 			)
 		}
 	}
 
-	return (
-		<DndContext onDragEnd={handleDragEnd}>
-			<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-				{cards.map((card) => {
-					const cardAssignments = assignmentsByRecurrence.get(card.id) ?? []
+	function printSchedule() {
+		const params = new URLSearchParams({
+			header: printHeader,
+		})
 
-					return (
-						<ShiftCard
-							key={card.id}
-							shift={card.shift}
-							recurrence={card.recurrence}
-							assignments={cardAssignments}
-							consultants={consultants}
-							setLocalAssignments={setLocalAssignments}
-						/>
-					)
-				})}
+		const win = window.open(
+			`/shifts/print?${params.toString()}`,
+			'_blank',
+			'width=1400,height=900'
+		)
+
+		if (!win) return
+
+		win.onload = () => {
+			win.focus()
+			win.print()
+			win.onafterprint = () => win.close()
+		}
+	}
+
+	return (
+		<>
+			<div className="flex items-end gap-4 mb-4 mt-4 rounded-lg border bg-card p-3">
+				<div className="flex-1">
+					<label className="block text-xs font-medium text-muted-foreground mb-1">
+						Print Header
+					</label>
+					<Input
+						value={printHeader}
+						onChange={(e) => setPrintHeader(e.target.value)}
+						placeholder="e.g. BFSC Shift Assignments"
+					/>
+				</div>
+
+				<Button onClick={printSchedule}>Print Schedule</Button>
 			</div>
-		</DndContext>
+			<DndContext onDragEnd={handleDragEnd}>
+				<div className="space-y-4">
+					<UnassignedBin canEdit={canEdit} />
+
+					<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+						{cards.map((card) => {
+							const cardAssignments = assignmentsByRecurrence.get(card.id) ?? []
+
+							return (
+								<ShiftCard
+									key={card.id}
+									shift={card.shift}
+									recurrence={card.recurrence}
+									assignments={cardAssignments}
+									consultants={consultants}
+									setLocalAssignments={setLocalAssignments}
+									canEdit={canEdit}
+								/>
+							)
+						})}
+					</div>
+				</div>
+			</DndContext>{' '}
+		</>
 	)
 }
 
@@ -185,23 +322,30 @@ function ShiftCard({
 	assignments,
 	consultants,
 	setLocalAssignments,
+	canEdit,
 }: {
 	shift: Shift
 	recurrence: Recurrence
 	assignments: Assignment[]
 	consultants: Consultant[]
 	setLocalAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>
+	canEdit: boolean
 }) {
-	const { setNodeRef, isOver } = useDroppable({
-		id: recurrence.id, // droppable target is recurrence id
-	})
+	const [editing, setEditing] = useState<Assignment | null>(null)
+
+	const openEditDialog = (a: Assignment) => {
+		if (!canEdit) return
+		setEditing(a)
+	}
+
+	const leads = assignments.filter((a) => a.assignmentRole === 'shift_lead')
+	const trainers = assignments.filter((a) => a.assignmentRole === 'trainer')
+	const helpers = assignments.filter((a) => a.assignmentRole === 'consultant')
 
 	return (
 		<Card
-			ref={setNodeRef}
 			className={cn(
-				'p-3 border rounded-lg space-y-2 transition-colors',
-				isOver && 'border-primary bg-primary/5',
+				'p-3 border rounded-lg space-y-2',
 				(!shift.isActive || !recurrence.isActive) && 'opacity-50'
 			)}
 		>
@@ -215,24 +359,47 @@ function ShiftCard({
 					</div>
 				</div>
 
-				<AddConsultantDialog
-					shiftRecurrenceId={recurrence.id}
-					consultants={consultants}
-					setLocalAssignments={setLocalAssignments}
-				/>
-			</div>
-
-			<div className="space-y-1">
-				{assignments.length === 0 ? (
-					<p className="text-xs text-muted-foreground">
-						No consultants assigned
-					</p>
-				) : (
-					assignments.map((a) => (
-						<DraggableAssignmentChip key={a.id} assignment={a} />
-					))
+				{canEdit && (
+					<AddConsultantDialog
+						shiftRecurrenceId={recurrence.id}
+						consultants={consultants}
+						setLocalAssignments={setLocalAssignments}
+					/>
 				)}
 			</div>
+
+			<div className="grid gap-2">
+				<RoleBucket
+					title="Shift Leads"
+					droppableId={`${recurrence.id}|shift_lead`}
+					assignments={leads}
+					canEdit={canEdit}
+					onEdit={openEditDialog}
+				/>
+
+				<RoleBucket
+					title="Trainers"
+					droppableId={`${recurrence.id}|trainer`}
+					assignments={trainers}
+					canEdit={canEdit}
+					onEdit={openEditDialog}
+				/>
+
+				<RoleBucket
+					title="Consultants"
+					droppableId={`${recurrence.id}|consultant`}
+					assignments={helpers}
+					canEdit={canEdit}
+					onEdit={openEditDialog}
+				/>
+			</div>
+			{editing && (
+				<EditAssignmentDialog
+					assignment={editing}
+					onClose={() => setEditing(null)}
+					setLocalAssignments={setLocalAssignments}
+				/>
+			)}
 		</Card>
 	)
 }
@@ -249,6 +416,8 @@ function AddConsultantDialog({
 	const [open, setOpen] = useState(false)
 	const [query, setQuery] = useState('')
 	const [loading, setLoading] = useState(false)
+	const [role, setRole] = useState<AssignmentRole>('consultant')
+	const [notes, setNotes] = useState('')
 
 	const filtered = consultants.filter((c) =>
 		(c.name ?? c.email).toLowerCase().includes(query.toLowerCase())
@@ -265,7 +434,8 @@ function AddConsultantDialog({
 				id: tempId,
 				shiftRecurrenceId,
 				userId: consultant.id,
-				isPrimary: true,
+				assignmentRole: role,
+				notes: notes || null,
 				userName: consultant.name,
 				userEmail: consultant.email,
 				userRole: consultant.role,
@@ -276,7 +446,12 @@ function AddConsultantDialog({
 			const res = await fetch('/api/shifts/assignments', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ userId: consultant.id, shiftRecurrenceId }),
+				body: JSON.stringify({
+					userId: consultant.id,
+					shiftRecurrenceId,
+					assignmentRole: role,
+					notes: notes || null,
+				}),
 			})
 
 			if (!res.ok) throw new Error('Failed to create assignment')
@@ -286,7 +461,7 @@ function AddConsultantDialog({
 				prev.map((a) => (a.id === tempId ? { ...a, id: data.id } : a))
 			)
 
-			setOpen(false)
+			closeDialog()
 		} catch (e) {
 			// rollback
 			setLocalAssignments((prev) => prev.filter((a) => a.id !== tempId))
@@ -294,6 +469,13 @@ function AddConsultantDialog({
 		} finally {
 			setLoading(false)
 		}
+	}
+
+	const closeDialog = () => {
+		setOpen(false)
+		setQuery('')
+		setNotes('')
+		setRole('consultant')
 	}
 
 	return (
@@ -308,6 +490,51 @@ function AddConsultantDialog({
 				<DialogHeader>
 					<DialogTitle>Add Consultant</DialogTitle>
 				</DialogHeader>
+				<div className="space-y-2 mb-3">
+					<label className="text-xs font-medium text-muted-foreground">
+						Role
+					</label>
+
+					<div className="flex gap-2">
+						<Button
+							type="button"
+							size="sm"
+							variant={role === 'consultant' ? 'default' : 'outline'}
+							onClick={() => setRole('consultant')}
+						>
+							Consultant
+						</Button>
+
+						<Button
+							type="button"
+							size="sm"
+							variant={role === 'shift_lead' ? 'default' : 'outline'}
+							onClick={() => setRole('shift_lead')}
+						>
+							Shift Lead
+						</Button>
+
+						<Button
+							type="button"
+							size="sm"
+							variant={role === 'trainer' ? 'default' : 'outline'}
+							onClick={() => setRole('trainer')}
+						>
+							Trainer
+						</Button>
+					</div>
+				</div>
+
+				<div className="space-y-2 mb-3">
+					<label className="text-xs font-medium text-muted-foreground">
+						Notes (optional)
+					</label>
+					<Input
+						placeholder="e.g. arrives 3pm, 1st/3rd"
+						value={notes}
+						onChange={(e) => setNotes(e.target.value)}
+					/>
+				</div>
 
 				<Input
 					placeholder="Search by name..."
@@ -341,28 +568,204 @@ function AddConsultantDialog({
 	)
 }
 
-function DraggableAssignmentChip({ assignment }: { assignment: Assignment }) {
+function EditAssignmentDialog({
+	assignment,
+	onClose,
+	setLocalAssignments,
+}: {
+	assignment: Assignment
+	onClose: () => void
+	setLocalAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>
+}) {
+	const [role, setRole] = useState<AssignmentRole>(assignment.assignmentRole)
+	const [notes, setNotes] = useState(assignment.notes ?? '')
+	const [saving, setSaving] = useState(false)
+
+	const handleSave = async () => {
+		setSaving(true)
+
+		const previous = assignment
+
+		// optimistic update
+		setLocalAssignments((prev) =>
+			prev.map((a) =>
+				a.id === assignment.id
+					? { ...a, assignmentRole: role, notes: notes || null }
+					: a
+			)
+		)
+
+		const res = await fetch('/api/shifts/assignments', {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				assignmentId: assignment.id,
+				assignmentRole: role,
+				notes: notes || null,
+			}),
+		})
+
+		if (!res.ok) {
+			// rollback
+			setLocalAssignments((prev) =>
+				prev.map((a) => (a.id === previous.id ? previous : a))
+			)
+		}
+
+		setSaving(false)
+		onClose()
+	}
+
+	const handleRemove = async () => {
+		const previous = assignment
+
+		// optimistic remove
+		setLocalAssignments((prev) => prev.filter((a) => a.id !== assignment.id))
+
+		const res = await fetch('/api/shifts/assignments', {
+			method: 'DELETE',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ assignmentId: assignment.id }),
+		})
+
+		if (!res.ok) {
+			// rollback
+			setLocalAssignments((prev) => [...prev, previous])
+		}
+
+		onClose()
+	}
+
+	return (
+		<Dialog open onOpenChange={onClose}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>
+						Edit {assignment.userName ?? assignment.userEmail}
+					</DialogTitle>
+				</DialogHeader>
+
+				<div className="space-y-2">
+					<label className="text-xs font-medium text-muted-foreground">
+						Role
+					</label>
+
+					<div className="flex gap-2">
+						<Button
+							type="button"
+							size="sm"
+							variant={role === 'consultant' ? 'default' : 'outline'}
+							onClick={() => setRole('consultant')}
+						>
+							Consultant
+						</Button>
+
+						<Button
+							type="button"
+							size="sm"
+							variant={role === 'shift_lead' ? 'default' : 'outline'}
+							onClick={() => setRole('shift_lead')}
+						>
+							Shift Lead
+						</Button>
+
+						<Button
+							type="button"
+							size="sm"
+							variant={role === 'trainer' ? 'default' : 'outline'}
+							onClick={() => setRole('trainer')}
+						>
+							Trainer
+						</Button>
+					</div>
+				</div>
+
+				<div className="space-y-2">
+					<label className="text-xs font-medium text-muted-foreground">
+						Notes
+					</label>
+					<Input
+						value={notes}
+						onChange={(e) => setNotes(e.target.value)}
+						placeholder="e.g. arrives 3pm"
+					/>
+				</div>
+
+				<div className="flex justify-between pt-4">
+					<Button
+						variant="destructive"
+						onClick={handleRemove}
+						disabled={saving}
+					>
+						Remove from shift
+					</Button>
+
+					<div className="flex gap-2">
+						<Button variant="outline" onClick={onClose}>
+							Cancel
+						</Button>
+						<Button onClick={handleSave} disabled={saving}>
+							Save
+						</Button>
+					</div>
+				</div>
+			</DialogContent>
+		</Dialog>
+	)
+}
+
+function DraggableAssignmentChip({
+	assignment,
+	canEdit,
+	onClick,
+}: {
+	assignment: Assignment
+	canEdit: boolean
+	onClick: () => void
+}) {
 	const { attributes, listeners, setNodeRef, transform, isDragging } =
 		useDraggable({
 			id: `assign-${assignment.id}`,
+			disabled: !canEdit,
 		})
 
 	return (
 		<div
 			ref={setNodeRef}
 			style={{ transform: CSS.Translate.toString(transform) }}
-			{...listeners}
-			{...attributes}
+			onClick={onClick}
 			className={cn(
-				'flex items-center justify-between rounded-md bg-muted px-2 py-1 text-[11px] cursor-move',
+				'flex items-center justify-between rounded-md bg-muted px-2 py-1 text-[11px]',
+				canEdit ? 'cursor-pointer' : 'cursor-default',
 				isDragging && 'ring-2 ring-primary shadow-lg'
 			)}
 		>
+			{/* LEFT: text (clickable) */}
 			<span className="truncate">
 				{assignment.userName ?? assignment.userEmail}
+				{assignment.notes ? (
+					<span className="ml-1 text-[10px] text-muted-foreground">
+						({assignment.notes})
+					</span>
+				) : null}
 			</span>
+
+			{/* RIGHT: drag handle */}
+			<div
+				{...(canEdit ? listeners : {})}
+				{...(canEdit ? attributes : {})}
+				className="ml-2 cursor-move select-none text-muted-foreground"
+				title="Drag to move"
+			>
+				⋮⋮
+			</div>
+
 			<Badge variant="outline" className="ml-2 text-[9px]">
-				{assignment.userRole}
+				{assignment.assignmentRole === 'shift_lead'
+					? 'Lead'
+					: assignment.assignmentRole === 'trainer'
+					? 'Trainer'
+					: 'Consult'}
 			</Badge>
 		</div>
 	)

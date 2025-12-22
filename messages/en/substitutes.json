@@ -12,6 +12,8 @@
 	"substituteRequest": "Substitute request",
 	"unknownUser": "Unknown user",
 	"shiftOn": "{date} · {time}",
+	"calendar": "Substitute Calendar",
+	"calendarSub": "Lorem ipsum",
 	"statusLabel": "Status",
 	"status": {
 		"open": "Open",
@@ -30,8 +32,10 @@
 	"waitingForYourResponse": "Waiting for your response",
 	"haveVolunteers": "You have volunteers",
 	"availability": {
+		"title": "Availability",
 		"usually": "Usually available for this shift",
-		"maybe": "Maybe available for this shift"
+		"maybe": "Maybe available for this shift",
+		"define": "Define your availability for substitutions."
 	},
 	"youCreatedRequest": "You created this substitute request",
 	"confirm": "Confirm",

@@ -127,6 +127,15 @@ export const shiftAssignments = pgTable(
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
 
+		// NEW: bucket/role within the shift
+		assignmentRole: varchar('assignment_role', { length: 20 })
+			.notNull()
+			.default('consultant'),
+		// values: 'consultant' | 'shift_lead' | 'trainer'
+
+		// NEW: optional per-assignment note
+		notes: varchar('notes', { length: 255 }),
+
 		isPrimary: boolean('is_primary').notNull().default(true),
 
 		createdAt: timestamp('created_at', { withTimezone: true })
@@ -136,6 +145,15 @@ export const shiftAssignments = pgTable(
 	(t) => ({
 		recurrenceIdx: index('shift_assignments_recurrence_idx').on(
 			t.shiftRecurrenceId
+		),
+		uniqUserPerRecurrence: uniqueIndex(
+			'shift_assignments_user_recurrence_uq'
+		).on(t.shiftRecurrenceId, t.userId),
+
+		// Optional: enforce allowed roles at DB level
+		roleCheck: check(
+			'shift_assignments_role_ck',
+			sql`${t.assignmentRole} in ('consultant','shift_lead','trainer')`
 		),
 	})
 )

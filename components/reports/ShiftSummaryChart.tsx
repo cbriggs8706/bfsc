@@ -24,7 +24,7 @@ function parseLabel(label: string) {
 		const [y, m, d] = label.split('-').map(Number)
 		return new Date(y, m - 1, d) // local
 	}
-	console.log(label, parseLabel(label).toString())
+	// console.log(label, parseLabel(label).toString())
 
 	// fallback
 	return new Date(label)

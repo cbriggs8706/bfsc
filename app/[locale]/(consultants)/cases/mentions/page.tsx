@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { eq, desc, and, isNull } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 import { MentionsList } from '@/components/cases/MentionsList'
+import { getTranslations } from 'next-intl/server'
 
 interface Props {
 	params: Promise<{ locale: string }>
@@ -12,6 +13,7 @@ interface Props {
 
 export default async function MentionsPage({ params }: Props) {
 	const { locale } = await params
+	const t = await getTranslations({ locale, namespace: 'common' })
 
 	const currentUser = await getCurrentUser()
 	if (!currentUser) redirect('/login')
@@ -41,8 +43,8 @@ export default async function MentionsPage({ params }: Props) {
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">Mentions</h1>
-				<p className="text-sm text-muted-foreground">Lorem ipsum</p>
+				<h1 className="text-3xl font-bold">{t('mentions.title')}</h1>
+				<p className="text-sm text-muted-foreground">{t('mentions.sub')}</p>
 			</div>
 			<MentionsList locale={locale} initialMentions={mentions} />
 		</div>

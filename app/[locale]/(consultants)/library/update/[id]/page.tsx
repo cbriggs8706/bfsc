@@ -10,6 +10,7 @@ import {
 	UpdateLibraryItemInput,
 } from '@/db/queries/library'
 import { requireCurrentUser } from '@/utils/require-current-user'
+import { getTranslations } from 'next-intl/server'
 
 interface Props {
 	params: Promise<{ locale: string; id: string }>
@@ -17,6 +18,7 @@ interface Props {
 
 export default async function UpdateLibraryItemPage({ params }: Props) {
 	const { locale, id } = await params
+	const t = await getTranslations({ locale, namespace: 'common' })
 
 	const currentUser = await requireCurrentUser()
 
@@ -33,10 +35,10 @@ export default async function UpdateLibraryItemPage({ params }: Props) {
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">Update {data.name}</h1>
-				<p className="text-sm text-muted-foreground">
-					Changes are not saved until you click Save below.
-				</p>
+				<h1 className="text-3xl font-bold">
+					{t('update')} {data.name}
+				</h1>
+				<p className="text-sm text-muted-foreground">{t('changesNotSaved')}</p>
 			</div>
 
 			<Card>

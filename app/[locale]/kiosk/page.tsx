@@ -180,7 +180,7 @@ export default function KioskPage() {
 		}
 
 		const data: IdentifyResponse = await res.json()
-		console.log('IDENTIFY RESPONSE', data)
+		// console.log('IDENTIFY RESPONSE', data)
 
 		if (data.status === 'notFound') {
 			setNewName(data.suggestedName ?? input.trim())
@@ -277,7 +277,7 @@ export default function KioskPage() {
 	// ──────────────────────────────
 
 	const handleSubmitShift = async () => {
-		console.log(expectedDeparture)
+		// console.log(expectedDeparture)
 		if (!selectedPerson || !expectedDeparture) return
 		const res = await fetch('/api/kiosk/shift', {
 			method: 'POST',

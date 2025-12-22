@@ -10,5 +10,43 @@
 	"login": "Login",
 	"guest": "Continue as a Guest",
 	"viewCourses": "View Courses",
-	"createCourse": "Create a Course"
+	"createCourse": "Create a Course",
+	"createdBy": "Created by",
+	"delete": "Delete",
+	"cancel": "Cancel",
+	"update": "Update",
+	"sub": "Lorem ipsum",
+	"changesNotSaved": "Changes are not saved until you click Save below.",
+	"cases": {
+		"title": "Cases",
+		"cases": "cases",
+		"createdBy": "Created by"
+	},
+	"mentions": {
+		"title": "Mentions",
+		"mentions": "mentions",
+		"sub": "Lorem ipsum"
+	},
+	"classes": {
+		"title": "Classes",
+		"sub": "Upcoming and past classes offered by the center.",
+		"create": "Create Class",
+		"createSub": "Create a one-time class or a multi-part series.",
+		"deleteSub": "This permanently deletes the series and all parts."
+	},
+	"library": {
+		"title": "Library",
+		"inventory": "Library Inventory",
+		"sub": "Books and equipment available at the center",
+		"create": "Create Library Item",
+		"createSub": "Add a book or piece of equipment to inventory.",
+		"deleteSub": "This permanently deletes the item and all copies."
+	},
+	"shifts": {
+		"schedule": "Shift Schedule",
+		"reports": "Shift Reports",
+		"noOp": "No operating days are configured.",
+		"dragBetween": "Drag people between shifts.",
+		"dailyHist": "Daily and Historical"
+	}
 }

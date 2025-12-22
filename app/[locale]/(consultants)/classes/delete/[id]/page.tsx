@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { deleteSeries, getSeriesWithSessionsById } from '@/db/queries/classes'
 import { requireCurrentUser } from '@/utils/require-current-user'
+import { getTranslations } from 'next-intl/server'
 
 interface Props {
 	params: Promise<{ locale: string; id: string }>
@@ -13,6 +14,8 @@ interface Props {
 
 export default async function DeleteClassPage({ params }: Props) {
 	const { locale, id } = await params
+	const t = await getTranslations({ locale, namespace: 'common' })
+
 	const currentUser = await requireCurrentUser()
 
 	const data = await getSeriesWithSessionsById(id)
@@ -27,9 +30,11 @@ export default async function DeleteClassPage({ params }: Props) {
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">Delete {data.series.title}</h1>
+				<h1 className="text-3xl font-bold">
+					{t('delete')} {data.series.title}
+				</h1>
 				<p className="text-sm text-muted-foreground">
-					This permanently deletes the series and all parts.
+					{t('classes.deleteSub')}
 				</p>
 			</div>
 
@@ -37,12 +42,12 @@ export default async function DeleteClassPage({ params }: Props) {
 				<CardContent className="space-y-4">
 					<form action={deleteAction}>
 						<Button variant="destructive" className="w-full" type="submit">
-							Delete
+							{t('delete')}
 						</Button>
 					</form>
 
 					<Button variant="secondary" className="w-full" asChild>
-						<Link href={`/${locale}/classes/update/${id}`}>Cancel</Link>
+						<Link href={`/${locale}/classes/update/${id}`}>{t('cancel')}</Link>
 					</Button>
 				</CardContent>
 			</Card>

@@ -21,7 +21,7 @@ export async function PATCH(
 ) {
 	try {
 		const { id } = await params
-		console.log('Updating user with id:', id)
+		// console.log('Updating user with id:', id)
 
 		const body = await request.json()
 

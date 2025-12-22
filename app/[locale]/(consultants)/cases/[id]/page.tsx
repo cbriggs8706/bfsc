@@ -9,6 +9,7 @@ import { markCaseSolved } from '@/app/actions/cases/mark-solved'
 import { addComment } from '@/app/actions/cases/add-comment'
 import { reopenCase } from '@/app/actions/cases/reopen-case'
 import { isUserInvestigating } from '@/db/queries/cases'
+import { getTranslations } from 'next-intl/server'
 
 export default async function CasePage({
 	params,
@@ -16,6 +17,7 @@ export default async function CasePage({
 	params: Promise<{ id: string; locale: string }>
 }) {
 	const { id, locale } = await params
+	const t = await getTranslations({ locale, namespace: 'common' })
 
 	const currentUser = await getCurrentUser()
 	if (!currentUser) redirect('/login')
@@ -58,7 +60,7 @@ export default async function CasePage({
 			<div>
 				<h1 className="text-3xl font-bold">{caseRow.title}</h1>
 				<p className="text-sm text-muted-foreground">
-					Created by {currentUser.name}
+					{t('createdBy')} {currentUser.name}
 				</p>
 			</div>
 			<CaseThread

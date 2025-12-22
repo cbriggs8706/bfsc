@@ -64,7 +64,7 @@ export default function UserDetails() {
 		async function load() {
 			const data = await getUserDetails()
 			setDetails(data)
-			console.log('USER DETAILS FROM SERVER', data)
+			// console.log('USER DETAILS FROM SERVER', data)
 		}
 		load()
 	}, [isOpen]) // refresh on open

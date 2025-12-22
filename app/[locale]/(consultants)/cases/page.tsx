@@ -9,6 +9,7 @@ import {
 } from '@/db/queries/cases'
 import { getCurrentUser } from '@/lib/auth'
 import { CaseView, parseCaseView, titleCaseView } from '@/lib/cases/views'
+import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +20,7 @@ interface Props {
 
 export default async function CasesPage({ params, searchParams }: Props) {
 	const { locale } = await params
+	const t = await getTranslations({ locale, namespace: 'common' })
 
 	const user = await getCurrentUser()
 	if (!user) redirect('/login')
@@ -47,7 +49,7 @@ export default async function CasesPage({ params, searchParams }: Props) {
 
 		return (
 			<div className="p-4 space-y-8">
-				<h1 className="text-3xl font-bold">Cases</h1>
+				<h1 className="text-3xl font-bold">{t('cases.title')}</h1>
 
 				{Object.entries(grouped).map(([typeName, cases]) => (
 					<section key={typeName} className="space-y-3">
@@ -64,9 +66,9 @@ export default async function CasesPage({ params, searchParams }: Props) {
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">Cases</h1>
+				<h1 className="text-3xl font-bold">{t('cases.title')}</h1>
 				<p className="text-sm text-muted-foreground">
-					{titleCaseView(view)} cases
+					{titleCaseView(view)} {t('cases.cases')}
 				</p>
 			</div>
 

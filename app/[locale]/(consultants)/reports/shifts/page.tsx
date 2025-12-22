@@ -2,8 +2,15 @@
 
 import { headers } from 'next/headers'
 import { ShiftReport } from '@/components/reports/ShiftReport'
+import { getTranslations } from 'next-intl/server'
+interface Props {
+	params: Promise<{ locale: string }>
+}
 
-export default async function ShiftReportPage() {
+export default async function ShiftReportPage({ params }: Props) {
+	const { locale } = await params
+	const t = await getTranslations({ locale, namespace: 'common' })
+
 	const headersList = await headers()
 
 	const host = headersList.get('host')
@@ -26,8 +33,8 @@ export default async function ShiftReportPage() {
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">Shift Reports</h1>
-				<p className="text-sm text-muted-foreground">Daily and Historical</p>
+				<h1 className="text-3xl font-bold">{t('shifts.reports')}</h1>
+				<p className="text-sm text-muted-foreground">{t('shifts.dailyHist')}</p>
 			</div>
 			<ShiftReport
 				initialShifts={data.shifts}

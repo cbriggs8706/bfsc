@@ -7,6 +7,7 @@ import { insertSeries, listPresenterOptions } from '@/db/queries/classes'
 // ✅ replace this with your real session getter
 import { requireCurrentUser } from '@/utils/require-current-user'
 import { getClassesRequireApproval } from '@/utils/site-settings'
+import { getTranslations } from 'next-intl/server'
 
 interface Props {
 	params: Promise<{ locale: string }>
@@ -14,6 +15,7 @@ interface Props {
 
 export default async function CreateClassPage({ params }: Props) {
 	const { locale } = await params
+	const t = await getTranslations({ locale, namespace: 'common' })
 
 	const currentUser = await requireCurrentUser()
 	const presenterOptions = await listPresenterOptions()
@@ -29,9 +31,9 @@ export default async function CreateClassPage({ params }: Props) {
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">Create Class</h1>
+				<h1 className="text-3xl font-bold">{t('classes.create')}</h1>
 				<p className="text-sm text-muted-foreground">
-					Create a one-time class or a multi-part series.
+					{t('classes.createSub')}
 				</p>
 			</div>
 

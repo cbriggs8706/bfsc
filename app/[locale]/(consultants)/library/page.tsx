@@ -5,6 +5,7 @@ import { LibraryFilters } from '@/components/library/LibraryFilters'
 import { LibraryFilterDrawer } from '@/components/library/LibraryFilterDrawer'
 import { listLibraryItems } from '@/db/queries/library'
 import { LibraryPagination } from '@/components/library/LibraryPagination'
+import { getTranslations } from 'next-intl/server'
 
 interface Props {
 	params: Promise<{ locale: string }>
@@ -18,6 +19,8 @@ interface Props {
 
 export default async function LibraryPage({ params, searchParams }: Props) {
 	const { locale } = await params
+	const t = await getTranslations({ locale, namespace: 'common' })
+
 	const sp = await searchParams
 
 	let currentUser = null
@@ -40,10 +43,8 @@ export default async function LibraryPage({ params, searchParams }: Props) {
 		<div className="p-4 space-y-4">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-3xl font-bold">Library Inventory</h1>
-					<p className="text-sm text-muted-foreground">
-						Books and equipment available at the center
-					</p>
+					<h1 className="text-3xl font-bold">{t('library.inventory')}</h1>
+					<p className="text-sm text-muted-foreground">{t('library.sub')}</p>
 				</div>
 			</div>
 

@@ -8,16 +8,16 @@ export function useNotificationCount(userId?: string) {
 
 	useEffect(() => {
 		if (!userId) {
-			console.log('❌ no userId')
+			// console.log('❌ no userId')
 			return
 		}
 
-		console.log('✅ fetching unread count for', userId)
+		// console.log('✅ fetching unread count for', userId)
 
 		async function load() {
 			const res = await fetch('/api/notifications/unread-count')
 			const data = await res.json()
-			console.log('📨 unread response', data)
+			// console.log('📨 unread response', data)
 			setCount(data.count ?? 0)
 		}
 

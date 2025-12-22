@@ -190,6 +190,13 @@
       "when": 1766250277735,
       "tag": "0026_brown_tiger_shark",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1766369017467,
+      "tag": "0027_curious_maverick",
+      "breakpoints": true
     }
   ]
 }

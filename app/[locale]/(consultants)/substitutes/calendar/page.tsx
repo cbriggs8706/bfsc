@@ -7,6 +7,7 @@ import {
 	getMyNominatedRequests,
 } from '@/db/queries/substitutes'
 import { getCurrentUser } from '@/lib/auth'
+import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
 
 type Props = {
@@ -15,6 +16,8 @@ type Props = {
 
 export default async function SubstituteCalendarPage({ params }: Props) {
 	const { locale } = await params
+	const t = await getTranslations({ locale, namespace: 'substitutes' })
+
 	const user = await getCurrentUser()
 	if (!user) {
 		redirect(`/${locale}`)
@@ -34,12 +37,12 @@ export default async function SubstituteCalendarPage({ params }: Props) {
 	// 	}))
 	// )
 
-	console.log('acceptedRequests', acceptedRequests)
+	// console.log('acceptedRequests', acceptedRequests)
 	return (
 		<div className="p-4 space-y-6">
 			<div>
-				<h1 className="text-3xl font-bold">Substitute Calendar</h1>
-				<p className="text-sm text-muted-foreground">Lorem ipsum</p>
+				<h1 className="text-3xl font-bold">{t('calendar')}</h1>
+				<p className="text-sm text-muted-foreground">{t('calendarSub')}</p>
 			</div>
 
 			<SubstituteCalendarClient

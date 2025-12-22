@@ -1,6 +1,7 @@
-// app/[locale]/admin/shifts/assignments/page.tsx
+// app/[locale]/(consultants)/shifts/assignments/page.tsx
+
 import { Metadata } from 'next'
-import { eq, inArray, ne } from 'drizzle-orm'
+import { and, eq, inArray, ne } from 'drizzle-orm'
 import { db } from '@/db'
 import {
 	operatingHours,
@@ -10,8 +11,9 @@ import {
 } from '@/db/schema/tables/shifts'
 import { user } from '@/db/schema/tables/auth'
 import { ShiftScheduler } from '@/components/admin/shift/ShiftScheduler'
-import { PrintScheduleButton } from '@/components/admin/shift/PrintScheduleButton'
-import { ShiftSchedulePrint } from '@/components/admin/shift/ShiftSchedulePrint'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { getTranslations } from 'next-intl/server'
 
 export const metadata: Metadata = {
 	title: 'Shift Schedule',
@@ -44,14 +46,23 @@ type ShiftWithRecurrences = {
 	recurrences: ShiftRecurrence[]
 }
 
+type AssignmentRole = 'consultant' | 'shift_lead' | 'trainer'
+
 type Assignment = {
 	id: string
 	shiftRecurrenceId: string
 	userId: string
-	isPrimary: boolean
+	// assignmentRole: string
+	assignmentRole: AssignmentRole
+	notes: string | null
+
 	userName: string | null
 	userRole: string
 	userEmail: string
+}
+
+interface Props {
+	params: Promise<{ locale: string }>
 }
 
 const WEEKDAY_LABELS = [
@@ -64,7 +75,22 @@ const WEEKDAY_LABELS = [
 	'Saturday',
 ]
 
-export default async function ShiftsPage() {
+function isAssignmentRole(value: string): value is AssignmentRole {
+	return value === 'consultant' || value === 'shift_lead' || value === 'trainer'
+}
+
+const EDIT_ROLES = ['Admin', 'Director'] as const
+
+export default async function ShiftsPage({ params }: Props) {
+	const { locale } = await params
+
+	const t = await getTranslations({ locale, namespace: 'common' })
+
+	const session = await getServerSession(authOptions)
+
+	const canEdit = EDIT_ROLES.includes(
+		session?.user?.role as (typeof EDIT_ROLES)[number]
+	)
 	/* -----------------------------------------------------
 	 * 1) Active operating days
 	 * --------------------------------------------------- */
@@ -78,10 +104,8 @@ export default async function ShiftsPage() {
 	if (activeWeekdays.length === 0) {
 		return (
 			<div className="p-6">
-				<h1 className="text-2xl font-semibold">Shift Schedule</h1>
-				<p className="text-muted-foreground">
-					No operating days are configured.
-				</p>
+				<h1 className="text-2xl font-semibold">{t('shifts.schedule')}</h1>
+				<p className="text-muted-foreground">{t('shifts.noOp')}</p>
 			</div>
 		)
 	}
@@ -89,18 +113,28 @@ export default async function ShiftsPage() {
 	/* -----------------------------------------------------
 	 * 2) Assignments with user info
 	 * --------------------------------------------------- */
-	const assignments: Assignment[] = await db
+	const rawAssignments = await db
 		.select({
 			id: shiftAssignments.id,
 			shiftRecurrenceId: shiftAssignments.shiftRecurrenceId,
 			userId: shiftAssignments.userId,
-			isPrimary: shiftAssignments.isPrimary,
+
+			assignmentRole: shiftAssignments.assignmentRole, // string
+			notes: shiftAssignments.notes,
+
 			userName: user.name,
 			userRole: user.role,
 			userEmail: user.email,
 		})
 		.from(shiftAssignments)
 		.innerJoin(user, eq(shiftAssignments.userId, user.id))
+
+	const assignments: Assignment[] = rawAssignments.map((a) => ({
+		...a,
+		assignmentRole: isAssignmentRole(a.assignmentRole)
+			? a.assignmentRole
+			: 'consultant', // safe fallback
+	}))
 
 	/* -----------------------------------------------------
 	 * 3) Consultants
@@ -113,7 +147,12 @@ export default async function ShiftsPage() {
 			role: user.role,
 		})
 		.from(user)
-		.where(ne(user.role, 'Patron'))
+		.where(
+			and(
+				ne(user.role, 'Patron'),
+				eq(user.isActiveConsultant, true) // NEW
+			)
+		)
 
 	/* -----------------------------------------------------
 	 * 4) Shifts + Recurrences (flat rows)
@@ -209,15 +248,11 @@ export default async function ShiftsPage() {
 		<div className="p-4 space-y-4">
 			{/* Interactive (screen only) */}
 			<div className="no-print">
-				<div className="flex items-center justify-between">
-					<div>
-						<h1 className="text-3xl font-bold">Shift Schedule</h1>
-						<p className="text-sm text-muted-foreground">
-							Drag people between shifts.
-						</p>
-					</div>
-
-					<PrintScheduleButton />
+				<div>
+					<h1 className="text-3xl font-bold">{t('shifts.schedule')}</h1>
+					<p className="text-sm text-muted-foreground">
+						{t('shifts.dragBetween')}
+					</p>
 				</div>
 
 				<ShiftScheduler
@@ -225,15 +260,7 @@ export default async function ShiftsPage() {
 					shifts={shifts}
 					assignments={assignments}
 					consultants={consultants}
-				/>
-			</div>
-
-			{/* Print-only (single landscape page) */}
-			<div className="print-only">
-				<ShiftSchedulePrint
-					days={days}
-					shifts={shifts}
-					assignments={assignments}
+					canEdit={canEdit}
 				/>
 			</div>
 		</div>

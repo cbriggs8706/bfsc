@@ -7,7 +7,15 @@
 		"freeForever": "Discover Gather Connect",
 		"language": "Language",
 		"chooseLanguage": "Choose Language",
-		"bfsc": "Burley FamilySearch"
+		"bfsc": "Burley FamilySearch",
+		"groupVisits": "Group Visits",
+		"researchSpecialists": "Research Specialists",
+		"trainingGuide": "Training Guide",
+		"consultantHelps": "Consultant Helps",
+		"communityProjects": "Community Projects",
+		"memoryLane": "Memory Lane",
+		"activities": "Activities",
+		"newsletters": "Newsletters"
 	},
 	"groups": {
 		"schedule": "Schedule a visit"
@@ -68,14 +76,24 @@
 	},
 	"admin": {
 		"title": "Admin",
-		"users": "User Management"
+		"userManagement": "User Management",
+		"users": "Users",
+		"centerDefinitions": "Center Definitions",
+		"scheduleClosures": "Schedule Closures",
+		"shiftScheduler": "Shift Scheduler",
+		"announcements": "Announcements",
+		"newsletter": "Newsletter",
+		"addBookEquip": "Add Book / Equipment",
+		"training": "Training"
 	},
 	"consultant": {
 		"title": "Consultant",
 		"shiftReport": "Shift Report",
 		"teachClass": "Teach A Class",
 		"library": "Library",
-		"training": "Training"
+		"training": "Training",
+		"shiftAssignments": "Shift Assignments",
+		"substitutes": "Substitutes"
 	},
 	"patron": {
 		"title": "Patron"
