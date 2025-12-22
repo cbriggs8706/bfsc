@@ -47,7 +47,7 @@ export default async function Page({ params }: DashboardPageProps) {
 	return (
 		<div className="p-4 space-y-4">
 			<div className="space-y-8">
-				<h1 className="text-3xl font-bold">Dashboard</h1>
+				<h1 className="text-3xl font-bold">{t('dashboard')}</h1>
 				{announcements.length > 0 && (
 					<div className="space-y-3 mt-4">
 						{announcements.map((a) => (

@@ -1,14 +1,63 @@
 {
 	"welcome": "Bienvenido",
-	"welcomeBFSC": "Bienvenido a BFSC!",
-	"startLesson": "Empezar lección",
+	"welcomeBFSC": "¡Bienvenido a BFSC!",
+	"startLesson": "Comenzar lección",
 	"continue": "Continuar",
-	"settings": "Ajustes",
+	"settings": "Configuración",
 	"switchLanguage": "Cambiar idioma",
 	"construction": "Este sitio está en construcción",
-	"register": "Crea una cuenta",
+	"register": "Crear una cuenta",
 	"login": "Iniciar sesión",
 	"guest": "Continuar como invitado",
-	"viewCourses": "Ver Cursos",
-	"createCourse": "Crea un curso"
+	"viewCourses": "Ver cursos",
+	"createCourse": "Crear un curso",
+	"createdBy": "Creado por",
+	"delete": "Eliminar",
+	"cancel": "Cancelar",
+	"update": "Actualizar",
+	"sub": "Lorem ipsum",
+	"changesNotSaved": "Los cambios no se guardan hasta que hagas clic en Guardar abajo.",
+	"userAccount": "Cuenta de usuario",
+	"userSub": "Lorem ipsum",
+	"dashboard": "Panel",
+	"notifications": "Notificaciones",
+	"notificationSub": "Toca una notificación para marcarla como leída.",
+	"bfscCalendar": "BFSC Calendar",
+
+	"cases": {
+		"title": "Casos",
+		"cases": "casos",
+		"createdBy": "Creado por"
+	},
+	"mentions": {
+		"title": "Menciones",
+		"mentions": "menciones",
+		"sub": "Lorem ipsum"
+	},
+	"classes": {
+		"title": "Clases",
+		"sub": "Clases próximas y pasadas ofrecidas por el centro.",
+		"create": "Crear clase",
+		"createSub": "Crea una clase única o una serie de varias partes.",
+		"deleteSub": "Esto elimina permanentemente la serie y todas sus partes."
+	},
+	"library": {
+		"title": "Biblioteca",
+		"inventory": "Inventario de la biblioteca",
+		"sub": "Libros y equipos disponibles en el centro",
+		"create": "Crear elemento de biblioteca",
+		"createSub": "Agrega un libro o equipo al inventario.",
+		"deleteSub": "Esto elimina permanentemente el elemento y todas sus copias."
+	},
+	"shifts": {
+		"schedule": "Horario de turnos",
+		"reports": "Informes de turnos",
+		"noOp": "No hay días de operación configurados.",
+		"dragBetween": "Arrastra personas entre turnos.",
+		"dailyHist": "Diario e histórico"
+	},
+	"training": {
+		"consultantTraining": "Capacitación para consultores",
+		"sub": "Cada curso otorgará un certificado. Si se agregan lecciones adicionales a un curso, deberás actualizarlo para mantener tu certificación vigente."
+	}
 }

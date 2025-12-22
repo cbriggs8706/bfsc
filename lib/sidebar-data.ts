@@ -154,7 +154,7 @@ export function buildSidebarData(t: TFunction, locale: string) {
 			},
 			{
 				title: t('substitutes.availability.title'),
-				url: `/${locale}/shifts/availability`,
+				url: `/${locale}/substitutes/availability`,
 				icon: CalendarCheck,
 			},
 			{

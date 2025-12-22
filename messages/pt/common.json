@@ -1,15 +1,62 @@
 {
 	"welcome": "Bem-vindo",
 	"welcomeBFSC": "Bem-vindo ao BFSC!",
-	"startLesson": "Iniciar Lição",
+	"startLesson": "Iniciar aula",
 	"continue": "Continuar",
 	"settings": "Configurações",
-	"switchLanguage": "Mudar Idioma",
+	"switchLanguage": "Trocar idioma",
 	"construction": "Este site está em construção",
 	"register": "Criar uma conta",
 	"login": "Entrar",
 	"guest": "Continuar como convidado",
-	"viewCourses": "PTView Courses",
-
-	"createCourse": "PTCreate a Course"
+	"viewCourses": "Ver cursos",
+	"createCourse": "Criar um curso",
+	"createdBy": "Criado por",
+	"delete": "Excluir",
+	"cancel": "Cancelar",
+	"update": "Atualizar",
+	"sub": "Lorem ipsum",
+	"changesNotSaved": "As alterações não são salvas até você clicar em Salvar abaixo.",
+	"userAccount": "Conta do usuário",
+	"userSub": "Lorem ipsum",
+	"dashboard": "Painel",
+	"notifications": "Notificações",
+	"notificationSub": "Toque em uma notificação para marcá-la como lida.",
+	"bfscCalendar": "BFSC Calendar",
+	"cases": {
+		"title": "Casos",
+		"cases": "casos",
+		"createdBy": "Criado por"
+	},
+	"mentions": {
+		"title": "Menções",
+		"mentions": "menções",
+		"sub": "Lorem ipsum"
+	},
+	"classes": {
+		"title": "Aulas",
+		"sub": "Aulas futuras e passadas oferecidas pelo centro.",
+		"create": "Criar aula",
+		"createSub": "Crie uma aula única ou uma série com várias partes.",
+		"deleteSub": "Isso exclui permanentemente a série e todas as suas partes."
+	},
+	"library": {
+		"title": "Biblioteca",
+		"inventory": "Inventário da biblioteca",
+		"sub": "Livros e equipamentos disponíveis no centro",
+		"create": "Criar item da biblioteca",
+		"createSub": "Adicione um livro ou equipamento ao inventário.",
+		"deleteSub": "Isso exclui permanentemente o item e todas as suas cópias."
+	},
+	"shifts": {
+		"schedule": "Escala de turnos",
+		"reports": "Relatórios de turnos",
+		"noOp": "Nenhum dia de funcionamento foi configurado.",
+		"dragBetween": "Arraste pessoas entre turnos.",
+		"dailyHist": "Diário e histórico"
+	},
+	"training": {
+		"consultantTraining": "Treinamento de consultores",
+		"sub": "Cada curso concederá um certificado. Se aulas adicionais forem adicionadas a um curso, será necessário atualizar para manter sua certificação em dia."
+	}
 }

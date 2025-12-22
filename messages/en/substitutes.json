@@ -1,5 +1,7 @@
 {
 	"openRequestsTitle": "Substitute Needs Needing Filled",
+	"requests": "Substitute Requests",
+	"requestsSub": "Lorem ipsum",
 	"openRequests": "Substitute Needs Needing Filled",
 	"openRequestsEmpty": "No open substitute requests.",
 	"nominatedTitle": "New Requests",

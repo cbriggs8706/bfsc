@@ -17,6 +17,12 @@
 	"update": "Update",
 	"sub": "Lorem ipsum",
 	"changesNotSaved": "Changes are not saved until you click Save below.",
+	"userAccount": "User Account",
+	"userSub": "Lorem ipsum",
+	"dashboard": "Dashboard",
+	"notifications": "Notifications",
+	"notificationSub": "Tap a notification to mark it as read.",
+	"bfscCalendar": "BFSC Calendar",
 	"cases": {
 		"title": "Cases",
 		"cases": "cases",
@@ -48,5 +54,9 @@
 		"noOp": "No operating days are configured.",
 		"dragBetween": "Drag people between shifts.",
 		"dailyHist": "Daily and Historical"
+	},
+	"training": {
+		"consultantTraining": "Consultant Training",
+		"sub": "Each course will earn a certificate. If additional lessons are added to a course, you'll need to update to keep your certification current."
 	}
 }

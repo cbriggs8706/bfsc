@@ -4,8 +4,17 @@ import { db, operatingHours, specialHours } from '@/db'
 import { toLocalYMD } from '@/utils/time'
 import { and, gte, lte } from 'drizzle-orm'
 import { listCalendarClasses } from '@/db/queries/calendar-classes'
+import { getTranslations } from 'next-intl/server'
 
-export default async function Page() {
+type Props = {
+	params: Promise<{ locale: string }>
+}
+
+export default async function Page({ params }: Props) {
+	const { locale } = await params
+
+	const t = await getTranslations({ locale, namespace: 'common' })
+
 	const today = new Date()
 	const year = today.getFullYear()
 	const month = today.getMonth()
@@ -46,7 +55,7 @@ export default async function Page() {
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">BFSC Calendar</h1>
+				<h1 className="text-3xl font-bold">{t('bfscCalendar')}</h1>
 				<p className="text-sm text-muted-foreground">
 					Normal Operating Hours and Class Schedule
 				</p>

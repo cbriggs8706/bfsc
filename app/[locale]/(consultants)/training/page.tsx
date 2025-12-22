@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { UserCourse } from '@/types/training'
 import { redirect } from 'next/navigation'
 import { CourseCatalog } from '@/components/training/CourseCatalog'
+import { getTranslations } from 'next-intl/server'
 
 type Props = {
 	params: Promise<{ locale: string }>
@@ -15,6 +16,7 @@ type Props = {
 export default async function TrainingCatalogPage({ params }: Props) {
 	const { locale } = await params
 	const user = await getCurrentUser()
+	const t = await getTranslations({ locale, namespace: 'common' })
 
 	if (!user || user.role === 'Patron') {
 		redirect(`/${locale}/login?redirect=/${locale}/training`)
@@ -72,12 +74,8 @@ export default async function TrainingCatalogPage({ params }: Props) {
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">Consultant Training</h1>
-				<p className="text-sm text-muted-foreground">
-					Each course will earn a certificate. If additional lessons are added
-					to a course, you&apos;ll need to update to keep your certification
-					current.
-				</p>
+				<h1 className="text-3xl font-bold">{t('consultantTraining')}</h1>
+				<p className="text-sm text-muted-foreground">{t('sub')}</p>
 			</div>
 			<CourseCatalog courses={userCourses} locale={locale} />
 		</div>

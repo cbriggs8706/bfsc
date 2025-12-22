@@ -4,20 +4,26 @@ import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { getUserNotifications } from '@/db/queries/notifications'
 import { Notifications } from '@/components/notifications/Notifications'
+import { getTranslations } from 'next-intl/server'
 
-export default async function NotificationsPage() {
+type Props = {
+	params: Promise<{ locale: string }>
+}
+
+export default async function NotificationsPage({ params }: Props) {
+	const { locale } = await params
+
 	const session = await getServerSession(authOptions)
 	if (!session) redirect('/')
+	const t = await getTranslations({ locale, namespace: 'common' })
 
 	const notifications = await getUserNotifications(session.user.id)
 
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">Notifications</h1>
-				<p className="text-sm text-muted-foreground">
-					Tap a notification to mark it as read.
-				</p>
+				<h1 className="text-3xl font-bold">{t('notifications')}</h1>
+				<p className="text-sm text-muted-foreground">{t('notificationSub')}</p>
 			</div>
 			<Notifications notifications={notifications} />
 		</div>

@@ -21,8 +21,8 @@ export default async function Page({ params }: Props) {
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">User Account</h1>
-				<p className="text-sm text-muted-foreground">Lorem ipsum</p>
+				<h1 className="text-3xl font-bold">{t('userAccount')}</h1>
+				<p className="text-sm text-muted-foreground">{t('userSub')}</p>
 			</div>
 			<UserDetails />
 		</div>
