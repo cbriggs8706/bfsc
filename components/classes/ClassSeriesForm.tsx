@@ -23,6 +23,7 @@ import type {
 // TODO: implement these like your uploadAnnouncementImage
 import { uploadClassCoverImage } from '@/utils/upload-class-cover-image'
 import { uploadClassHandoutPdf } from '@/utils/upload-class-handout-pdf'
+import { PresenterMultiSelect } from '../custom/ConsultantMultiSelect'
 
 type Mode = 'create' | 'update'
 
@@ -449,23 +450,12 @@ export function ClassSeriesForm(props: Props) {
 
 			<div className="space-y-2">
 				<Label>Presenters</Label>
-				<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-					{props.presenterOptions.map((p) => (
-						<label
-							key={p.id}
-							className="flex items-center justify-between p-2 border rounded-md"
-						>
-							<div className="text-sm">
-								<div className="font-medium">{p.name ?? p.email}</div>
-								<div className="text-xs text-muted-foreground">{p.email}</div>
-							</div>
-							<Switch
-								checked={seriesPresenterIds.includes(p.id)}
-								onCheckedChange={() => toggleSeriesPresenter(p.id)}
-							/>
-						</label>
-					))}
-				</div>
+
+				<PresenterMultiSelect
+					options={props.presenterOptions}
+					value={seriesPresenterIds}
+					onChange={setSeriesPresenterIds}
+				/>
 			</div>
 
 			<div className="space-y-2">

@@ -16,6 +16,7 @@ import { eq } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 import { MentionAlerts } from '@/components/cases/MentionAlerts'
 import { ConsultantAlerts } from '@/components/consultant/ConsultantAlerts'
+import { FloatingNavButton } from '@/components/nav/FloatingNavButton'
 
 export default async function Layout({
 	children,
@@ -59,6 +60,7 @@ export default async function Layout({
 				{/* Actual dashboard content */}
 				<div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
 			</SidebarInset>
+			<FloatingNavButton />
 		</SidebarProvider>
 	)
 }

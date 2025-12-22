@@ -12,6 +12,7 @@ import { AppSidebar } from '@/components/nav/AppSidebar'
 import { db, operatingHours, specialHours } from '@/db'
 import { eq } from 'drizzle-orm'
 import AppBreadcrumbs from '@/components/nav/AppBreadcrumbs'
+import { FloatingNavButton } from '@/components/nav/FloatingNavButton'
 
 export default async function Layout({
 	children,
@@ -51,6 +52,7 @@ export default async function Layout({
 				{/* Actual dashboard content */}
 				<div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
 			</SidebarInset>
+			<FloatingNavButton />
 		</SidebarProvider>
 	)
 }
