@@ -9,6 +9,7 @@ interface UpdateKioskProfileInput {
 	fullName?: string
 	email?: string | null
 	profileImageUrl?: string | null
+	languagesSpoken?: string[]
 }
 
 export async function updateKioskProfile(
@@ -21,6 +22,9 @@ export async function updateKioskProfile(
 			...(input.email !== undefined && { email: input.email }),
 			...(input.profileImageUrl !== undefined && {
 				profileImageUrl: input.profileImageUrl,
+			}),
+			...(input.languagesSpoken !== undefined && {
+				languagesSpoken: input.languagesSpoken,
 			}),
 			updatedAt: new Date(),
 		})

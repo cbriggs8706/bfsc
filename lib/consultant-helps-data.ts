@@ -267,10 +267,6 @@ export const consultantHelps = [
 	},
 	{
 		title: 'Learning the Basics of Family History Work',
-		items: [],
-	},
-	{
-		title: 'Link toTraining Guide for Burley FamilySearch Center',
 		items: [
 			{
 				text: 'Link to Training Guide for Burley FamilySearch Center',
@@ -281,11 +277,6 @@ export const consultantHelps = [
 					},
 				],
 			},
-		],
-	},
-	{
-		title: 'BYU Family History Tutorials',
-		items: [
 			{
 				text: 'BYU Family History Tutorials',
 				links: [
@@ -295,11 +286,6 @@ export const consultantHelps = [
 					},
 				],
 			},
-		],
-	},
-	{
-		title: 'The Family History Guide',
-		items: [
 			{
 				text: 'The Family History Guide',
 				links: [

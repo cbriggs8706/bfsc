@@ -248,9 +248,9 @@ export default async function HomePage({ params, searchParams }: Props) {
 			<section className="max-w-6xl mx-auto px-4 space-y-6">
 				<div className="flex items-center justify-between">
 					<h2 className="text-2xl font-semibold">Recent Newsletters</h2>
-					<Button variant="outline" asChild>
-						<Link href={`/${locale}/newsletter`}>View All</Link>
-					</Button>
+					<Link href={`/${locale}/newsletters`}>
+						<Button variant="default">View All</Button>
+					</Link>
 				</div>
 
 				<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,8 +1,8 @@
 // app/[locale]/(public)/consultant-helps/page.tsx
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import { consultantHelps } from '@/lib/consultant-helps-data'
+import { Square } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ConsultantHelpsPage() {
@@ -25,8 +25,8 @@ export default function ConsultantHelpsPage() {
 						<ul className="space-y-2">
 							{section.items.map((item, idx) => (
 								<li key={idx} className="flex gap-3 items-start">
-									<Checkbox disabled className="mt-1" />
-									<span className="text-sm">
+									<Square className="w-5 h-5 shrink-0 mt-1 text-muted-foreground" />
+									<span className="text-base">
 										{item.text}{' '}
 										{item.links.map((l, i) => (
 											<Link

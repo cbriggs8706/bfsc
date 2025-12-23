@@ -1,4 +1,5 @@
 // app/[locale]/(public)/groups/page.tsx
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
 
@@ -28,11 +29,8 @@ export default async function ClassesPage({ params }: Props) {
 						and weekends. To see if your date and time are available, please
 						check the calendar — all group visits are shown there.
 					</p>
-					<Link
-						href={`/${locale}/calendar`}
-						className="inline-flex items-center text-primary font-medium hover:underline"
-					>
-						View Calendar →
+					<Link href={`/${locale}/calendar`}>
+						<Button>View Calendar</Button>
 					</Link>
 				</CardContent>
 			</Card>
@@ -45,13 +43,15 @@ export default async function ClassesPage({ params }: Props) {
 						Community groups are welcome. We offer specialized classes to meet
 						your group’s needs.
 					</p>
-					<ul className="list-disc pl-5 text-sm space-y-1">
+					<ul className="list-disc pl-5 text-base space-y-1">
 						<li>Minimum of 5 people</li>
 						<li>Can accommodate 40–80 people depending on the activity</li>
 					</ul>
-					<p className="text-sm">
+					<p className="text-base">
 						Please contact one of the Stake Assistants listed below or{' '}
-						<strong>Melani (208) 431-0457</strong>.
+						<Link href="tel:+12084310457">
+							<Button className="ml-2">Melani (208) 431-0457</Button>
+						</Link>
 					</p>
 				</CardContent>
 			</Card>
@@ -67,11 +67,14 @@ export default async function ClassesPage({ params }: Props) {
 						20 or fewer are preferred for a more hands-on experience, with a
 						maximum of 40 youth.
 					</p>
-					<p className="text-sm">
+					<p className="text-base">
 						All youth reservations must be made at least one week in advance
-						through <strong>Trina (208) 242-6217</strong>.
+						through
+						<Link href="tel:+12082426217">
+							<Button className="ml-2">Trina (208) 242-6217</Button>
+						</Link>
 					</p>
-					<p className="text-sm italic">
+					<p className="text-base italic">
 						Each participant should bring their FamilySearch (or Church) login
 						name and password.
 					</p>
@@ -82,7 +85,7 @@ export default async function ClassesPage({ params }: Props) {
 			<Card>
 				<CardContent className="space-y-4">
 					<h3 className="text-lg font-semibold">Youth Activity Options</h3>
-					<ul className="space-y-2 text-sm">
+					<ul className="space-y-2 text-base">
 						<li>
 							<strong>Know Your FamilySearch Center</strong> – Learn to use
 							Ordinances Ready, family history activities, and the Recording
@@ -114,7 +117,7 @@ export default async function ClassesPage({ params }: Props) {
 							Bring youth to work on their temple journey guidebooks.
 						</li>
 					</ul>
-					<p className="text-sm italic">
+					<p className="text-base italic">
 						If youth wish to come on a night other than Wednesday, please
 						contact your Stake Assistants.
 					</p>
@@ -126,9 +129,11 @@ export default async function ClassesPage({ params }: Props) {
 				<CardContent className="space-y-3">
 					<h2 className="text-xl font-semibold">YSA Groups</h2>
 					<p>Monday nights are available primarily for YSA groups.</p>
-					<p className="text-sm">
-						All YSA reservations are made through{' '}
-						<strong>Melani (208) 431-0457</strong>.
+					<p className="text-base">
+						All YSA reservations are made through
+						<Link href="tel:+12084310457">
+							<Button className="ml-2">Melani (208) 431-0457</Button>
+						</Link>
 					</p>
 				</CardContent>
 			</Card>
@@ -141,7 +146,7 @@ export default async function ClassesPage({ params }: Props) {
 						For wards, stakes, and committees, please contact your Stake
 						Assistants to arrange staffing and accommodations.
 					</p>
-					<ul className="list-disc pl-5 text-sm space-y-1">
+					<ul className="list-disc pl-5 text-base space-y-1">
 						<li>Indexing activities</li>
 						<li>Full Name Review</li>
 						<li>Get Involved App</li>
@@ -157,44 +162,85 @@ export default async function ClassesPage({ params }: Props) {
 			<Card>
 				<CardContent className="space-y-4">
 					<h2 className="text-xl font-semibold">Stake Assistants</h2>
-					<div className="grid gap-3 text-sm md:grid-cols-2">
-						<div>
+					<div className="grid gap-3 text-base md:grid-cols-2">
+						<div className="flex flex-col gap-2">
 							<strong>Burley Stake</strong>
-							<p>Jamie Palmer – 208-431-6580</p>
+
+							<Link href="tel:+12084316510">
+								<Button>Jamie Palmer – 208-431-6580</Button>
+							</Link>
 						</div>
-						<div>
+
+						<div className="flex flex-col gap-2">
 							<strong>Burley Central Stake</strong>
-							<p>Lonnie Downs – 208-312-3949</p>
-							<p>Gay Downs – 208-312-5130</p>
+
+							<Link href="tel:+12083123949">
+								<Button>Lonnie Downs – 208-312-3949</Button>
+							</Link>
+							<Link href="tel:+12083125130">
+								<Button>Gay Downs – 208-312-5130</Button>
+							</Link>
 						</div>
-						<div>
+
+						<div className="flex flex-col gap-2">
 							<strong>Burley West Stake</strong>
-							<p>Brad Harrop – 843-729-9622</p>
-							<p>Tookie Harrop – 843-729-6247</p>
+
+							<Link href="tel:+18437299622">
+								<Button>Brad Harrop – 843-729-9622</Button>
+							</Link>
+							<Link href="tel:+18437296247">
+								<Button>Tookie Harrop – 843-729-6247</Button>
+							</Link>
 						</div>
-						<div>
+
+						<div className="flex flex-col gap-2">
 							<strong>Declo Stake</strong>
-							<p>Celia Turner – 208-431-2086</p>
+
+							<Link href="tel:+12084312086">
+								<Button>Celia Turner – 208-431-2086</Button>
+							</Link>
 						</div>
-						<div>
+
+						<div className="flex flex-col gap-2">
 							<strong>Oakley Stake</strong>
-							<p>Sharon Bowers – 208-670-4400</p>
-							<p>Carla Carson – 208-678-8204</p>
+
+							<Link href="tel:+12086704400">
+								<Button>Sharon Bowers – 208-670-4400</Button>
+							</Link>
+							<Link href="tel:+12086788204">
+								<Button>Carla Carson – 208-678-8204</Button>
+							</Link>
 						</div>
-						<div>
+
+						<div className="flex flex-col gap-2">
 							<strong>Paul Stake</strong>
-							<p>Arlen Morgan – 208-300-0297</p>
-							<p>Lois Morgan – 208-300-0522</p>
+
+							<Link href="tel:+12083000297">
+								<Button>Arlen Morgan – 208-300-0297</Button>
+							</Link>
+							<Link href="tel:+12083000522">
+								<Button>Lois Morgan – 208-300-0522</Button>
+							</Link>
 						</div>
-						<div>
+						<div className="flex flex-col gap-2">
 							<strong>Rupert Stake</strong>
-							<p>Jolene Hunsaker – 208-431-6642</p>
-							<p>Charlotte Reedy – 208-431-1864</p>
+
+							<Link href="tel:+12084316642">
+								<Button>Jolene Hunsaker – 208-431-6642</Button>
+							</Link>
+							<Link href="tel:+12084311864">
+								<Button>Charlotte Reedy – 208-431-1864</Button>
+							</Link>
 						</div>
-						<div>
+						<div className="flex flex-col gap-2">
 							<strong>Rupert West Stake</strong>
-							<p>Layne Rutschke – 208-431-6510</p>
-							<p>Janie Rutschke – 208-431-6514</p>
+
+							<Link href="tel:+12084316510">
+								<Button>Layne Rutschke – 208-431-6510</Button>
+							</Link>
+							<Link href="tel:+12084316514">
+								<Button>Janie Rutschke – 208-431-6514</Button>
+							</Link>
 						</div>
 					</div>
 				</CardContent>

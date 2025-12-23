@@ -7,7 +7,6 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-	DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +24,7 @@ export interface UserDetailsData {
 	// kiosk_people (optional)
 	kioskPersonId?: string
 	profileImageUrl?: string | null
-
+	languagesSpoken?: string[]
 	// user
 	id: string
 	name: string | null
@@ -39,6 +38,80 @@ export interface UserDetailsData {
 	lastLogin?: string | Date
 }
 
+export const LANGUAGE_OPTIONS: {
+	category: string
+	languages: string[]
+}[] = [
+	{
+		category: 'Global / Widely Spoken',
+		languages: [
+			'English',
+			'Spanish',
+			'Mandarin Chinese',
+			'Hindi',
+			'Arabic',
+			'Portuguese',
+			'Bengali',
+			'Russian',
+			'Japanese',
+			'French',
+		],
+	},
+	{
+		category: 'European',
+		languages: [
+			'German',
+			'Dutch',
+			'Italian',
+			'Polish',
+			'Greek',
+			'Swedish',
+			'Norwegian',
+			'Danish',
+			'Finnish',
+			'Icelandic',
+		],
+	},
+	{
+		category: 'Middle East & Africa',
+		languages: [
+			'Hebrew',
+			'Persian (Farsi)',
+			'Amharic',
+			'Swahili',
+			'Somali',
+			'Afrikaans',
+			'Yoruba',
+			'Zulu',
+		],
+	},
+	{
+		category: 'South & Southeast Asia',
+		languages: [
+			'Urdu',
+			'Punjabi',
+			'Tamil',
+			'Telugu',
+			'Vietnamese',
+			'Thai',
+			'Indonesian',
+			'Filipino (Tagalog)',
+		],
+	},
+	{
+		category: 'Indigenous & Regional',
+		languages: ['Quechua', 'Guarani', 'Nahuatl', 'Maya'],
+	},
+	{
+		category: 'Sign & Accessibility Languages',
+		languages: [
+			'American Sign Language (ASL)',
+			'British Sign Language (BSL)',
+			'International Sign',
+		],
+	},
+]
+
 export default function UserDetails() {
 	const { data: session, update: refreshSession } = useSession()
 
@@ -46,16 +119,14 @@ export default function UserDetails() {
 	const [username, setUsername] = useState('')
 	const [email, setEmail] = useState('')
 	const [details, setDetails] = useState<UserDetailsData | null>(null)
-
 	const [currentPassword, setCurrentPassword] = useState('')
 	const [newPassword, setNewPassword] = useState('')
 	const [confirmPassword, setConfirmPassword] = useState('')
-
 	const [isOpen, setIsOpen] = useState(false)
 	const [preview, setPreview] = useState<string | null>(null)
 	const [file, setFile] = useState<File | null>(null)
-
 	const [isPending, startTransition] = useTransition()
+	const [languagesSpoken, setLanguagesSpoken] = useState<string[]>([])
 
 	const isCredentialsUser = session?.user?.authProvider === 'credentials'
 
@@ -64,6 +135,7 @@ export default function UserDetails() {
 		async function load() {
 			const data = await getUserDetails()
 			setDetails(data)
+			setLanguagesSpoken(data?.languagesSpoken ?? [])
 			// console.log('USER DETAILS FROM SERVER', data)
 		}
 		load()
@@ -102,10 +174,11 @@ export default function UserDetails() {
 				}
 
 				// 2️⃣ Persist image URL to kiosk_people
-				if (uploadedProfileImageUrl && details?.kioskPersonId) {
+				if (details?.kioskPersonId) {
 					await updateKioskProfile({
 						kioskPersonId: details.kioskPersonId,
 						profileImageUrl: uploadedProfileImageUrl,
+						languagesSpoken,
 					})
 				}
 
@@ -201,7 +274,10 @@ export default function UserDetails() {
 							{details?.name ?? session?.user?.name}
 						</CardTitle>
 						<p className="text-sm text-muted-foreground">
-							@{details?.username ?? session?.user?.username}
+							@
+							{details?.username
+								? session?.user?.username
+								: 'No username chosen yet'}
 						</p>
 					</div>
 				</CardHeader>
@@ -222,8 +298,14 @@ export default function UserDetails() {
 									: 'Username/Password'}
 							</p>
 							<p>
-								<strong>Note:</strong> After saving edits you may need to logout
-								and back in to see it update here.
+								<strong>Languages Spoken:</strong>{' '}
+								{details.languagesSpoken?.length
+									? details.languagesSpoken.join(', ')
+									: 'None selected'}
+							</p>
+							<p>
+								<strong>Note:</strong> After saving edits you will need to
+								logout and back in to see it update here.
 							</p>
 
 							{details.createdAt && (
@@ -253,107 +335,158 @@ export default function UserDetails() {
 
 			{/* ---- DIALOG ---- */}
 			<Dialog open={isOpen} onOpenChange={setIsOpen}>
-				<DialogContent>
+				<DialogContent className="max-h-[90vh] flex flex-col">
 					<DialogHeader>
 						<DialogTitle>Edit Your Profile</DialogTitle>
 					</DialogHeader>
+					<div className="flex-1 overflow-y-auto pr-2">
+						<div className="space-y-6">
+							{/* Avatar */}
+							<div className="flex flex-col items-center gap-4">
+								<Image
+									src={resolvedImageUrl ?? '/user.svg'}
+									alt="Preview"
+									width={120}
+									height={120}
+									className="rounded-full border shadow-sm object-cover"
+								/>
 
-					<div className="space-y-6">
-						{/* Avatar */}
-						<div className="flex flex-col items-center gap-4">
-							<Image
-								src={resolvedImageUrl ?? '/user.svg'}
-								alt="Preview"
-								width={120}
-								height={120}
-								className="rounded-full border shadow-sm object-cover"
-							/>
-
-							<input
-								type="file"
-								accept="image/*"
-								onChange={onSelectFile}
-								className="block w-full text-sm text-muted-foreground 
+								<input
+									type="file"
+									accept="image/*"
+									onChange={onSelectFile}
+									className="block w-full text-sm text-muted-foreground 
              file:mr-4 file:py-2 file:px-4
              file:rounded-md file:border file:border-input
              file:bg-secondary file:text-secondary-foreground
              file:text-sm file:font-medium
              hover:file:bg-secondary/80
              cursor-pointer"
-							/>
-						</div>
+								/>
+							</div>
 
-						{/* Name */}
-						<div>
-							<label className="text-sm font-medium">Full Name</label>
-							<Input value={name} onChange={(e) => setName(e.target.value)} />
-						</div>
+							{/* Name */}
+							<div>
+								<label className="text-sm font-medium">Full Name</label>
+								<Input value={name} onChange={(e) => setName(e.target.value)} />
+							</div>
 
-						{/* Username */}
-						<div>
-							<label className="text-sm font-medium">Username</label>
-							<Input
-								value={username}
-								onChange={(e) => setUsername(e.target.value)}
-							/>
-						</div>
+							{/* Username */}
+							<div>
+								<label className="text-sm font-medium">Username</label>
+								<Input
+									value={username}
+									onChange={(e) => setUsername(e.target.value)}
+								/>
+							</div>
 
-						{/* Email */}
-						<div>
-							<label className="text-sm font-medium">Email</label>
-							<Input value={email} onChange={(e) => setEmail(e.target.value)} />
-						</div>
+							{/* Email */}
+							<div>
+								<label className="text-sm font-medium">Email</label>
+								<Input
+									value={email}
+									onChange={(e) => setEmail(e.target.value)}
+								/>
+							</div>
 
+							<div>
+								<label className="text-sm font-medium mb-2 block">
+									Languages Spoken
+								</label>
+
+								<div className="space-y-4">
+									{LANGUAGE_OPTIONS.map((group) => (
+										<div key={group.category}>
+											<p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
+												{group.category}
+											</p>
+
+											<div className="grid grid-cols-2 gap-2">
+												{group.languages.map((lang) => (
+													<label
+														key={lang}
+														className="flex items-center gap-2 text-sm"
+													>
+														<input
+															type="checkbox"
+															checked={languagesSpoken.includes(lang)}
+															onChange={(e) => {
+																setLanguagesSpoken((prev) =>
+																	e.target.checked
+																		? [...prev, lang]
+																		: prev.filter((l) => l !== lang)
+																)
+															}}
+														/>
+														{lang}
+													</label>
+												))}
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+
+							{/* <Button
+								onClick={onSaveProfile}
+								disabled={isPending}
+								className="w-full"
+							>
+								{isPending ? 'Saving...' : 'Save Profile'}
+							</Button> */}
+
+							{/* ---- CREDENTIALS ONLY: CHANGE PASSWORD ---- */}
+							{isCredentialsUser && (
+								<div className="pt-6 border-t">
+									<h2 className="font-semibold mb-2">Change Password</h2>
+
+									<div className="space-y-3">
+										<Input
+											type="password"
+											placeholder="Current password"
+											value={currentPassword}
+											onChange={(e) => setCurrentPassword(e.target.value)}
+										/>
+										<Input
+											type="password"
+											placeholder="New password"
+											value={newPassword}
+											onChange={(e) => setNewPassword(e.target.value)}
+										/>
+										<Input
+											type="password"
+											placeholder="Confirm new password"
+											value={confirmPassword}
+											onChange={(e) => setConfirmPassword(e.target.value)}
+										/>
+
+										<Button
+											onClick={onChangePassword}
+											disabled={isPending}
+											className="w-full"
+										>
+											{isPending ? 'Updating…' : 'Update Password'}
+										</Button>
+									</div>
+								</div>
+							)}
+						</div>
+					</div>
+
+					<div className="mt-auto border-t pt-4 flex flex-col gap-2">
 						<Button
 							onClick={onSaveProfile}
 							disabled={isPending}
 							className="w-full"
+							// className="w-full sm:w-1/2"
 						>
 							{isPending ? 'Saving...' : 'Save Profile'}
 						</Button>
 
-						{/* ---- CREDENTIALS ONLY: CHANGE PASSWORD ---- */}
-						{isCredentialsUser && (
-							<div className="pt-6 border-t">
-								<h2 className="font-semibold mb-2">Change Password</h2>
-
-								<div className="space-y-3">
-									<Input
-										type="password"
-										placeholder="Current password"
-										value={currentPassword}
-										onChange={(e) => setCurrentPassword(e.target.value)}
-									/>
-									<Input
-										type="password"
-										placeholder="New password"
-										value={newPassword}
-										onChange={(e) => setNewPassword(e.target.value)}
-									/>
-									<Input
-										type="password"
-										placeholder="Confirm new password"
-										value={confirmPassword}
-										onChange={(e) => setConfirmPassword(e.target.value)}
-									/>
-
-									<Button
-										onClick={onChangePassword}
-										disabled={isPending}
-										className="w-full"
-									>
-										{isPending ? 'Updating…' : 'Update Password'}
-									</Button>
-								</div>
-							</div>
-						)}
-					</div>
-
-					<DialogFooter>
 						<Button variant="secondary" onClick={() => setIsOpen(false)}>
 							Close
 						</Button>
-					</DialogFooter>
+					</div>
 				</DialogContent>
 			</Dialog>
 		</>

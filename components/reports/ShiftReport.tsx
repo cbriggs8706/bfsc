@@ -16,6 +16,7 @@ import type {
 } from '@/types/shift-report'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { supabase } from '@/lib/supabase-client'
+import { format, isToday } from 'date-fns'
 
 type Props = {
 	initialShifts: TodayShift[]
@@ -23,33 +24,44 @@ type Props = {
 		consultants: ShiftReportConsultant[]
 		patrons: ShiftReportPatron[]
 	}
+	locale: string
 }
 type OffShift = {
 	consultants: ShiftReportConsultant[]
 	patrons: ShiftReportPatron[]
 }
 
-export function ShiftReport({ initialShifts, initialOffShift }: Props) {
-	const [preset, setPreset] = useState<DateRangePreset>('wtd')
+export function ShiftReport({ initialShifts, initialOffShift, locale }: Props) {
+	const [preset, setPreset] = useState<DateRangePreset>('lastWeek')
 	const [summary, setSummary] = useState<ShiftSummaryPoint[]>([])
 	const refetchTimer = useRef<number | null>(null)
 	const [shifts, setShifts] = useState<TodayShift[]>(initialShifts)
 	const [offShift, setOffShift] = useState<OffShift>(initialOffShift)
+	const [selectedDate, setSelectedDate] = useState<Date>(new Date())
 
-	const refetchToday = useCallback(async () => {
-		const res = await fetch('/api/reports/shifts/today', { cache: 'no-store' })
+	const refetchForDate = useCallback(async (date: Date) => {
+		const dateStr = format(date, 'yyyy-MM-dd')
+
+		const res = await fetch(`/api/reports/shifts/day?date=${dateStr}`, {
+			cache: 'no-store',
+		})
+
 		if (!res.ok) return
+
 		const json = await res.json()
 		setShifts(json.shifts)
 		setOffShift(json.offShift)
 	}, [])
 
 	const scheduleRefetch = useCallback(() => {
+		if (!isToday(selectedDate)) return
+
 		if (refetchTimer.current) window.clearTimeout(refetchTimer.current)
+
 		refetchTimer.current = window.setTimeout(() => {
-			refetchToday()
-		}, 250) // debounce
-	}, [refetchToday])
+			refetchForDate(selectedDate)
+		}, 250)
+	}, [selectedDate, refetchForDate])
 
 	useEffect(() => {
 		let cancelled = false
@@ -73,24 +85,22 @@ export function ShiftReport({ initialShifts, initialOffShift }: Props) {
 	}, [preset])
 
 	useEffect(() => {
-		// Subscribe to inserts on BOTH tables
 		const channel = supabase
-			.channel('kiosk-today-live')
+			.channel('kiosk-day-live')
 			.on(
 				'postgres_changes',
 				{ event: 'INSERT', schema: 'public', table: 'kiosk_shift_logs' },
-				() => scheduleRefetch()
+				scheduleRefetch
 			)
 			.on(
 				'postgres_changes',
 				{ event: 'INSERT', schema: 'public', table: 'kiosk_visit_logs' },
-				() => scheduleRefetch()
+				scheduleRefetch
 			)
-			// Optional: if you ever start updating departures and want UI to react:
 			.on(
 				'postgres_changes',
 				{ event: 'UPDATE', schema: 'public', table: 'kiosk_shift_logs' },
-				() => scheduleRefetch()
+				scheduleRefetch
 			)
 			.subscribe()
 
@@ -103,9 +113,40 @@ export function ShiftReport({ initialShifts, initialOffShift }: Props) {
 	return (
 		<>
 			<Card>
-				<CardHeader className="space-y-4">
-					<CardTitle>Today’s Shifts</CardTitle>
-					<Button onClick={() => window.print()}>Print</Button>
+				<CardHeader className="flex gap-4 items-center">
+					<CardTitle>
+						Shifts for {format(selectedDate, 'MMM d, yyyy')}
+					</CardTitle>
+
+					<input
+						type="date"
+						value={format(selectedDate, 'yyyy-MM-dd')}
+						onChange={(e) => {
+							const nextDate = new Date(e.target.value)
+							setSelectedDate(nextDate)
+							refetchForDate(nextDate) // 👈 explicit, intentional
+						}}
+						className="border rounded px-2 py-1 text-sm"
+					/>
+
+					<Button
+						onClick={() => {
+							const dateStr = format(selectedDate, 'yyyy-MM-dd')
+							const header = `Shift Report – ${format(
+								selectedDate,
+								'MMMM d, yyyy'
+							)}`
+							window.open(
+								`/shifts/report?date=${dateStr}&header=${encodeURIComponent(
+									header
+								)}`,
+								'_blank',
+								'width=1200,height=900'
+							)
+						}}
+					>
+						Print
+					</Button>
 				</CardHeader>
 
 				<CardContent className="space-y-4">

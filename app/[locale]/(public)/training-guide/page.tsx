@@ -24,7 +24,7 @@ function ResourceList({ items }: { items: TrainingResource[] }) {
 	return (
 		<ul className="space-y-2">
 			{items.map((it, idx) => (
-				<li key={idx} className="flex items-start gap-3 text-sm">
+				<li key={idx} className="flex items-start gap-3 text-base">
 					{/* Empty checkbox decoration */}
 					<span
 						className="mt-0.5 h-4 w-4 rounded border border-muted-foreground/40 bg-background"
@@ -59,16 +59,16 @@ export default async function TrainingGuidePage({ params }: Props) {
 			{/* Header */}
 			<div>
 				<h1 className="text-3xl font-bold">Training Guide</h1>
-				<p className="text-sm text-muted-foreground max-w-3xl">
+				<p className="text-base text-muted-foreground max-w-3xl">
 					{TRAINING_GUIDE_TITLE}
 				</p>
 			</div>
 
 			{/* Intro / notes */}
 			<Card>
-				<CardContent className="space-y-3 pt-6">
+				<CardContent className="space-y-3">
 					{TRAINING_GUIDE_INTRO.map((p, idx) => (
-						<p key={idx} className="text-sm">
+						<p key={idx} className="text-base">
 							{p}
 						</p>
 					))}
@@ -76,9 +76,9 @@ export default async function TrainingGuidePage({ params }: Props) {
 			</Card>
 			{/* Intro / notes */}
 			<Card>
-				<CardContent className="space-y-3 pt-6">
+				<CardContent className="">
 					{TRAINING_GUIDE_NOTE.map((p, idx) => (
-						<p key={idx} className="text-sm">
+						<p key={idx} className="text-base">
 							{p}
 						</p>
 					))}
@@ -91,12 +91,16 @@ export default async function TrainingGuidePage({ params }: Props) {
 					<h2 className="text-xl font-semibold">
 						Consultant Training Sections
 					</h2>
-					<Link href="https://docs.google.com/document/d/1mYsK_qqDQfFNSpGZIsGK7Icg_6Hyd6WVkFQA6Vt2tvA/edit?usp=sharing">
-						<Button variant="default">Download this list for printing</Button>
-					</Link>
-					<Link href={`/${locale}/training`} className="">
-						<Button variant="default">Become certified in each</Button>
-					</Link>
+					<div className="flex flex-wrap gap-4">
+						<Link href="https://docs.google.com/document/d/1mYsK_qqDQfFNSpGZIsGK7Icg_6Hyd6WVkFQA6Vt2tvA/edit?usp=sharing">
+							<Button variant="default">Download this list for printing</Button>
+						</Link>
+						<Link href={`/${locale}/training`} className="">
+							<Button variant="default">
+								Login to take the certification courses
+							</Button>
+						</Link>
+					</div>
 					<Accordion type="multiple" className="w-full">
 						{TRAINING_GUIDE_SECTIONS.map((section) => (
 							<AccordionItem key={section.id} value={section.id}>
@@ -113,20 +117,22 @@ export default async function TrainingGuidePage({ params }: Props) {
 			</Card>
 
 			<Card>
-				<CardHeader>Another Option</CardHeader>
+				<CardHeader className="font-bold">Another Option</CardHeader>
 				<CardContent className="space-y-2">
-					<Link
-						className="font-bold underline"
-						href="https://www.familysearch.org/en/fieldops/familysearch-center-workers-and-volunteers-learning-resources"
-					>
-						The FamilySearch Center Workers and Volunteers Learning Resources
-					</Link>
-					<p className="text-sm">
+					<p className="text-base">
 						This is the training guide put together by FamilySearch with ten
 						different topics and multiple articles and videos for assistance in
 						learning how to use FamilySearch. But also a great resource for
 						specific questions relating to FamilySearch.
-					</p>
+					</p>{' '}
+					<Link
+						className="font-bold underline"
+						href="https://www.familysearch.org/en/fieldops/familysearch-center-workers-and-volunteers-learning-resources"
+					>
+						<Button>
+							The FamilySearch Center Workers and Volunteers Learning Resources
+						</Button>
+					</Link>
 				</CardContent>
 			</Card>
 		</div>

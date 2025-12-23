@@ -1,3 +1,4 @@
+// app/(print)/shifts/print/page.tsx
 import { ShiftSchedulePrint } from '@/components/admin/shift/ShiftSchedulePrint'
 import { getShiftPrintData } from '@/db/queries/shifts-print'
 

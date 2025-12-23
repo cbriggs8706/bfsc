@@ -23,6 +23,10 @@ export const kioskPeople = pgTable('kiosk_people', {
 	passcode: varchar('passcode', { length: 6 }).unique(), // 6-digit passcode, optional, must be numeric if present
 	isConsultantCached: boolean('is_consultant_cached').notNull().default(false), // derived from user.role but cached for quick kiosk logic
 	profileImageUrl: text('profile_image_url'),
+	languagesSpoken: text('languages_spoken')
+		.array()
+		.notNull()
+		.default(sql`ARRAY[]::text[]`),
 
 	faithId: uuid('faith_id').references(() => faiths.id, {
 		onDelete: 'set null',

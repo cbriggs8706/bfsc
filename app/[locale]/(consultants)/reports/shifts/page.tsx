@@ -39,6 +39,7 @@ export default async function ShiftReportPage({ params }: Props) {
 			<ShiftReport
 				initialShifts={data.shifts}
 				initialOffShift={data.offShift}
+				locale={locale}
 			/>
 		</div>
 	)

@@ -1,4 +1,5 @@
 // app/[locale]/(public)/research-specialists/page.tsx
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
 
@@ -27,9 +28,10 @@ export default async function ClassesPage({ params }: Props) {
 					<p className="text-sm">
 						For all appointments, contact the center to schedule yours:
 					</p>
-					<p className="text-base">
-						<strong>(208) 878-7286</strong>
-					</p>
+
+					<Link href="tel:+12088787286">
+						<Button className="ml-2">(208) 878-7286</Button>
+					</Link>
 				</CardContent>
 			</Card>
 
