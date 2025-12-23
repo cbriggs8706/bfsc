@@ -18,6 +18,7 @@ export type OnShiftConsultant = {
 	userId: string | null
 	fullName: string
 	profileImageUrl: string | null
+	languages: string[]
 }
 
 export type Purpose = {

@@ -1,6 +1,6 @@
 // app/(print)/shifts/report/page.tsx
 import { ShiftReportPrint } from '@/components/reports/ShiftReportPrint'
-import { getShiftReportPrintData } from '@/db/queries/shifts/shift-report-print'
+import { getShiftReportDay } from '@/db/queries/shifts/shift-report-day'
 import { format } from 'date-fns'
 
 type Props = {
@@ -17,7 +17,8 @@ export default async function ShiftReportPrintPage({ searchParams }: Props) {
 	const headerTrimmed =
 		header?.trim() || `Shift Report – ${format(day, 'MMMM d, yyyy')}`
 
-	const data = await getShiftReportPrintData(day)
+	const dateStr = date ?? format(new Date(), 'yyyy-MM-dd')
+	const data = await getShiftReportDay(dateStr)
 
 	return (
 		<html>
@@ -65,7 +66,9 @@ export default async function ShiftReportPrintPage({ searchParams }: Props) {
 				<ShiftReportPrint
 					header={headerTrimmed}
 					date={data.date}
-					report={data.report}
+					// report={data.report}
+					shifts={data.shifts}
+					offShift={data.offShift}
 				/>
 			</body>
 		</html>

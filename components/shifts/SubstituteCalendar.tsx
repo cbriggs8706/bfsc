@@ -241,6 +241,8 @@ export function SubstituteCalendarClient({
 						openRequests={openRequests}
 						currentUserId={currentUserId}
 						locale={locale}
+						collapsible={false}
+						defaultCollapsed={false}
 					/>
 					<Card className="hidden md:block p-6">
 						<MonthCalendar

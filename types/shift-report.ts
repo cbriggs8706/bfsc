@@ -84,7 +84,9 @@ export type TodayShift = {
 	patrons: {
 		visitId: string
 		fullName: string
+		purposeName?: string | null
 		arrivedAt: Date
+		departedAt: Date | null
 	}[]
 }
 
@@ -114,8 +116,10 @@ export type ShiftSummaryPoint = {
 }
 
 export type ShiftReportConsultant = {
+	shiftLogId: string
 	userId: string
 	fullName: string
 	profileImageUrl: string | null
 	arrivalAt: Date
+	actualDepartureAt: Date | null
 }

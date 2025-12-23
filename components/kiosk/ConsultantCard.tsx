@@ -10,11 +10,13 @@ interface ConsultantCardProps {
 	name: string
 	imageUrl?: string | null
 	certificates: CertificateSummary[]
+	languages: string[]
 }
 
 export function ConsultantCard({
 	name,
 	imageUrl,
+	languages,
 	certificates,
 }: ConsultantCardProps) {
 	return (
@@ -28,10 +30,10 @@ export function ConsultantCard({
 			/>
 
 			<span className="font-bold text-md">{name}</span>
-
+			{languages && <span className="text-xs">{languages.join(', ')}</span>}
 			{certificates.length > 0 && (
 				<>
-					<span className="font-medium text-sm">Can assist with:</span>
+					<span className="font-xs text-sm">Can assist with:</span>
 
 					<div className="flex flex-wrap gap-1 justify-center">
 						{certificates.map((c) => (

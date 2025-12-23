@@ -8,11 +8,14 @@ import type { TodayShift } from '@/types/shift-report'
 import { toAmPm } from '@/utils/time'
 
 export function TodayShiftCard({ shift }: { shift: TodayShift }) {
+	const hasTimes = shift.startTime !== '—' && shift.endTime !== '—'
 	return (
 		<Card>
 			<CardHeader>
 				<p className="font-semibold">
-					{toAmPm(shift.startTime)} – {toAmPm(shift.endTime)}
+					{hasTimes
+						? `${toAmPm(shift.startTime)} – ${toAmPm(shift.endTime)}`
+						: 'Outside of Regular Shift'}
 				</p>
 			</CardHeader>
 
@@ -56,8 +59,23 @@ export function TodayShiftCard({ shift }: { shift: TodayShift }) {
 					) : (
 						<ul className="space-y-1 text-sm">
 							{shift.patrons.map((p) => (
-								<li key={p.visitId} className="flex justify-between">
+								<li
+									key={p.visitId}
+									className="
+											grid
+											grid-cols-1
+											sm:grid-cols-2
+											md:grid-cols-4
+											items-center
+											gap-x-3
+											gap-y-1
+											border-b
+											last:border-b-0
+											pb-2
+										"
+								>
 									<span>{p.fullName}</span>
+									<span>{p.purposeName}</span>
 									<span className="text-muted-foreground">
 										{new Date(p.arrivedAt).toLocaleTimeString()}
 									</span>

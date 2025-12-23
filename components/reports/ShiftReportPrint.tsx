@@ -1,58 +1,92 @@
 // components/reports/ShiftReportPrint.tsx
-import type { ShiftReportItem } from '@/types/shift-report'
+import type {
+	ShiftReportConsultant,
+	ShiftReportItem,
+	ShiftReportPatron,
+	TodayShift,
+} from '@/types/shift-report'
+import { toAmPm } from '@/utils/time'
 import { format } from 'date-fns'
 
 type Props = {
 	header: string
-	date: string // YYYY-MM-DD
-	report: ShiftReportItem[]
+	date: string
+	shifts: TodayShift[]
+	offShift: TodayShift[]
 }
 
-export function ShiftReportPrint({ header, date, report }: Props) {
+export function ShiftReportPrint({ header, date, shifts, offShift }: Props) {
 	return (
-		<div>
-			<h1>{header}</h1>
+		<div className="p-6">
+			<h1 className="text-2xl font-bold">{header}</h1>
 
-			{report.length === 0 && (
-				<p>No consultant or patron activity recorded for this day.</p>
-			)}
+			{shifts.length === 0 && <p>No shifts scheduled for this day.</p>}
 
-			{report.map(({ consultant, patrons }) => {
-				const arrival = new Date(consultant.arrivalAt)
-				const departure = new Date(
-					consultant.actualDepartureAt ?? consultant.expectedDepartureAt
-				)
+			{shifts.map((shift) => (
+				<section key={shift.shiftId}>
+					<h2 className="text-lg font-semibold">
+						{toAmPm(shift.startTime)} – {toAmPm(shift.endTime)}
+					</h2>
 
-				return (
-					<section key={`${consultant.personId}-${consultant.arrivalAt}`}>
-						<h2>{consultant.fullName}</h2>
+					<p>
+						<strong>Consultants:</strong>{' '}
+						{shift.consultants.map((c) => c.fullName).join(', ') || '—'}
+					</p>
 
-						<p>
-							<strong>Shift:</strong> {format(arrival, 'h:mm a')} –{' '}
-							{format(departure, 'h:mm a')}
-						</p>
-
-						<table>
-							<thead>
-								<tr>
-									<th>Patron</th>
-									<th>Signed In</th>
-									<th>Purpose</th>
+					<table>
+						<thead>
+							<tr>
+								<th>Patron</th>
+								<th>Purpose</th>
+								<th>Arrived</th>
+							</tr>
+						</thead>
+						<tbody>
+							{shift.patrons.map((p) => (
+								<tr key={p.visitId}>
+									<td>{p.fullName}</td>
+									<td>{p.purposeName}</td>
+									<td>{format(new Date(p.arrivedAt), 'h:mm a')}</td>
 								</tr>
-							</thead>
-							<tbody>
-								{patrons.map((p) => (
-									<tr key={`${p.personId}-${p.signedInAt}`}>
-										<td>{p.fullName}</td>
-										<td>{format(new Date(p.signedInAt), 'h:mm a')}</td>
-										<td>{p.purposeName ?? '—'}</td>
+							))}
+						</tbody>
+					</table>
+				</section>
+			))}
+
+			{offShift.length > 0 && (
+				<>
+					{offShift.map((shift) => (
+						<section key={shift.shiftId}>
+							<h3 className="text-lg font-semibold">Off Shift</h3>
+
+							<p>
+								<strong>Consultants:</strong>{' '}
+								{shift.consultants.map((c) => c.fullName).join(', ') || '—'}
+							</p>
+
+							<table>
+								<thead>
+									<tr>
+										<th>Patron</th>
+										<th>Purpose</th>
+										<th>Arrived</th>
 									</tr>
-								))}
-							</tbody>
-						</table>
-					</section>
-				)
-			})}
+								</thead>
+								<tbody>
+									{shift.patrons.map((p) => (
+										<tr key={p.visitId}>
+											<td>{p.fullName}</td>
+											<td>{p.purposeName ?? '—'}</td>
+											<td>{format(new Date(p.arrivedAt), 'h:mm a')}</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</section>
+					))}
+				</>
+			)}
 		</div>
 	)
 }

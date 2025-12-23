@@ -17,6 +17,8 @@
 	"calendar": "Substitute Calendar",
 	"calendarSub": "Lorem ipsum",
 	"statusLabel": "Status",
+	"show": "Show",
+	"hide": "Hide",
 	"status": {
 		"open": "Open",
 		"awaiting_request_confirmation": "Awaiting volunteer acceptance",

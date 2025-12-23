@@ -23,12 +23,17 @@ export function AnnouncementBanner({ announcement }: AnnouncementBannerProps) {
 	return (
 		<>
 			<div
-				className="w-full bg-accent outline-green-accent outline-2 p-3 rounded-md cursor-pointer hover:bg-green-accent transition flex items-center gap-2"
+				className="w-full bg-accent outline-green-accent outline-2 p-3 rounded-md cursor-pointer hover:bg-green-accent transition flex items-center gap-2 justify-between"
 				onClick={() => setOpen(true)}
 			>
-				<Megaphone className="h-5 w-5 shrink-0 " />
+				<div className="flex-row flex gap-2">
+					<Megaphone className="h-5 w-5 shrink-0 " />
 
-				<span className="font-semibold">{announcement.title}</span>
+					<span className="font-semibold">{announcement.title}</span>
+				</div>
+				<span className="text-sm text-muted-foreground text-right">
+					Click to view announcement
+				</span>
 			</div>
 
 			<AnnouncementDialog

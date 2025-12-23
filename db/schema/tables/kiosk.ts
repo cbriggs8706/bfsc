@@ -79,8 +79,7 @@ export const kioskVisitLogs = pgTable('kiosk_visit_logs', {
 	createdAt: timestamp('created_at', { withTimezone: true })
 		.notNull()
 		.defaultNow(),
-	// If you ever want to log exit time for patrons later:
-	// departedAt: timestamp('departed_at', { withTimezone: true }),
+	departedAt: timestamp('departed_at', { withTimezone: true }),
 	notes: text('notes'),
 })
 

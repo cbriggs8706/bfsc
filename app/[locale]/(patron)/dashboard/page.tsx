@@ -61,6 +61,8 @@ export default async function Page({ params }: DashboardPageProps) {
 					openRequests={openRequests}
 					currentUserId={session.user.id}
 					locale={locale}
+					collapsible={true}
+					defaultCollapsed={true}
 				/>
 				<ConsultantShiftsDashboard
 					shifts={shiftInstances}

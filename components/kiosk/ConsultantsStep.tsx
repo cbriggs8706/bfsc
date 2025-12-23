@@ -45,6 +45,7 @@ export function ConsultantsStep({
 									name={c.fullName}
 									imageUrl={c.profileImageUrl}
 									certificates={certificates}
+									languages={c.languages}
 								/>
 							)
 						})}

@@ -16,6 +16,7 @@ export async function GET() {
 			userId: kioskPeople.userId, // 👈 ADD THIS
 			fullName: kioskPeople.fullName,
 			profileImageUrl: kioskPeople.profileImageUrl,
+			languages: kioskPeople.languagesSpoken,
 		})
 		.from(kioskShiftLogs)
 		.innerJoin(kioskPeople, eq(kioskShiftLogs.personId, kioskPeople.id))

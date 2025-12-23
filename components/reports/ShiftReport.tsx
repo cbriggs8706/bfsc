@@ -9,26 +9,16 @@ import { DateRangeButtons } from '@/components/custom/DateRangeButtons'
 import { ShiftSummaryChart } from '@/components/reports/ShiftSummaryChart'
 import type {
 	DateRangePreset,
-	ShiftReportConsultant,
-	ShiftReportPatron,
 	ShiftSummaryPoint,
 	TodayShift,
 } from '@/types/shift-report'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { supabase } from '@/lib/supabase-client'
 import { format, isToday } from 'date-fns'
 
 type Props = {
 	initialShifts: TodayShift[]
-	initialOffShift: {
-		consultants: ShiftReportConsultant[]
-		patrons: ShiftReportPatron[]
-	}
+	initialOffShift: TodayShift[]
 	locale: string
-}
-type OffShift = {
-	consultants: ShiftReportConsultant[]
-	patrons: ShiftReportPatron[]
 }
 
 export function ShiftReport({ initialShifts, initialOffShift, locale }: Props) {
@@ -36,12 +26,13 @@ export function ShiftReport({ initialShifts, initialOffShift, locale }: Props) {
 	const [summary, setSummary] = useState<ShiftSummaryPoint[]>([])
 	const refetchTimer = useRef<number | null>(null)
 	const [shifts, setShifts] = useState<TodayShift[]>(initialShifts)
-	const [offShift, setOffShift] = useState<OffShift>(initialOffShift)
-	const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+	const [offShift, setOffShift] = useState<TodayShift[]>(initialOffShift)
+	const [selectedDateStr, setSelectedDateStr] = useState(
+		format(new Date(), 'yyyy-MM-dd')
+	)
+	const selectedDate = new Date(`${selectedDateStr}T12:00:00`)
 
-	const refetchForDate = useCallback(async (date: Date) => {
-		const dateStr = format(date, 'yyyy-MM-dd')
-
+	const refetchForDate = useCallback(async (dateStr: string) => {
 		const res = await fetch(`/api/reports/shifts/day?date=${dateStr}`, {
 			cache: 'no-store',
 		})
@@ -59,9 +50,9 @@ export function ShiftReport({ initialShifts, initialOffShift, locale }: Props) {
 		if (refetchTimer.current) window.clearTimeout(refetchTimer.current)
 
 		refetchTimer.current = window.setTimeout(() => {
-			refetchForDate(selectedDate)
+			refetchForDate(selectedDateStr)
 		}, 250)
-	}, [selectedDate, refetchForDate])
+	}, [selectedDate, selectedDateStr, refetchForDate])
 
 	useEffect(() => {
 		let cancelled = false
@@ -113,25 +104,25 @@ export function ShiftReport({ initialShifts, initialOffShift, locale }: Props) {
 	return (
 		<>
 			<Card>
-				<CardHeader className="flex gap-4 items-center">
+				<CardHeader className="flex flex-wrap gap-4 items-center">
 					<CardTitle>
 						Shifts for {format(selectedDate, 'MMM d, yyyy')}
 					</CardTitle>
 
 					<input
 						type="date"
-						value={format(selectedDate, 'yyyy-MM-dd')}
+						value={selectedDateStr}
 						onChange={(e) => {
-							const nextDate = new Date(e.target.value)
-							setSelectedDate(nextDate)
-							refetchForDate(nextDate) // 👈 explicit, intentional
+							const next = e.target.value
+							setSelectedDateStr(next)
+							refetchForDate(next)
 						}}
 						className="border rounded px-2 py-1 text-sm"
 					/>
 
 					<Button
 						onClick={() => {
-							const dateStr = format(selectedDate, 'yyyy-MM-dd')
+							const dateStr = selectedDateStr
 							const header = `Shift Report – ${format(
 								selectedDate,
 								'MMMM d, yyyy'
@@ -161,74 +152,38 @@ export function ShiftReport({ initialShifts, initialOffShift, locale }: Props) {
 					)}
 
 					{/* Off-shift section */}
-					{(offShift.consultants.length > 0 || offShift.patrons.length > 0) && (
-						<Card>
-							<CardHeader>
-								<CardTitle>Arrived Outside Scheduled Shifts</CardTitle>
-							</CardHeader>
-
-							<CardContent className="space-y-4">
-								{/* Consultants */}
-								<div>
-									<p className="text-sm font-medium mb-2">Consultants</p>
-
-									{offShift.consultants.length === 0 ? (
-										<p className="text-sm text-muted-foreground">
-											No off-shift consultants.
-										</p>
-									) : (
-										<div className="flex gap-3 flex-wrap">
-											{offShift.consultants.map((c) => (
-												<div key={c.userId} className="flex items-center gap-2">
-													<Avatar>
-														<AvatarImage src={c.profileImageUrl ?? undefined} />
-														<AvatarFallback>
-															{c.fullName.charAt(0)}
-														</AvatarFallback>
-													</Avatar>
-													<div>
-														<p className="text-sm">{c.fullName}</p>
-														<p className="text-xs text-muted-foreground">
-															Arrived{' '}
-															{new Date(c.arrivalAt).toLocaleTimeString()}
-														</p>
-													</div>
-												</div>
-											))}
-										</div>
-									)}
-								</div>
-
-								{/* Patrons */}
-								<div>
-									<p className="text-sm font-medium mb-2">Patrons</p>
-
-									{offShift.patrons.length === 0 ? (
-										<p className="text-sm text-muted-foreground">
-											No off-shift patrons.
-										</p>
-									) : (
-										<ul className="space-y-1 text-sm">
-											{offShift.patrons.map((p) => (
-												<li key={p.visitId} className="flex justify-between">
-													<span>{p.fullName}</span>
-													<span className="text-muted-foreground">
-														{new Date(p.arrivedAt).toLocaleTimeString()}
-													</span>
-												</li>
-											))}
-										</ul>
-									)}
-								</div>
-							</CardContent>
-						</Card>
+					{offShift.length > 0 && (
+						<div className="space-y-4">
+							{offShift.map((shift) => (
+								<TodayShiftCard key={shift.shiftId} shift={shift} />
+							))}
+						</div>
 					)}
 				</CardContent>
 			</Card>
 
 			<Card>
 				<CardHeader className="space-y-4">
-					<DateRangeButtons value={preset} onChange={setPreset} />
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						<DateRangeButtons value={preset} onChange={setPreset} />
+
+						<Button
+							variant="default"
+							onClick={() => {
+								const header = `Shift Summary – ${format(
+									selectedDate,
+									'MMMM d, yyyy'
+								)}`
+								window.open(
+									`/shifts/summary?header=${encodeURIComponent(header)}`,
+									'_blank',
+									'width=1200,height=900'
+								)
+							}}
+						>
+							Print Summary Charts
+						</Button>
+					</div>
 				</CardHeader>
 
 				<CardContent>
