@@ -20,7 +20,7 @@ export default async function UpdateLibraryItemPage({ params }: Props) {
 	const { locale, id } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
 
-	const currentUser = await requireCurrentUser()
+	const currentUser = await requireCurrentUser(locale)
 
 	const data = await getLibraryItemById(id)
 	if (!data) notFound()

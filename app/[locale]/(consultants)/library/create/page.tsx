@@ -14,7 +14,7 @@ export default async function CreateLibraryItemPage({ params }: Props) {
 	const { locale } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
 
-	const currentUser = await requireCurrentUser()
+	const currentUser = await requireCurrentUser(locale)
 
 	async function createAction(input: Parameters<typeof createLibraryItem>[1]) {
 		'use server'

@@ -17,7 +17,7 @@ export default async function ClassesPage({ params }: Props) {
 	// Page itself can be public, but actions depend on auth
 	let currentUser = null
 	try {
-		currentUser = await requireCurrentUser()
+		currentUser = await requireCurrentUser(locale)
 	} catch {
 		// not logged in — fine
 	}

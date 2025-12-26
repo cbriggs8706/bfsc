@@ -16,7 +16,7 @@ export default async function ResourcePage({ params }: Props) {
 	const { locale } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
 
-	const currentUser = await requireCurrentUser()
+	const currentUser = await requireCurrentUser(locale)
 	if (currentUser.role !== 'Admin') {
 		redirect(`/${locale}`)
 	}

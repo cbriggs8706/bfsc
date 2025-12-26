@@ -25,7 +25,7 @@ export default async function LibraryPage({ params, searchParams }: Props) {
 
 	let currentUser = null
 	try {
-		currentUser = await requireCurrentUser()
+		currentUser = await requireCurrentUser(locale)
 	} catch {
 		// public allowed
 	}

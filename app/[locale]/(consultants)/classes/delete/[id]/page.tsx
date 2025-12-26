@@ -16,7 +16,7 @@ export default async function DeleteClassPage({ params }: Props) {
 	const { locale, id } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
 
-	const currentUser = await requireCurrentUser()
+	const currentUser = await requireCurrentUser(locale)
 
 	const data = await getSeriesWithSessionsById(id)
 	if (!data) notFound()
