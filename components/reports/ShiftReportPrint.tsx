@@ -7,6 +7,7 @@ import type {
 } from '@/types/shift-report'
 import { toAmPm } from '@/utils/time'
 import { format } from 'date-fns'
+import React from 'react'
 
 type Props = {
 	header: string
@@ -22,37 +23,73 @@ export function ShiftReportPrint({ header, date, shifts, offShift }: Props) {
 
 			{shifts.length === 0 && <p>No shifts scheduled for this day.</p>}
 
-			{shifts.map((shift) => (
-				<section key={shift.shiftId}>
-					<h2 className="text-lg font-semibold">
-						{toAmPm(shift.startTime)} – {toAmPm(shift.endTime)}
-					</h2>
+			{shifts.map((shift) => {
+				const sortedReservations = [...shift.reservations].sort((a, b) =>
+					a.startTime.localeCompare(b.startTime)
+				)
+				return (
+					<React.Fragment key={shift.shiftId}>
+						<section>
+							<h2 className="text-lg font-semibold">
+								{toAmPm(shift.startTime)} – {toAmPm(shift.endTime)}
+							</h2>
 
-					<p>
-						<strong>Consultants:</strong>{' '}
-						{shift.consultants.map((c) => c.fullName).join(', ') || '—'}
-					</p>
+							<p>
+								<strong>Consultants:</strong>{' '}
+								{shift.consultants.map((c) => c.fullName).join(', ') || '—'}
+							</p>
 
-					<table>
-						<thead>
-							<tr>
-								<th>Patron</th>
-								<th>Purpose</th>
-								<th>Arrived</th>
-							</tr>
-						</thead>
-						<tbody>
-							{shift.patrons.map((p) => (
-								<tr key={p.visitId}>
-									<td>{p.fullName}</td>
-									<td>{p.purposeName}</td>
-									<td>{format(new Date(p.arrivedAt), 'h:mm a')}</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</section>
-			))}
+							<table>
+								<thead>
+									<tr>
+										<th>Patron</th>
+										<th>Purpose</th>
+										<th>Arrived</th>
+									</tr>
+								</thead>
+								<tbody>
+									{shift.patrons.map((p) => (
+										<tr key={p.visitId}>
+											<td>{p.fullName}</td>
+											<td>{p.purposeName}</td>
+											<td>{format(new Date(p.arrivedAt), 'h:mm a')}</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+
+							{shift.reservations.length > 0 && (
+								<>
+									<h4 className="mt-4 font-semibold">Reservations</h4>
+
+									<table>
+										<thead>
+											<tr>
+												<th>Patron</th>
+												<th>Resource</th>
+												<th>Time</th>
+												<th>Status</th>
+											</tr>
+										</thead>
+										<tbody>
+											{sortedReservations.map((r) => (
+												<tr key={r.id}>
+													<td>{r.patronName}</td>
+													<td>{r.resourceName}</td>
+													<td>
+														{toAmPm(r.startTime)} – {toAmPm(r.endTime)}
+													</td>
+													<td>{r.status}</td>
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</>
+							)}
+						</section>
+					</React.Fragment>
+				)
+			})}
 
 			{offShift.length > 0 && (
 				<>

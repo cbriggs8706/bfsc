@@ -9,6 +9,10 @@ import { toAmPm } from '@/utils/time'
 
 export function TodayShiftCard({ shift }: { shift: TodayShift }) {
 	const hasTimes = shift.startTime !== '—' && shift.endTime !== '—'
+
+	const sortedReservations = [...shift.reservations].sort((a, b) =>
+		a.startTime.localeCompare(b.startTime)
+	)
 	return (
 		<Card>
 			<CardHeader>
@@ -79,6 +83,33 @@ export function TodayShiftCard({ shift }: { shift: TodayShift }) {
 									<span className="text-muted-foreground">
 										{new Date(p.arrivedAt).toLocaleTimeString()}
 									</span>
+								</li>
+							))}
+						</ul>
+					)}
+				</div>
+
+				{/* Reservations */}
+				<div>
+					<p className="text-sm font-medium mb-2">Reservations</p>
+
+					{shift.reservations.length === 0 ? (
+						<p className="text-sm text-muted-foreground">
+							No reservations during this shift.
+						</p>
+					) : (
+						<ul className="space-y-1 text-sm">
+							{sortedReservations.map((r) => (
+								<li
+									key={r.id}
+									className="grid grid-cols-2 sm:grid-cols-4 gap-x-3"
+								>
+									<span>{r.patronName}</span>
+									<span>{r.resourceName}</span>
+									<span className="text-muted-foreground">
+										{toAmPm(r.startTime)} – {toAmPm(r.endTime)}
+									</span>
+									<span className="capitalize text-xs">{r.status}</span>
 								</li>
 							))}
 						</ul>

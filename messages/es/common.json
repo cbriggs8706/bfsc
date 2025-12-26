@@ -20,6 +20,8 @@
 	"deleteSub": "Esto eliminará permanentemente este elemento. Esta acción no se puede deshacer.",
 	"cancel": "Cancelar",
 	"update": "Actualizar",
+	"close": "Cerrar",
+
 	"sub": "Lorem ipsum",
 	"name": "Nombre",
 	"link": "Enlace",
@@ -29,6 +31,7 @@
 	"status": "Estado",
 	"changesNotSaved": "Los cambios no se guardan hasta que haga clic en Guardar a continuación.",
 	"userAccount": "Cuenta de usuario",
+	"requestedBy": "Solicitado por",
 	"userSub": "Lorem ipsum",
 	"dashboard": "Panel",
 	"notifications": "Notificaciones",
@@ -73,6 +76,7 @@
 	"resource": {
 		"title": "Recurso/Actividad",
 		"titles": "Recursos y actividades",
+		"select": "Seleccione un recurso",
 		"noFound": "No se encontraron recursos.",
 		"sub": "Recursos y actividades activos en el BFSC",
 		"readSub": "Si desea editar o eliminar este recurso, los botones se encuentran abajo.",
@@ -97,5 +101,38 @@
 		"preparation": "Preparación",
 		"maxConcurrent": "Máximo simultáneo",
 		"createSub": "Complete este formulario para crear un recurso o actividad."
-	}
+	},
+	"reservation": {
+		"title": "Reservación",
+		"titles": "Reservaciones",
+		"sub": "Administrar y revisar reservaciones",
+		"readSub": "Ver detalles de la reservación",
+		"updateSub": "Actualizar información de la reservación",
+		"noneFound": "No se encontraron reservaciones",
+		"requestTitle": "Solicitud de reservación",
+		"requestSub": "Esta solicitud aparecerá bajo su nombre en el sistema. Si usted es consultor, asegúrese de incluir el nombre del usuario en las notas.",
+		"requestSuccess": "Solicitud de reservación enviada",
+		"requestSuccessSub": "Su solicitud ha sido recibida y será revisada en breve.",
+		"statuses": {
+			"pending": "Pendiente",
+			"approved": "Aprobada",
+			"denied": "Rechazada",
+			"cancelled": "Cancelada"
+		}
+	},
+
+	"startTime": "Hora de inicio",
+	"endTime": "Hora de fin",
+	"date": "Fecha",
+	"timeBlock": "Bloque de tiempo",
+	"selectTimeBlock": "Seleccionar bloque de tiempo",
+	"selectResourceFirst": "Seleccione un recurso primero",
+	"loading": "Cargando",
+	"attendees": "Asistentes",
+	"assistance": "Nivel de asistencia",
+	"none": "Ninguna",
+	"startup": "Ayuda inicial",
+	"full": "Asistencia completa",
+
+	"user": "Usuario"
 }

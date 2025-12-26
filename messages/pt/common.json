@@ -17,6 +17,8 @@
 	"edit": "Editar",
 	"read": "Ver",
 	"delete": "Excluir",
+	"close": "Fechar",
+
 	"deleteSub": "Isso excluirá permanentemente este item. Esta ação não pode ser desfeita.",
 	"cancel": "Cancelar",
 	"update": "Atualizar",
@@ -29,6 +31,7 @@
 	"status": "Status",
 	"changesNotSaved": "As alterações não são salvas até que você clique em Salvar abaixo.",
 	"userAccount": "Conta do usuário",
+	"requestedBy": "Solicitado por",
 	"userSub": "Lorem ipsum",
 	"dashboard": "Painel",
 	"notifications": "Notificações",
@@ -74,6 +77,7 @@
 		"title": "Recurso/Atividade",
 		"titles": "Recursos e atividades",
 		"noFound": "Nenhum recurso encontrado.",
+		"select": "Selecione um recurso",
 		"sub": "Recursos e atividades ativos no BFSC",
 		"readSub": "Se desejar editar ou excluir este recurso, os botões estão abaixo.",
 		"updateSub": "Modifique os detalhes abaixo e não se esqueça de salvar ao concluir.",
@@ -97,5 +101,38 @@
 		"preparation": "Preparação",
 		"maxConcurrent": "Máximo simultâneo",
 		"createSub": "Preencha este formulário para criar um recurso ou atividade."
-	}
+	},
+	"reservation": {
+		"title": "Reserva",
+		"titles": "Reservas",
+		"sub": "Gerenciar e revisar reservas",
+		"readSub": "Ver detalhes da reserva",
+		"updateSub": "Atualizar informações da reserva",
+		"noneFound": "Nenhuma reserva encontrada",
+		"requestTitle": "Solicitação de reserva",
+		"requestSub": "Esta solicitação aparecerá sob o seu nome no sistema. Se você for um consultor, certifique-se de incluir o nome do usuário nas observações.",
+		"requestSuccess": "Solicitação de reserva enviada",
+		"requestSuccessSub": "Sua solicitação foi recebida e será analisada em breve.",
+		"statuses": {
+			"pending": "Pendente",
+			"approved": "Aprovada",
+			"denied": "Negada",
+			"cancelled": "Cancelada"
+		}
+	},
+
+	"startTime": "Hora de início",
+	"endTime": "Hora de término",
+	"date": "Data",
+	"timeBlock": "Bloco de tempo",
+	"selectTimeBlock": "Selecionar bloco de tempo",
+	"selectResourceFirst": "Selecione um recurso primeiro",
+	"loading": "Carregando",
+	"attendees": "Participantes",
+	"assistance": "Nível de assistência",
+	"none": "Nenhuma",
+	"startup": "Ajuda inicial",
+	"full": "Assistência completa",
+
+	"user": "Usuário"
 }

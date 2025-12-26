@@ -1,3 +1,5 @@
+import { ReservationStatus } from './resource'
+
 export type PatronVisit = {
 	personId: string
 	fullName: string
@@ -88,6 +90,16 @@ export type TodayShift = {
 		arrivedAt: Date
 		departedAt: Date | null
 	}[]
+	reservations: ShiftReservation[]
+}
+
+export type ShiftReservation = {
+	id: string
+	resourceName: string
+	startTime: string // "HH:mm"
+	endTime: string // "HH:mm"
+	status: ReservationStatus
+	patronName: string
 }
 
 export type SummaryPoint = {

@@ -15,6 +15,7 @@
 	"viewDetails": "View Details",
 	"create": "Create",
 	"edit": "Edit",
+	"close": "Close",
 	"read": "Read",
 	"delete": "Delete",
 	"deleteSub": "This will permanently delete this item. This action cannot be undone.",
@@ -30,6 +31,7 @@
 	"changesNotSaved": "Changes are not saved until you click Save below.",
 	"userAccount": "User Account",
 	"userSub": "Lorem ipsum",
+	"requestedBy": "Requested by",
 	"dashboard": "Dashboard",
 	"notifications": "Notifications",
 	"notificationSub": "Tap a notification to mark it as read.",
@@ -74,6 +76,7 @@
 		"title": "Resource/Activity",
 		"titles": "Resources and Activities",
 		"noFound": "No resources found.",
+		"select": "Select a resource",
 		"sub": "Active resources and activites at the BFSC",
 		"readSub": "If you would like to edit or delete this resource, buttons can be found below.",
 		"updateSub": "Modify any details below and make sure to hit save when you're done.",
@@ -97,5 +100,39 @@
 		"preparation": "Preparation",
 		"maxConcurrent": "Max Concurrent",
 		"createSub": "Fill out this form to create a resource or activity."
-	}
+	},
+	"reservation": {
+		"title": "Reservation",
+		"titles": "Reservations",
+		"sub": "Manage and review reservations",
+		"createSub": "Reserve resources or activities",
+		"readSub": "View reservation details",
+		"updateSub": "Update reservation information",
+		"noneFound": "No reservations found",
+		"requestTitle": "Reservation Request",
+		"requestSub": "This will request will appear under your name in the system.  If you are a consultant, make sure to put the patron's name in the notes.",
+		"requestSuccess": "Reservation request submitted",
+		"requestSuccessSub": "Your request has been received and will be reviewed shortly.",
+		"statuses": {
+			"pending": "Pending",
+			"approved": "Approved",
+			"denied": "Denied",
+			"cancelled": "Cancelled"
+		}
+	},
+	"startTime": "Start Time",
+	"endTime": "End Time",
+	"date": "Date",
+	"timeBlock": "Time Block",
+	"selectTimeBlock": "Select Time Block",
+	"selectResourceFirst": "Select Resource First",
+	"loading": "Loading",
+	"noAvailability": "No Availability",
+	"attendees": "Attendees",
+	"assistance": "Assistance Level",
+	"none": "None",
+	"startup": "Startup Help",
+	"full": "Full Assistance",
+
+	"user": "User"
 }

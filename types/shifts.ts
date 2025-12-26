@@ -18,6 +18,12 @@ export type Shift = {
 	recurrences: Recurrence[]
 }
 
+export type TimeFormat =
+	| 'h:mm a' // 4:00 PM
+	| 'hh:mm a' // 04:00 PM
+	| 'H:mm' // 16:00
+	| 'HH:mm' // 16:00
+
 export type Day = {
 	weekday: number
 	label: string

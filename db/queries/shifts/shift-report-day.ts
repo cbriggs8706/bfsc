@@ -1,5 +1,5 @@
 // db/queries/shifts/shift-report-day.ts
-import { db } from '@/db'
+import { db, reservation, resource, user } from '@/db'
 import {
 	weeklyShifts,
 	kioskShiftLogs,
@@ -9,10 +9,23 @@ import {
 } from '@/db/schema'
 import { eq, and, gte, lte, asc } from 'drizzle-orm'
 import { toZonedTime, fromZonedTime } from 'date-fns-tz'
-import { startOfDay, endOfDay, parseISO } from 'date-fns'
+import { startOfDay, endOfDay, parseISO, format } from 'date-fns'
 import { TodayShift } from '@/types/shift-report'
+import { ReservationStatus } from '@/types/resource'
 
 const TZ = 'America/Boise'
+
+function toReservationStatus(value: string): ReservationStatus {
+	switch (value) {
+		case 'pending':
+		case 'approved':
+		case 'denied':
+		case 'cancelled':
+			return value
+		default:
+			throw new Error(`Invalid reservation status: ${value}`)
+	}
+}
 
 export async function getShiftReportDay(dateStr: string) {
 	const dayBoise = toZonedTime(parseISO(dateStr), TZ)
@@ -68,6 +81,26 @@ export async function getShiftReportDay(dateStr: string) {
 			)
 		)
 
+	const reservations = await db
+		.select({
+			id: reservation.id,
+			startTime: reservation.startTime,
+			endTime: reservation.endTime,
+			status: reservation.status,
+			resourceName: resource.name,
+			patronName: user.name,
+			patronEmail: user.email,
+		})
+		.from(reservation)
+		.innerJoin(resource, eq(reservation.resourceId, resource.id))
+		.innerJoin(user, eq(reservation.userId, user.id))
+		.where(
+			and(
+				gte(reservation.startTime, startUtc),
+				lte(reservation.startTime, endUtc)
+			)
+		)
+
 	const results: TodayShift[] = shifts.map((shift) => {
 		const [sh, sm] = shift.startTime.split(':').map(Number)
 		const [eh, em] = shift.endTime.split(':').map(Number)
@@ -80,6 +113,17 @@ export async function getShiftReportDay(dateStr: string) {
 
 		const shiftStartUtc = fromZonedTime(shiftStartBoise, TZ)
 		const shiftEndUtc = fromZonedTime(shiftEndBoise, TZ)
+
+		const reservationsInShift = reservations
+			.filter((r) => r.startTime >= shiftStartUtc && r.startTime <= shiftEndUtc)
+			.map((r) => ({
+				id: r.id,
+				resourceName: r.resourceName,
+				startTime: format(r.startTime, 'HH:mm'),
+				endTime: format(r.endTime, 'HH:mm'),
+				status: toReservationStatus(r.status),
+				patronName: r.patronName ?? r.patronEmail,
+			}))
 
 		const consultantsInShift = consultants
 			.filter((c) => c.arrivalAt >= shiftStartUtc && c.arrivalAt <= shiftEndUtc)
@@ -109,6 +153,7 @@ export async function getShiftReportDay(dateStr: string) {
 			endTime: shift.endTime,
 			consultants: consultantsInShift,
 			patrons: patronsInShift,
+			reservations: reservationsInShift,
 		}
 	})
 
@@ -117,6 +162,10 @@ export async function getShiftReportDay(dateStr: string) {
 	)
 	const assignedPatrons = new Set(
 		results.flatMap((r) => r.patrons.map((p) => p.visitId))
+	)
+
+	const assignedReservationIds = new Set(
+		results.flatMap((r) => r.reservations.map((res) => res.id))
 	)
 
 	const offShiftResults: TodayShift[] =
@@ -145,6 +194,16 @@ export async function getShiftReportDay(dateStr: string) {
 								purposeName: p.purposeName,
 								arrivedAt: p.arrivedAt,
 								departedAt: p.departedAt,
+							})),
+						reservations: reservations
+							.filter((r) => !assignedReservationIds.has(r.id))
+							.map((r) => ({
+								id: r.id,
+								resourceName: r.resourceName,
+								startTime: format(r.startTime, 'HH:mm'),
+								endTime: format(r.endTime, 'HH:mm'),
+								status: toReservationStatus(r.status),
+								patronName: r.patronName ?? r.patronEmail,
 							})),
 					},
 			  ]

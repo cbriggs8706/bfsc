@@ -18,5 +18,6 @@ export * from './relations/auth.relations'
 export * from './relations/kiosk.relations'
 export * from './relations/faith.relations'
 export * from './relations/training.relations'
+export * from './relations/reservation.relations'
 
 // export * from './enums'

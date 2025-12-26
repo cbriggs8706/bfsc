@@ -1,6 +1,8 @@
 // app/[locale]/admin/center/page.tsx
 
+import { TimeFormatSettings } from '@/components/admin/definitions/TimeFormatSettings'
 import { Button } from '@/components/ui/button'
+import { getAppSettings } from '@/lib/actions/app-settings'
 import Link from 'next/link'
 
 type Props = {
@@ -13,6 +15,7 @@ type Props = {
 
 export default async function Page({ params }: Props) {
 	const { locale } = await params
+	const settings = await getAppSettings()
 
 	return (
 		<div className="p-4 space-y-4">
@@ -23,6 +26,10 @@ export default async function Page({ params }: Props) {
 					these very often other than initial setup.
 				</p>
 			</div>
+
+			{/* 🔧 Time & Display Settings */}
+			<TimeFormatSettings initialFormat={settings.timeFormat} />
+
 			<ul className="space-y-4">
 				<li>
 					{' '}

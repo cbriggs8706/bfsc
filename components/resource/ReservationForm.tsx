@@ -1,205 +1,394 @@
 // components/resources/ReservationForm.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import {
 	Select,
-	SelectContent,
-	SelectItem,
 	SelectTrigger,
 	SelectValue,
+	SelectContent,
+	SelectItem,
 } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { AssistanceLevel, ResourceOption, TimeSlot } from '@/types/resource'
-import { useAvailability } from '@/hooks/use-availability'
-import { createReservation } from '@/app/actions/resource/create-reservation'
-import { toAmPm } from '@/utils/time'
-import { Card } from '../ui/card'
+import { useEffect } from 'react'
+import { getAvailability } from '@/lib/actions/resource/availability'
+import { ReservationWithUser, Reservation, Resource } from '@/types/resource'
+import { TimeFormat } from '@/types/shifts'
+import { formatTimeRange, toHHMM, toYYYYMMDD } from '@/utils/time'
+
+type Mode = 'create' | 'read' | 'update' | 'delete'
 
 type Props = {
-	resources: ResourceOption[]
+	initial?: Partial<ReservationWithUser>
+	mode: Mode
+	onSubmit?: (data: Reservation) => Promise<unknown>
+	reservationId?: string
+	locale?: string
+	resources: Resource[]
+	timeFormat: TimeFormat
+	canSetStatus?: boolean
 }
 
-export function ReservationForm({ resources }: Props) {
-	const [resourceId, setResourceId] = useState<string | null>(null)
-	const [date, setDate] = useState<string | null>(null)
-	const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
-	const [closedAck, setClosedAck] = useState(false)
-	const [notes, setNotes] = useState('')
-	const [submitting, setSubmitting] = useState(false)
-	const [error, setError] = useState<string | null>(null)
-	const [success, setSuccess] = useState(false)
-	const [attendeeCount, setAttendeeCount] = useState<number>(1)
-	const [assistanceLevel, setAssistanceLevel] =
-		useState<AssistanceLevel>('none')
+export function ReservationForm({
+	initial = {},
+	mode,
+	onSubmit,
+	reservationId,
+	locale,
+	resources,
+	timeFormat,
+	canSetStatus = false,
+}: Props) {
+	const [pending, startTransition] = useTransition()
+	const disabled = mode === 'read' || mode === 'delete'
+	const t = useTranslations('common')
+	const [date, setDate] = useState(() => {
+		const d = new Date()
+		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+			2,
+			'0'
+		)}-${String(d.getDate()).padStart(2, '0')}`
+	})
 
-	const { data, loading } = useAvailability(resourceId, date)
+	const [slots, setSlots] = useState<{ startTime: string; endTime: string }[]>(
+		[]
+	)
+	const [slotStart, setSlotStart] = useState('')
+	const [loadingSlots, setLoadingSlots] = useState(false)
 
-	async function handleSubmit() {
-		if (!resourceId || !date || !selectedSlot) return
+	const [form, setForm] = useState<Reservation>({
+		resourceId: initial.resourceId ?? '',
+		userId: initial.userId ?? '',
 
-		setSubmitting(true)
-		setError(null)
+		startTime: initial.startTime ? new Date(initial.startTime) : new Date(),
 
-		const startTime = new Date(`${date}T${selectedSlot.startTime}:00Z`)
+		endTime: initial.endTime ? new Date(initial.endTime) : new Date(),
 
-		const result = await createReservation({
-			resourceId,
-			startTime,
-			isClosedDayRequest: closedAck,
-			notes,
-			attendeeCount,
-			assistanceLevel,
+		attendeeCount: initial.attendeeCount ?? 1,
+		assistanceLevel: initial.assistanceLevel ?? 'none',
+		status: initial.status ?? 'pending',
+
+		isClosedDayRequest: initial.isClosedDayRequest ?? false,
+
+		notes: initial.notes ?? '',
+	})
+
+	function submit() {
+		if (!onSubmit) return
+		if (!slotStart) return // must select a time block
+
+		startTransition(async () => {
+			await onSubmit(form)
 		})
+	}
 
-		if (!result.success) {
-			setError(result.error)
-		} else {
-			setSuccess(true)
+	useEffect(() => {
+		if (!initial?.startTime || !initial?.endTime) return
+
+		const start = new Date(initial.startTime)
+		const end = new Date(initial.endTime)
+
+		setDate(toYYYYMMDD(start))
+		setSlotStart(toHHMM(start))
+
+		setForm((prev) => ({
+			...prev,
+			startTime: start,
+			endTime: end,
+		}))
+		// ⚠️ run once only
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
+
+	useEffect(() => {
+		if (!form.resourceId || !date) {
+			setSlots([])
+			setSlotStart('')
+			return
 		}
 
-		setSubmitting(false)
-	}
+		let cancelled = false
 
-	if (success) {
-		return (
-			<Card className="p-6 text-center">
-				<h2 className="text-lg font-semibold">Request submitted</h2>
-				<p className="text-sm text-muted-foreground mt-1">
-					A consultant will review your request shortly.
-				</p>
-			</Card>
-		)
-	}
+		async function load() {
+			setLoadingSlots(true)
+			try {
+				const res = await getAvailability({
+					resourceId: form.resourceId,
+					date,
+					excludeReservationId: reservationId,
+				})
+
+				if (cancelled) return
+
+				setSlots(
+					res.timeSlots.map((s) => ({
+						startTime: s.startTime,
+						endTime: s.endTime,
+					}))
+				)
+
+				// Clear invalid selection
+				if (
+					mode === 'create' &&
+					slotStart &&
+					!res.timeSlots.some((s) => s.startTime === slotStart)
+				) {
+					setSlotStart('')
+				}
+			} finally {
+				if (!cancelled) setLoadingSlots(false)
+			}
+		}
+
+		load()
+		return () => {
+			cancelled = true
+		}
+	}, [form.resourceId, date, reservationId])
+
+	const resourcesByType = resources.reduce<
+		Record<Resource['type'], Resource[]>
+	>((acc, r) => {
+		;(acc[r.type] ||= []).push(r)
+		return acc
+	}, {} as Record<Resource['type'], Resource[]>)
 
 	return (
-		<Card className="p-6">
-			{/* Resource */}
-			<div>
-				<label className="text-sm font-medium">Resource</label>
-				<Select value={resourceId ?? ''} onValueChange={setResourceId}>
-					<SelectTrigger>
-						{' '}
-						<SelectValue placeholder="Select a resource" />
-					</SelectTrigger>
-					<SelectContent>
-						{resources.map((r) => (
-							<SelectItem key={r.id} value={r.id}>
-								{r.name}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
+		<Card className="p-6 space-y-4">
+			{/* Resource + User */}
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div className="space-y-1">
+					<Label>{t('resource.title')}</Label>
+					<Select
+						disabled={disabled}
+						value={form.resourceId}
+						onValueChange={(v) => setForm({ ...form, resourceId: v })}
+					>
+						<SelectTrigger>
+							<SelectValue placeholder={t('resource.select')} />
+						</SelectTrigger>
+
+						<SelectContent>
+							{(
+								Object.entries(resourcesByType) as [
+									Resource['type'],
+									Resource[]
+								][]
+							).map(([type, items]) => (
+								<div key={type}>
+									{/* Group label */}
+									<div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
+										{t(`resource.typesP.${type}`)}
+									</div>
+
+									{items.map((r) => (
+										<SelectItem key={r.id} value={r.id}>
+											{r.name}
+										</SelectItem>
+									))}
+								</div>
+							))}
+						</SelectContent>
+					</Select>
+				</div>
 			</div>
 
-			{/* Date */}
-			<div>
-				<label className="text-sm font-medium">Date</label>
-				<Input
-					type="date"
-					value={date ?? ''}
-					onChange={(e) => {
-						setDate(e.target.value)
-						setSelectedSlot(null)
-					}}
+			{/* Date + Time Block */}
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div className="space-y-1">
+					<Label>{t('date')}</Label>
+					<Input
+						type="date"
+						disabled={disabled}
+						value={date}
+						onChange={(e) => setDate(e.target.value)}
+					/>
+				</div>
+
+				<div className="space-y-1">
+					<Label>{t('timeBlock')}</Label>
+					<Select
+						disabled={disabled || !form.resourceId || loadingSlots}
+						value={slotStart}
+						onValueChange={(v) => {
+							const found = slots.find((s) => s.startTime === v)
+							if (!found) return
+
+							setSlotStart(v)
+
+							setForm((prev) => ({
+								...prev,
+								startTime: new Date(`${date}T${found.startTime}:00`),
+								endTime: new Date(`${date}T${found.endTime}:00`),
+							}))
+						}}
+					>
+						<SelectTrigger>
+							<SelectValue
+								placeholder={
+									loadingSlots
+										? t('loading')
+										: !form.resourceId
+										? t('selectResourceFirst')
+										: t('selectTimeBlock')
+								}
+							/>
+						</SelectTrigger>
+
+						<SelectContent>
+							{slots.length === 0 ? (
+								<SelectItem value="__none__" disabled>
+									{t('noAvailability')}
+								</SelectItem>
+							) : (
+								slots.map((s) => (
+									<SelectItem key={s.startTime} value={s.startTime}>
+										{formatTimeRange(s.startTime, s.endTime, timeFormat)}
+									</SelectItem>
+								))
+							)}
+						</SelectContent>
+					</Select>
+				</div>
+			</div>
+
+			{/* Attendance / Assistance / Status */}
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div className="space-y-1">
+					<Label>{t('attendees')}</Label>
+					<Input
+						type="number"
+						disabled={disabled}
+						min={1}
+						value={form.attendeeCount}
+						onChange={(e) =>
+							setForm({ ...form, attendeeCount: +e.target.value })
+						}
+					/>
+				</div>
+
+				<div className="space-y-1">
+					<Label>{t('assistance')}</Label>
+					<Select
+						disabled={disabled}
+						value={form.assistanceLevel}
+						onValueChange={(v) =>
+							setForm({
+								...form,
+								assistanceLevel: v as ReservationWithUser['assistanceLevel'],
+							})
+						}
+					>
+						<SelectTrigger>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="none">{t('none')}</SelectItem>
+							<SelectItem value="startup">{t('startup')}</SelectItem>
+							<SelectItem value="full">{t('full')}</SelectItem>
+						</SelectContent>
+					</Select>
+				</div>
+
+				{canSetStatus ? (
+					<div className="space-y-1">
+						<Label>{t('status')}</Label>
+						<Select
+							disabled={disabled}
+							value={form.status}
+							onValueChange={(v) =>
+								setForm({
+									...form,
+									status: v as ReservationWithUser['status'],
+								})
+							}
+						>
+							<SelectTrigger>
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="pending">
+									{t('reservation.statuses.pending')}
+								</SelectItem>
+								<SelectItem value="approved">
+									{t('reservation.statuses.approved')}
+								</SelectItem>
+								<SelectItem value="denied">
+									{t('reservation.statuses.denied')}
+								</SelectItem>
+								<SelectItem value="cancelled">
+									{t('reservation.statuses.cancelled')}
+								</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
+				) : (
+					<div className="space-y-1">
+						<Label>{t('status')}</Label>
+						<div className="h-10 flex items-center text-sm text-muted-foreground">
+							{t('reservation.statuses.pending')}
+						</div>
+					</div>
+				)}
+			</div>
+
+			{/* Notes */}
+			<div className="space-y-1">
+				<Label>{t('notes')}</Label>
+				<Textarea
+					disabled={disabled}
+					value={form.notes ?? ''}
+					onChange={(e) => setForm({ ...form, notes: e.target.value })}
 				/>
 			</div>
 
-			{/* Availability */}
-			{loading && (
-				<p className="text-sm text-muted-foreground">Checking availability…</p>
-			)}
+			{/* Read mode actions */}
+			{mode === 'read' && reservationId && locale && (
+				<div className="flex gap-2">
+					<Link href={`/${locale}/admin/reservation/update/${reservationId}`}>
+						<Button>{t('edit')}</Button>
+					</Link>
 
-			{data && (
-				<div className="space-y-3">
-					<div className="text-sm font-medium">Available times</div>
-
-					<div className="flex flex-wrap gap-2">
-						{data.timeSlots.map((slot) => (
-							<Button
-								key={slot.startTime}
-								type="button"
-								variant={
-									selectedSlot?.startTime === slot.startTime
-										? 'default'
-										: 'outline'
-								}
-								disabled={!slot.isAvailable}
-								onClick={() => setSelectedSlot(slot)}
-								className="min-w-[110px]"
-							>
-								{toAmPm(slot.startTime)}–{toAmPm(slot.endTime)}
-							</Button>
-						))}
-					</div>
-
-					{data.requiresClosedDayAck && (
-						<div className="flex items-start gap-2">
-							<Checkbox
-								checked={closedAck}
-								onCheckedChange={(v) => setClosedAck(Boolean(v))}
-							/>
-							<p className="text-sm">
-								I understand this request is for a closed day and requires a
-								consultant to come in specially.
-							</p>
-						</div>
-					)}
+					<Link href={`/${locale}/admin/reservation/delete/${reservationId}`}>
+						<Button variant="destructive">{t('delete')}</Button>
+					</Link>
 				</div>
 			)}
 
-			{/* Notes */}
-			<div>
-				<label className="text-sm font-medium">Notes (optional)</label>
-				<Textarea
-					value={notes}
-					onChange={(e) => setNotes(e.target.value)}
-					rows={3}
-				/>
-			</div>
-
-			<Input
-				type="number"
-				min={1}
-				value={attendeeCount}
-				onChange={(e) => setAttendeeCount(Number(e.target.value))}
-				placeholder="Number of attendees"
-			/>
-
-			<Select
-				value={assistanceLevel}
-				onValueChange={(v) => setAssistanceLevel(v as AssistanceLevel)}
-			>
-				<SelectTrigger>
-					<SelectValue placeholder="Assistance needed?" />
-				</SelectTrigger>
-				<SelectContent>
-					<SelectItem value="none">No assistance</SelectItem>
-					<SelectItem value="startup">Help getting started</SelectItem>
-					<SelectItem value="full">Assistance entire time</SelectItem>
-				</SelectContent>
-			</Select>
-
-			{/* Error */}
-			{error && <p className="text-sm text-red-600">{error}</p>}
-
 			{/* Submit */}
-			<Button
-				onClick={handleSubmit}
-				disabled={
-					!resourceId ||
-					!date ||
-					!selectedSlot ||
-					(data?.requiresClosedDayAck && !closedAck) ||
-					submitting
-				}
-				className="w-full"
-			>
-				{submitting ? 'Submitting…' : 'Submit reservation request'}
-			</Button>
+			{mode !== 'read' && (
+				<Button
+					variant={mode === 'delete' ? 'destructive' : 'default'}
+					onClick={submit}
+					disabled={pending || !slotStart}
+				>
+					{pending
+						? 'Working…'
+						: mode === 'delete'
+						? `${t('delete')} ${t('reservation.title')}`
+						: mode === 'update'
+						? `${t('update')} ${t('reservation.title')}`
+						: `${t('create')} ${t('reservation.title')}`}
+				</Button>
+			)}
 		</Card>
 	)
+}
+
+/* -----------------------------------------------
+ * Helpers
+ * --------------------------------------------- */
+
+function toInputDate(d: Date) {
+	const pad = (n: number) => n.toString().padStart(2, '0')
+	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+		d.getHours()
+	)}:${pad(d.getMinutes())}`
 }

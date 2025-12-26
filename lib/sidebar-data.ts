@@ -93,7 +93,7 @@ export function buildSidebarData(t: TFunction, locale: string) {
 			},
 			{
 				title: t('sidebar.admin.reservations'),
-				url: `/${locale}/reservations`,
+				url: `/${locale}/reservation`,
 				icon: CalendarPlus,
 			},
 		],
@@ -201,12 +201,12 @@ export function buildSidebarData(t: TFunction, locale: string) {
 			},
 			{
 				name: t('sidebar.admin.resources'),
-				url: `/${locale}/admin/resources`,
+				url: `/${locale}/admin/resource`,
 				icon: PlusCircle,
 			},
 			{
 				name: t('sidebar.admin.reservations'),
-				url: `/${locale}/admin/reservations`,
+				url: `/${locale}/admin/reservation`,
 				icon: CalendarCheck,
 			},
 			{

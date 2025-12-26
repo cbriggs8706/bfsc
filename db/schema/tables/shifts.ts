@@ -189,3 +189,35 @@ export const shiftExceptions = pgTable('shift_exceptions', {
 		.notNull()
 		.defaultNow(),
 })
+
+export const appSettings = pgTable(
+	'app_settings',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+
+		// --- Time & date formatting ---
+		timeFormat: varchar('time_format', { length: 20 })
+			.notNull()
+			.default('h:mm a'),
+		// Examples:
+		// 'h:mm a'  → 4:00 PM
+		// 'hh:mm a' → 04:00 PM
+		// 'H:mm'    → 16:00
+		// 'HH:mm'   → 16:00
+
+		// --- Future-proof toggles ---
+		use24HourClock: boolean('use_24_hour_clock').notNull().default(false),
+
+		// --- Auditing ---
+		updatedAt: timestamp('updated_at', { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(t) => ({
+		// Enforce allowed formats at DB level
+		timeFormatCheck: check(
+			'app_settings_time_format_ck',
+			sql`${t.timeFormat} in ('h:mm a','hh:mm a','H:mm','HH:mm')`
+		),
+	})
+)

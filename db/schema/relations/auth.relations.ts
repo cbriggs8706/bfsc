@@ -1,10 +1,12 @@
 // src/db/schema/relations/auth.relations.ts
 import { relations } from 'drizzle-orm'
 import { account, session, user } from '../tables/auth'
+import { reservation } from '../tables/resource'
 
 export const userRelations = relations(user, ({ many }) => ({
 	sessions: many(session),
 	accounts: many(account),
+	reservations: many(reservation),
 }))
 
 export const sessionRelations = relations(session, ({ one }) => ({

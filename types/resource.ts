@@ -33,8 +33,10 @@ export type AvailabilityResponse = {
 	status: AvailabilityStatus
 	defaultDurationMinutes: number
 	capacity: number | null
-	requiresClosedDayAck: boolean
+	// requiresClosedDayAck: boolean
 	timeSlots: TimeSlot[]
+	opensAt?: string | null
+	closesAt?: string | null
 }
 
 export type ResourceType = 'equipment' | 'room' | 'booth' | 'activity'
@@ -43,6 +45,7 @@ export type ReservationStatus = 'pending' | 'approved' | 'denied' | 'cancelled'
 
 export type ReservationApprovalAction = 'approve' | 'deny'
 
+//TODO delete? duplicate of Reservation
 export type ReservationListItem = {
 	id: string
 	resourceName: string
@@ -54,6 +57,30 @@ export type ReservationListItem = {
 	assistanceLevel: AssistanceLevel
 	requestedByName: string | null
 	notes: string | null
+}
+
+export interface Reservation {
+	id?: string
+
+	resourceId: string
+	userId: string
+
+	startTime: Date
+	endTime: Date
+
+	attendeeCount?: number
+	assistanceLevel?: AssistanceLevel
+
+	isClosedDayRequest?: boolean
+
+	status?: ReservationStatus
+
+	approvedByUserId?: string | null
+	assignedConsultantId?: string | null
+
+	notes?: string | null
+
+	createdAt?: Date
 }
 
 export type Resource = {
@@ -71,4 +98,16 @@ export type Resource = {
 	link: string | null
 
 	isActive: boolean
+}
+
+export type ReservationWithUser = Reservation & {
+	user: {
+		id: string
+		name: string | null
+		email: string | null
+	}
+	resource: {
+		id: string
+		name: string
+	}
 }

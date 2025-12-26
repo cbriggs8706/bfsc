@@ -190,7 +190,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 									</p>{' '}
 									<div className="flex flex-col mt-10 text-center justify-center">
 										{/* TODO replace with group reservations */}
-										<Link href={`/${locale}/reservations`}>
+										<Link href={`/${locale}/reservation`}>
 											<Button variant="default" size="lg">
 												Make a reservation
 											</Button>
