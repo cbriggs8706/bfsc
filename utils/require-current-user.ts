@@ -11,11 +11,11 @@ export type CurrentUser = {
 	username: string | null
 }
 
-export async function requireCurrentUser(): Promise<CurrentUser> {
+export async function requireCurrentUser(locale: string): Promise<CurrentUser> {
 	const session = await getSession()
 
 	if (!session?.user?.id) {
-		redirect('/login') // adjust if your login route differs
+		redirect(`/${locale}/login`)
 	}
 
 	return {
