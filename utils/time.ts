@@ -72,17 +72,19 @@ export function toHHMM(d: Date) {
 }
 
 export function toLocalDateTime(date: string, hhmm: string) {
-	// Matches your existing Date usage (server local time)
-	return new Date(`${date}T${hhmm}:00`)
+	const [year, month, day] = date.split('-').map(Number)
+	const [hour, minute] = hhmm.split(':').map(Number)
+
+	// Local wall-clock time, no UTC parsing
+	return new Date(year, month - 1, day, hour, minute, 0, 0)
 }
 
 export function weekdayFromYYYYMMDD(date: string) {
-	const d = new Date(`${date}T00:00:00`)
-	return d.getDay() // 0 = Sunday
+	return parseLocalYMD(date).getDay()
 }
 
 export function toYYYYMMDD(d: Date) {
-	return d.toISOString().slice(0, 10)
+	return toLocalYMD(d)
 }
 
 type Args = {

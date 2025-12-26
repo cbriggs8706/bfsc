@@ -5,11 +5,10 @@ import { unstable_noStore as noStore, revalidatePath } from 'next/cache'
 import { eq } from 'drizzle-orm'
 import { db, reservation } from '@/db'
 import { Reservation } from '@/types/resource'
-import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getAvailability } from './availability'
-import { toHHMM } from '@/utils/time'
+import { toLocalDateTime, toLocalYMD } from '@/utils/time'
 
 /* -------------------------------------------------
  * Reads
@@ -81,18 +80,29 @@ export async function createReservation(input: Reservation) {
 		throw new Error('Time block required')
 	}
 
+	const start = new Date(input.startTime)
+	const end = new Date(input.endTime)
+
+	// normalize seconds/ms
+	start.setSeconds(0, 0)
+	end.setSeconds(0, 0)
+
+	const date = toLocalYMD(start)
 	// availability check
-	const date = input.startTime.toISOString().slice(0, 10)
 	const availability = await getAvailability({
 		resourceId: input.resourceId,
 		date,
 	})
 
-	const isValid = availability.timeSlots.some(
-		(s) =>
-			s.startTime === toHHMM(input.startTime) &&
-			s.endTime === toHHMM(input.endTime)
-	)
+	const isValid = availability.timeSlots.some((s) => {
+		const slotStart = toLocalDateTime(date, s.startTime)
+		const slotEnd = toLocalDateTime(date, s.endTime)
+
+		return (
+			start.getTime() === slotStart.getTime() &&
+			end.getTime() === slotEnd.getTime()
+		)
+	})
 
 	if (!isValid) {
 		throw new Error('Selected time is no longer available')
@@ -100,6 +110,8 @@ export async function createReservation(input: Reservation) {
 
 	await db.insert(reservation).values({
 		...input,
+		startTime: start,
+		endTime: end,
 		userId,
 		status: isAdmin ? input.status ?? 'pending' : 'pending',
 	})
@@ -120,20 +132,31 @@ export async function updateReservation(id: string, input: Reservation) {
 			throw new Error('End time must be after start time')
 		}
 	}
+	const start = new Date(input.startTime)
+	const end = new Date(input.endTime)
+
+	// normalize seconds/ms
+	start.setSeconds(0, 0)
+	end.setSeconds(0, 0)
+
+	const date = toLocalYMD(start)
 
 	// 🔐 FINAL SERVER-SIDE SAFETY CHECK
-	const date = input.startTime.toISOString().slice(0, 10)
 	const availability = await getAvailability({
 		resourceId: input.resourceId,
 		date,
 		excludeReservationId: id,
 	})
 
-	const isValid = availability.timeSlots.some(
-		(s) =>
-			s.startTime === toHHMM(input.startTime) &&
-			s.endTime === toHHMM(input.endTime)
-	)
+	const isValid = availability.timeSlots.some((s) => {
+		const slotStart = toLocalDateTime(date, s.startTime)
+		const slotEnd = toLocalDateTime(date, s.endTime)
+
+		return (
+			start.getTime() === slotStart.getTime() &&
+			end.getTime() === slotEnd.getTime()
+		)
+	})
 
 	if (!isValid) throw new Error('Selected time is no longer available')
 
@@ -141,6 +164,8 @@ export async function updateReservation(id: string, input: Reservation) {
 		.update(reservation)
 		.set({
 			...input,
+			startTime: start,
+			endTime: end,
 		})
 		.where(eq(reservation.id, id))
 		.returning()
