@@ -23,6 +23,7 @@ import {
 	PlusCircle,
 	ArrowRightLeft,
 	CalendarCheck,
+	CalendarPlus,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
 import { CASE_VIEWS } from '@/lib/cases/views'
@@ -90,6 +91,11 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				url: `/${locale}/library`,
 				icon: Book,
 			},
+			{
+				title: t('sidebar.admin.reservations'),
+				url: `/${locale}/reservations`,
+				icon: CalendarPlus,
+			},
 		],
 
 		navSecondary: [
@@ -102,49 +108,8 @@ export function buildSidebarData(t: TFunction, locale: string) {
 			{ title: t('sidebar.secondary.help'), url: '#', icon: LifeBuoy },
 			{ title: t('sidebar.secondary.feedback'), url: '#', icon: Send },
 		],
-		admin: [
-			{
-				name: t('sidebar.admin.users'),
-				url: `/${locale}/admin/users`,
-				icon: User,
-			},
-			{
-				name: t('sidebar.admin.centerDefinitions'),
-				url: `/${locale}/admin/center`,
-				icon: Pencil,
-			},
-			{
-				name: t('sidebar.admin.scheduleClosures'),
-				url: `/${locale}/admin/kiosk/special-hours`,
-				icon: CalendarX,
-			},
 
-			{
-				name: t('sidebar.admin.shiftScheduler'),
-				url: `/${locale}/shifts/assignments`,
-				icon: Calendar,
-			},
-			{
-				name: t('sidebar.admin.announcements'),
-				url: `/${locale}/admin/announcements`,
-				icon: Megaphone,
-			},
-			{
-				name: t('sidebar.admin.newsletter'),
-				url: `/${locale}/admin/newsletter`,
-				icon: Pencil,
-			},
-			{
-				name: t('sidebar.admin.addBookEquip'),
-				url: `/${locale}/library/create`,
-				icon: PlusCircle,
-			},
-			{
-				name: t('sidebar.admin.training'),
-				url: `/${locale}/admin/training`,
-				icon: GraduationCap,
-			},
-		],
+		patron: [],
 
 		consultant: [
 			{
@@ -197,7 +162,59 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				items: [],
 			},
 		],
-		patron: [],
+		admin: [
+			{
+				name: t('sidebar.admin.users'),
+				url: `/${locale}/admin/users`,
+				icon: User,
+			},
+			{
+				name: t('sidebar.admin.centerDefinitions'),
+				url: `/${locale}/admin/center`,
+				icon: Pencil,
+			},
+			{
+				name: t('sidebar.admin.scheduleClosures'),
+				url: `/${locale}/admin/kiosk/special-hours`,
+				icon: CalendarX,
+			},
+
+			{
+				name: t('sidebar.admin.shiftScheduler'),
+				url: `/${locale}/shifts/assignments`,
+				icon: Calendar,
+			},
+			{
+				name: t('sidebar.admin.announcements'),
+				url: `/${locale}/admin/announcements`,
+				icon: Megaphone,
+			},
+			{
+				name: t('sidebar.admin.newsletter'),
+				url: `/${locale}/admin/newsletter`,
+				icon: Pencil,
+			},
+			{
+				name: t('sidebar.admin.addBookEquip'),
+				url: `/${locale}/library/create`,
+				icon: PlusCircle,
+			},
+			{
+				name: t('sidebar.admin.resources'),
+				url: `/${locale}/admin/resources`,
+				icon: PlusCircle,
+			},
+			{
+				name: t('sidebar.admin.reservations'),
+				url: `/${locale}/admin/reservations`,
+				icon: CalendarCheck,
+			},
+			{
+				name: t('sidebar.admin.training'),
+				url: `/${locale}/admin/training`,
+				icon: GraduationCap,
+			},
+		],
 
 		lesson: [{ name: t('sidebar.lesson.scripts'), url: '#', icon: LetterText }],
 	}

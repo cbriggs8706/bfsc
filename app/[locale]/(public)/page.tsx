@@ -188,13 +188,15 @@ export default async function HomePage({ params, searchParams }: Props) {
 										Many youth groups schedule for Wednesday evenings from 6-8pm
 										for guided activities and classes.
 									</p>{' '}
-									<Button
-										variant="default"
-										size="lg"
-										className="mx-auto flex mt-10"
-									>
-										<a href="#">Make a reservation</a>
-									</Button>
+									<div className="flex flex-col mt-10 text-center justify-center">
+										{/* TODO replace with group reservations */}
+										<Link href={`/${locale}/reservations`}>
+											<Button variant="default" size="lg">
+												Make a reservation
+											</Button>
+										</Link>
+										<span className="text-xs">Requires login</span>
+									</div>
 								</CardContent>
 							</Card>
 						</div>
@@ -296,7 +298,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 			<Separator />
 
 			{/* =============================
-			   PLACEHOLDER SECTION #1
+			   ABOUT
 			============================= */}
 			<section className="max-w-5xl mx-auto px-4 space-y-4">
 				<h2 className="text-2xl font-semibold">About This Center</h2>
@@ -313,7 +315,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 			</section>
 
 			{/* =============================
-			   PLACEHOLDER SECTION #2
+			  SECTION #2
 			============================= */}
 			<section className="bg-muted/40 py-4">
 				<div className="max-w-6xl mx-auto px-4 grid gap-6 sm:grid-cols-2 md:grid-cols-3">
@@ -337,7 +339,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 			</section>
 
 			{/* =============================
-			   PLACEHOLDER CTA
+			   CTA
 			============================= */}
 			<section className="text-center space-y-6 px-4 pb-20">
 				<h2 className="text-2xl font-semibold">Stay Connected</h2>

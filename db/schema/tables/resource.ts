@@ -1,0 +1,136 @@
+// db/schema/tables/resource.ts
+import {
+	pgTable,
+	uuid,
+	varchar,
+	integer,
+	boolean,
+	timestamp,
+	index,
+	check,
+	text,
+	uniqueIndex,
+} from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { user } from './auth'
+
+export const resource = pgTable(
+	'resource',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+		name: varchar('name', { length: 100 }).notNull(), // "VHS Digitization Station 1", "Recording Booth A"
+		type: varchar('type', { length: 20 }).notNull(), // 'equipment' | 'room' | 'booth' | 'activity'
+		defaultDurationMinutes: integer('default_duration_minutes').notNull(),
+		capacity: integer('capacity'), // nullable
+		maxConcurrent: integer('max_concurrent').notNull().default(1),
+		isActive: boolean('is_active').notNull().default(true),
+		description: text('description'),
+		requiredItems: text('required_items'),
+		prep: text('prep'),
+		notes: text('notes'),
+		link: text('link'),
+
+		createdAt: timestamp('created_at', { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(t) => ({
+		typeIdx: index('resource_type_idx').on(t.type),
+		typeCheck: check(
+			'resource_type_ck',
+			sql`${t.type} in ('equipment','room','booth', 'activity')`
+		),
+		capacityCheck: check(
+			'resource_capacity_ck',
+			sql`${t.capacity} is null or ${t.capacity} > 0`
+		),
+	})
+)
+
+export const reservation = pgTable(
+	'reservation',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+
+		resourceId: uuid('resource_id')
+			.notNull()
+			.references(() => resource.id, { onDelete: 'restrict' }),
+
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+
+		startTime: timestamp('start_time', { withTimezone: true }).notNull(),
+		endTime: timestamp('end_time', { withTimezone: true }).notNull(),
+		attendeeCount: integer('attendee_count').notNull().default(1),
+		assistanceLevel: varchar('assistance_level', { length: 20 })
+			.notNull()
+			.default('none'),
+
+		isClosedDayRequest: boolean('is_closed_day_request')
+			.notNull()
+			.default(false),
+
+		status: varchar('status', { length: 20 }).notNull().default('pending'),
+		// 'pending' | 'approved' | 'denied' | 'cancelled'
+
+		approvedByUserId: uuid('approved_by_user_id').references(() => user.id, {
+			onDelete: 'set null',
+		}),
+
+		assignedConsultantId: uuid('assigned_consultant_id').references(
+			() => user.id,
+			{ onDelete: 'set null' }
+		),
+
+		notes: text('notes'),
+
+		createdAt: timestamp('created_at', { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(t) => ({
+		resourceTimeIdx: index('reservation_resource_time_idx').on(
+			t.resourceId,
+			t.startTime,
+			t.endTime
+		),
+		statusCheck: check(
+			'reservation_status_ck',
+			sql`${t.status} in ('pending','approved','denied','cancelled')`
+		),
+		assistanceCheck: check(
+			'reservation_assistance_level_ck',
+			sql`${t.assistanceLevel} in ('none','startup','full')`
+		),
+		attendeeCountCheck: check(
+			'reservation_attendee_count_ck',
+			sql`${t.attendeeCount} >= 1`
+		),
+	})
+)
+
+export const resourceBlock = pgTable(
+	'resource_block',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+
+		resourceId: uuid('resource_id')
+			.notNull()
+			.references(() => resource.id, { onDelete: 'cascade' }),
+
+		blockResourceId: uuid('block_resource_id')
+			.notNull()
+			.references(() => resource.id, { onDelete: 'cascade' }),
+	},
+	(t) => ({
+		uniq: uniqueIndex('resource_block_unique_idx').on(
+			t.resourceId,
+			t.blockResourceId
+		),
+		selfBlockCheck: check(
+			'resource_block_no_self_ck',
+			sql`${t.resourceId} <> ${t.blockResourceId}`
+		),
+	})
+)

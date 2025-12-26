@@ -12,6 +12,7 @@ export * from './tables/faith'
 export * from './tables/training'
 export * from './tables/substitutes'
 export * from './tables/notifications'
+export * from './tables/resource'
 
 export * from './relations/auth.relations'
 export * from './relations/kiosk.relations'

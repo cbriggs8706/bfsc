@@ -10,7 +10,7 @@ import {
 import { ShiftDefinitionsManager } from '@/components/admin/shift/ShiftDefinitions'
 import { Shift } from '@/types/shifts'
 
-type PageProps = {
+type Props = {
 	params: Promise<{ locale: string }>
 }
 
@@ -28,7 +28,7 @@ const WEEKDAY_LABELS = [
 	'Saturday',
 ]
 
-export default async function ManageShiftsPage({ params }: PageProps) {
+export default async function ManageShiftsPage({ params }: Props) {
 	const { locale } = await params
 	// 1) Get active operating days (only show those)
 	const operating = await db

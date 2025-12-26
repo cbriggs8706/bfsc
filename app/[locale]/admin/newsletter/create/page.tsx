@@ -11,7 +11,7 @@ export default async function CreateNewsletterPage({
 	const { locale } = await params
 
 	return (
-		<div className="p-4 space-y-4">
+		<div className="space-y-6">
 			<div>
 				<h1 className="text-3xl font-bold">Create a Newsletter</h1>
 				{/* <p className="text-sm text-muted-foreground"></p> */}

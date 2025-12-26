@@ -1,7 +1,7 @@
 {
 	"welcome": "Bem-vindo",
 	"welcomeBFSC": "Bem-vindo ao BFSC!",
-	"startLesson": "Iniciar aula",
+	"startLesson": "Iniciar lição",
 	"continue": "Continuar",
 	"settings": "Configurações",
 	"switchLanguage": "Trocar idioma",
@@ -10,19 +10,30 @@
 	"login": "Entrar",
 	"guest": "Continuar como convidado",
 	"viewCourses": "Ver cursos",
-	"createCourse": "Criar um curso",
+	"createCourse": "Criar curso",
 	"createdBy": "Criado por",
+	"viewDetails": "Ver detalhes",
+	"create": "Criar",
+	"edit": "Editar",
+	"read": "Ver",
 	"delete": "Excluir",
+	"deleteSub": "Isso excluirá permanentemente este item. Esta ação não pode ser desfeita.",
 	"cancel": "Cancelar",
 	"update": "Atualizar",
 	"sub": "Lorem ipsum",
-	"changesNotSaved": "As alterações não são salvas até você clicar em Salvar abaixo.",
+	"name": "Nome",
+	"link": "Link",
+	"notes": "Notas",
+	"description": "Descrição",
+	"minutes": "minutos",
+	"status": "Status",
+	"changesNotSaved": "As alterações não são salvas até que você clique em Salvar abaixo.",
 	"userAccount": "Conta do usuário",
 	"userSub": "Lorem ipsum",
 	"dashboard": "Painel",
 	"notifications": "Notificações",
 	"notificationSub": "Toque em uma notificação para marcá-la como lida.",
-	"bfscCalendar": "BFSC Calendar",
+	"bfscCalendar": "Calendário BFSC",
 	"cases": {
 		"title": "Casos",
 		"cases": "casos",
@@ -37,26 +48,54 @@
 		"title": "Aulas",
 		"sub": "Aulas futuras e passadas oferecidas pelo centro.",
 		"create": "Criar aula",
-		"createSub": "Crie uma aula única ou uma série com várias partes.",
-		"deleteSub": "Isso exclui permanentemente a série e todas as suas partes."
+		"createSub": "Criar uma aula única ou uma série com várias partes.",
+		"deleteSub": "Isso exclui permanentemente a série e todas as partes."
 	},
 	"library": {
 		"title": "Biblioteca",
 		"inventory": "Inventário da biblioteca",
 		"sub": "Livros e equipamentos disponíveis no centro",
 		"create": "Criar item da biblioteca",
-		"createSub": "Adicione um livro ou equipamento ao inventário.",
-		"deleteSub": "Isso exclui permanentemente o item e todas as suas cópias."
+		"createSub": "Adicionar um livro ou equipamento ao inventário.",
+		"deleteSub": "Isso exclui permanentemente o item e todas as cópias."
 	},
 	"shifts": {
 		"schedule": "Escala de turnos",
 		"reports": "Relatórios de turnos",
-		"noOp": "Nenhum dia de funcionamento foi configurado.",
+		"noOp": "Nenhum dia de funcionamento configurado.",
 		"dragBetween": "Arraste pessoas entre turnos.",
 		"dailyHist": "Diário e histórico"
 	},
 	"training": {
 		"consultantTraining": "Treinamento de consultores",
-		"sub": "Cada curso concederá um certificado. Se aulas adicionais forem adicionadas a um curso, será necessário atualizar para manter sua certificação em dia."
+		"sub": "Cada curso concederá um certificado. Se novas lições forem adicionadas a um curso, será necessário atualizá-lo para manter sua certificação válida."
+	},
+	"resource": {
+		"title": "Recurso/Atividade",
+		"titles": "Recursos e atividades",
+		"noFound": "Nenhum recurso encontrado.",
+		"sub": "Recursos e atividades ativos no BFSC",
+		"readSub": "Se desejar editar ou excluir este recurso, os botões estão abaixo.",
+		"updateSub": "Modifique os detalhes abaixo e não se esqueça de salvar ao concluir.",
+		"create": "Criar recurso/atividade",
+		"defaultDuration": "Duração padrão",
+		"type": "Tipo",
+		"types": {
+			"equipment": "Equipamento",
+			"room": "Sala",
+			"booth": "Cabine",
+			"activity": "Atividade"
+		},
+		"typesP": {
+			"equipment": "Equipamentos",
+			"room": "Salas",
+			"booth": "Cabines",
+			"activity": "Atividades"
+		},
+		"requiredItems": "Itens obrigatórios",
+		"capacity": "Capacidade",
+		"preparation": "Preparação",
+		"maxConcurrent": "Máximo simultâneo",
+		"createSub": "Preencha este formulário para criar um recurso ou atividade."
 	}
 }

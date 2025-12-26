@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
-type PageProps = {
+type Props = {
 	params: Promise<{ locale: string }>
 }
 
@@ -11,7 +11,7 @@ type PageProps = {
 // 	title: 'Manage Center Definitions',
 // }
 
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params }: Props) {
 	const { locale } = await params
 
 	return (

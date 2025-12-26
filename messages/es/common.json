@@ -12,18 +12,28 @@
 	"viewCourses": "Ver cursos",
 	"createCourse": "Crear un curso",
 	"createdBy": "Creado por",
+	"viewDetails": "Ver detalles",
+	"create": "Crear",
+	"edit": "Editar",
+	"read": "Ver",
 	"delete": "Eliminar",
+	"deleteSub": "Esto eliminará permanentemente este elemento. Esta acción no se puede deshacer.",
 	"cancel": "Cancelar",
 	"update": "Actualizar",
 	"sub": "Lorem ipsum",
-	"changesNotSaved": "Los cambios no se guardan hasta que hagas clic en Guardar abajo.",
+	"name": "Nombre",
+	"link": "Enlace",
+	"notes": "Notas",
+	"description": "Descripción",
+	"minutes": "minutos",
+	"status": "Estado",
+	"changesNotSaved": "Los cambios no se guardan hasta que haga clic en Guardar a continuación.",
 	"userAccount": "Cuenta de usuario",
 	"userSub": "Lorem ipsum",
 	"dashboard": "Panel",
 	"notifications": "Notificaciones",
-	"notificationSub": "Toca una notificación para marcarla como leída.",
-	"bfscCalendar": "BFSC Calendar",
-
+	"notificationSub": "Toque una notificación para marcarla como leída.",
+	"bfscCalendar": "Calendario BFSC",
 	"cases": {
 		"title": "Casos",
 		"cases": "casos",
@@ -38,7 +48,7 @@
 		"title": "Clases",
 		"sub": "Clases próximas y pasadas ofrecidas por el centro.",
 		"create": "Crear clase",
-		"createSub": "Crea una clase única o una serie de varias partes.",
+		"createSub": "Crear una clase única o una serie de varias partes.",
 		"deleteSub": "Esto elimina permanentemente la serie y todas sus partes."
 	},
 	"library": {
@@ -46,18 +56,46 @@
 		"inventory": "Inventario de la biblioteca",
 		"sub": "Libros y equipos disponibles en el centro",
 		"create": "Crear elemento de biblioteca",
-		"createSub": "Agrega un libro o equipo al inventario.",
+		"createSub": "Agregar un libro o equipo al inventario.",
 		"deleteSub": "Esto elimina permanentemente el elemento y todas sus copias."
 	},
 	"shifts": {
 		"schedule": "Horario de turnos",
 		"reports": "Informes de turnos",
 		"noOp": "No hay días de operación configurados.",
-		"dragBetween": "Arrastra personas entre turnos.",
+		"dragBetween": "Arrastre personas entre turnos.",
 		"dailyHist": "Diario e histórico"
 	},
 	"training": {
-		"consultantTraining": "Capacitación para consultores",
-		"sub": "Cada curso otorgará un certificado. Si se agregan lecciones adicionales a un curso, deberás actualizarlo para mantener tu certificación vigente."
+		"consultantTraining": "Capacitación de consultores",
+		"sub": "Cada curso otorgará un certificado. Si se agregan lecciones adicionales a un curso, deberá actualizarlo para mantener su certificación vigente."
+	},
+	"resource": {
+		"title": "Recurso/Actividad",
+		"titles": "Recursos y actividades",
+		"noFound": "No se encontraron recursos.",
+		"sub": "Recursos y actividades activos en el BFSC",
+		"readSub": "Si desea editar o eliminar este recurso, los botones se encuentran abajo.",
+		"updateSub": "Modifique los detalles a continuación y asegúrese de guardar cuando termine.",
+		"create": "Crear recurso/actividad",
+		"defaultDuration": "Duración predeterminada",
+		"type": "Tipo",
+		"types": {
+			"equipment": "Equipo",
+			"room": "Sala",
+			"booth": "Cabina",
+			"activity": "Actividad"
+		},
+		"typesP": {
+			"equipment": "Equipo",
+			"room": "Salas",
+			"booth": "Cabinas",
+			"activity": "Actividades"
+		},
+		"requiredItems": "Elementos requeridos",
+		"capacity": "Capacidad",
+		"preparation": "Preparación",
+		"maxConcurrent": "Máximo simultáneo",
+		"createSub": "Complete este formulario para crear un recurso o actividad."
 	}
 }

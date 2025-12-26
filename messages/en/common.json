@@ -12,10 +12,21 @@
 	"viewCourses": "View Courses",
 	"createCourse": "Create a Course",
 	"createdBy": "Created by",
+	"viewDetails": "View Details",
+	"create": "Create",
+	"edit": "Edit",
+	"read": "Read",
 	"delete": "Delete",
+	"deleteSub": "This will permanently delete this item. This action cannot be undone.",
 	"cancel": "Cancel",
 	"update": "Update",
 	"sub": "Lorem ipsum",
+	"name": "Name",
+	"link": "Link",
+	"notes": "Notes",
+	"description": "Description",
+	"minutes": "minutes",
+	"status": "Status",
 	"changesNotSaved": "Changes are not saved until you click Save below.",
 	"userAccount": "User Account",
 	"userSub": "Lorem ipsum",
@@ -58,5 +69,33 @@
 	"training": {
 		"consultantTraining": "Consultant Training",
 		"sub": "Each course will earn a certificate. If additional lessons are added to a course, you'll need to update to keep your certification current."
+	},
+	"resource": {
+		"title": "Resource/Activity",
+		"titles": "Resources and Activities",
+		"noFound": "No resources found.",
+		"sub": "Active resources and activites at the BFSC",
+		"readSub": "If you would like to edit or delete this resource, buttons can be found below.",
+		"updateSub": "Modify any details below and make sure to hit save when you're done.",
+		"create": "Create Resource/Activity",
+		"defaultDuration": "Default Duration",
+		"type": "Type",
+		"types": {
+			"equipment": "Equipment",
+			"room": "Room",
+			"booth": "Booth",
+			"activity": "Activity"
+		},
+		"typesP": {
+			"equipment": "Equipment",
+			"room": "Rooms",
+			"booth": "Booths",
+			"activity": "Activities"
+		},
+		"requiredItems": "Required Items",
+		"capacity": "Capacity",
+		"preparation": "Preparation",
+		"maxConcurrent": "Max Concurrent",
+		"createSub": "Fill out this form to create a resource or activity."
 	}
 }

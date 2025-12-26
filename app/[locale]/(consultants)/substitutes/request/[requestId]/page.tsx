@@ -6,11 +6,11 @@ import { getAcceptedSubstituteRequests } from '@/db/queries/substitutes'
 import { getCurrentUser } from '@/lib/auth'
 import { getTranslations } from 'next-intl/server'
 
-type PageProps = {
+type Props = {
 	params: Promise<{ requestId: string; locale: string }>
 }
 
-export default async function SubstituteRequestPage({ params }: PageProps) {
+export default async function SubstituteRequestPage({ params }: Props) {
 	const { requestId, locale } = await params
 	const { request, volunteers, availabilityMatches } =
 		await getSubstituteRequestDetail(requestId)
