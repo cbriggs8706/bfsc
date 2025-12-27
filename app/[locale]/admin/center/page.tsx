@@ -3,6 +3,8 @@
 import { TimeFormatSettings } from '@/components/admin/definitions/TimeFormatSettings'
 import { Button } from '@/components/ui/button'
 import { getAppSettings } from '@/lib/actions/app-settings'
+import { requireRole } from '@/utils/require-role'
+import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 
 type Props = {
@@ -15,15 +17,18 @@ type Props = {
 
 export default async function Page({ params }: Props) {
 	const { locale } = await params
+
+	await requireRole(locale, ['Admin', 'Director'], `/${locale}/admin`)
+	const t = await getTranslations({ locale })
+
 	const settings = await getAppSettings()
 
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">Center Definitions</h1>
+				<h1 className="text-3xl font-bold">{t('common.center.definitions')}</h1>
 				<p className="text-sm text-muted-foreground">
-					Set the main details of your center. You shouldn&apos;t need to change
-					these very often other than initial setup.
+					{t('common.center.definitionSub')}
 				</p>
 			</div>
 
@@ -33,38 +38,38 @@ export default async function Page({ params }: Props) {
 			<ul className="space-y-4">
 				<li>
 					{' '}
-					<Link href={`/${locale}/admin/kiosk/hours`}>
-						<Button>Define Hours</Button>
+					<Link href={`/${locale}/admin/center/hours`}>
+						<Button>{t('sidebar.admin.defineHours')}</Button>
 					</Link>
 				</li>
 				<li>
 					{' '}
-					<Link href={`/${locale}/admin/shifts/define`}>
-						<Button>Define Shifts</Button>
+					<Link href={`/${locale}/admin/center/shifts`}>
+						<Button>{t('sidebar.admin.defineShifts')}</Button>
 					</Link>
 				</li>
 				<li>
 					{' '}
-					<Link href={`/${locale}/admin/kiosk/purposes`}>
-						<Button>Define Purposes</Button>
+					<Link href={`/${locale}/admin/center/purposes`}>
+						<Button>{t('sidebar.admin.definePurposes')}</Button>
 					</Link>
 				</li>
 				<li>
 					{' '}
-					<Link href={`/${locale}/admin/case-types`}>
-						<Button>Define Case Types</Button>
+					<Link href={`/${locale}/admin/center/case-types`}>
+						<Button>{t('sidebar.admin.defineCaseTypes')}</Button>
 					</Link>
 				</li>
 				<li>
 					{' '}
 					<Link href={`/${locale}/admin/center/faiths`}>
-						<Button>Define Faiths</Button>
+						<Button>{t('sidebar.admin.defineFaiths')}</Button>
 					</Link>
 				</li>
 				<li>
 					{' '}
-					<Link href={`/${locale}/admin/center/positions`}>
-						<Button>Define Positions</Button>
+					<Link href={`/${locale}/admin/center/faiths/callings`}>
+						<Button>{t('sidebar.admin.defineCallings')}</Button>
 					</Link>
 				</li>
 			</ul>

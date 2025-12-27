@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
 	if (!person || !person.userId) {
 		return NextResponse.json(
-			{ error: 'This consultant has no linked userId' },
+			{ error: 'This worker has no linked userId' },
 			{ status: 400 }
 		)
 	}

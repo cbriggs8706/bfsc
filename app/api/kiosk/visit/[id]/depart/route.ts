@@ -21,7 +21,7 @@ export async function POST(
 		where: eq(kioskPeople.userId, session.user.id),
 	})
 
-	if (!person?.isConsultantCached) {
+	if (!person?.isWorkerCached) {
 		return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 	}
 

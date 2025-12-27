@@ -1,0 +1,127 @@
+'use client'
+
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
+export type SpecialHour = {
+	id: string
+	date: string
+	isClosed: boolean
+	reason?: string | null
+	opensAt: string | null
+	closesAt: string | null
+}
+
+type Props = {
+	initialItems: SpecialHour[]
+}
+
+export function SpecialHours({ initialItems }: Props) {
+	const [items, setItems] = useState<SpecialHour[]>(initialItems)
+	const [startDate, setStartDate] = useState('')
+	const [endDate, setEndDate] = useState('')
+	const [reason, setReason] = useState('')
+
+	const reload = async () => {
+		const res = await fetch('/api/admin/kiosk/special-hours')
+		const data = await res.json()
+		setItems(data.hours)
+	}
+
+	const addClosedRange = async () => {
+		if (!startDate) return
+
+		await fetch('/api/admin/kiosk/special-hours', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				startDate,
+				endDate: endDate || null,
+				reason: reason || null,
+			}),
+		})
+
+		setStartDate('')
+		setEndDate('')
+		setReason('')
+		await reload()
+	}
+
+	const deleteItem = async (id: string) => {
+		await fetch(`/api/admin/kiosk/special-hours/${id}`, {
+			method: 'DELETE',
+		})
+		await reload()
+	}
+
+	return (
+		<div className="space-y-6">
+			{/* Add date range */}
+			<div className="space-y-3">
+				<Label>Start Date</Label>
+				<Input
+					type="date"
+					value={startDate}
+					onChange={(e) => setStartDate(e.target.value)}
+				/>
+
+				<Label>End Date (optional)</Label>
+				<Input
+					type="date"
+					value={endDate}
+					onChange={(e) => setEndDate(e.target.value)}
+				/>
+
+				<Label>Reason (optional)</Label>
+				<Input
+					type="text"
+					placeholder="Thanksgiving Break, Cleaning, etc."
+					value={reason}
+					onChange={(e) => setReason(e.target.value)}
+				/>
+
+				<Button className="w-full" onClick={addClosedRange}>
+					Add Closure
+				</Button>
+			</div>
+
+			{/* List */}
+			<div className="space-y-2">
+				{items.map((i) => (
+					<div
+						key={i.id}
+						className="flex justify-between items-center border p-2 rounded"
+					>
+						<div>
+							<div className="font-semibold">
+								{i.date} {i.isClosed && '(Closed)'}
+							</div>
+
+							{i.reason && (
+								<div className="text-sm italic text-muted-foreground">
+									{i.reason}
+								</div>
+							)}
+
+							{!i.isClosed && (i.opensAt || i.closesAt) && (
+								<div className="text-sm text-muted-foreground">
+									Open {i.opensAt} – {i.closesAt}
+								</div>
+							)}
+						</div>
+
+						<Button
+							variant="destructive"
+							size="sm"
+							onClick={() => deleteItem(i.id)}
+						>
+							Delete
+						</Button>
+					</div>
+				))}
+			</div>
+		</div>
+	)
+}

@@ -24,7 +24,7 @@ export const wards = pgTable('wards', {
 	name: text('name').notNull(),
 })
 
-export const positions = pgTable('positions', {
+export const callings = pgTable('callings', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	name: text('name').notNull(),
 })

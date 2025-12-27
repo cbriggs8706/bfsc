@@ -7,13 +7,13 @@
 		"freeForever": "Descubrir · Reunir · Conectar",
 		"language": "Idioma",
 		"chooseLanguage": "Elegir idioma",
-		"bfsc": "Burley FamilySearch",
+		"bfsc": "FamilySearch de Burley",
 		"groupVisits": "Visitas grupales",
 		"researchSpecialists": "Especialistas en investigación",
 		"trainingGuide": "Guía de capacitación",
 		"consultantHelps": "Ayuda de consultores",
 		"communityProjects": "Proyectos comunitarios",
-		"memoryLane": "Sendero de la memoria",
+		"memoryLane": "Camino de los recuerdos",
 		"activities": "Actividades",
 		"newsletters": "Boletines"
 	},
@@ -26,7 +26,7 @@
 		"findagrave": "Find A Grave",
 		"mccemeteries": "Cementerios de Mini-Cassia",
 		"censuses": "Censos",
-		"mvwwii": "Periódico de la Segunda Guerra Mundial del Magic Valley",
+		"mvwwii": "Periódico de la Segunda Guerra Mundial del Valle Mágico",
 		"naturalization": "Naturalización",
 		"numident": "Numident",
 		"obituaries": "Obituarios",
@@ -40,12 +40,12 @@
 	},
 	"calendar": {
 		"expo": "Expo",
-		"memorylane": "Sendero de la memoria",
+		"memorylane": "Camino de los recuerdos",
 		"classes": "Horario de clases",
 		"niqqud": "Niqqud"
 	},
 	"secondary": {
-		"leaderboard": "Clasificación",
+		"leaderboard": "Tabla de clasificación",
 		"calendar": "Calendario",
 		"help": "Ayuda",
 		"feedback": "Comentarios"
@@ -58,7 +58,7 @@
 		"comprehensible": "Entrada comprensible"
 	},
 	"lesson": {
-		"scripts": "Guiones de lecciones",
+		"scripts": "Guiones de lección",
 		"lessonContent": "Contenido de la lección"
 	},
 	"teacher": {
@@ -86,16 +86,20 @@
 		"addBookEquip": "Agregar libro / equipo",
 		"reservations": "Reservas",
 		"resources": "Recursos",
+		"rolePermissions": "Permisos de roles",
+		"userPermissions": "Permisos de usuarios",
 		"training": "Capacitación"
 	},
-	"consultant": {
-		"title": "Consultor",
+	"worker": {
+		"title": "Trabajador",
 		"shiftReport": "Informe de turno",
-		"teachClass": "Impartir una clase",
+		"teachClass": "Dar una clase",
 		"library": "Biblioteca",
 		"training": "Capacitación",
-		"shiftAssignments": "Asignaciones de turnos",
-		"substitutes": "Sustituciones"
+		"shifts": "Turnos",
+		"assignments": "Asignaciones",
+		"substitutes": "Suplentes",
+		"availability": "Mi disponibilidad"
 	},
 	"patron": {
 		"title": "Usuario"
@@ -109,7 +113,7 @@
 		"waiting": "En pausa",
 		"solved": "Resuelto",
 		"archived": "Archivado",
-		"watching": "Siguiendo",
+		"watching": "Observando",
 		"mentions": "Menciones"
 	}
 }

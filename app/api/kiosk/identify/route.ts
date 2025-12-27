@@ -5,24 +5,23 @@ import { kioskPeople, KioskPeopleInsert } from '@/db/schema/tables/kiosk'
 import { user } from '@/db/schema/tables/auth'
 import { eq, ilike } from 'drizzle-orm'
 
-const CONSULTANT_ROLES = [
-	'Consultant',
+const WORKER_ROLES = [
+	'Worker',
 	'Shift Lead',
 	'Assistant Director',
 	'Director',
-	'High Councilman',
 	'Admin',
 ]
 
-function isConsultantRole(role: string | null): boolean {
-	return role !== null && CONSULTANT_ROLES.includes(role)
+function isWorkerRole(role: string | null): boolean {
+	return role !== null && WORKER_ROLES.includes(role)
 }
 
 type PersonSummary = {
 	id: string
 	fullName: string
 	userId: string | null
-	isConsultant: boolean
+	isWorker: boolean
 	hasPasscode: boolean
 }
 
@@ -66,13 +65,13 @@ async function createKioskPersonFromUserRow(u: {
 }): Promise<PersonSummary | null> {
 	if (!u.name) return null
 
-	const isConsultant = isConsultantRole(u.role)
+	const isWorker = isWorkerRole(u.role)
 
 	const insert: KioskPeopleInsert = {
 		fullName: u.name,
 		email: u.email,
 		userId: u.id,
-		isConsultantCached: isConsultant,
+		isWorkerCached: isWorker,
 	}
 
 	const [created] = await db.insert(kioskPeople).values(insert).returning()
@@ -81,7 +80,7 @@ async function createKioskPersonFromUserRow(u: {
 		id: created.id,
 		fullName: created.fullName,
 		userId: created.userId,
-		isConsultant,
+		isWorker,
 		hasPasscode: Boolean(created.passcode),
 	}
 }
@@ -115,14 +114,14 @@ export async function POST(req: Request) {
 				where: eq(kioskPeople.userId, existingUser.id),
 			})
 
-			const isConsultant = isConsultantRole(existingUser.role)
+			const isWorker = isWorkerRole(existingUser.role)
 
 			if (existingKiosk) {
 				const person: PersonSummary = {
 					id: existingKiosk.id,
 					fullName: existingKiosk.fullName,
 					userId: existingKiosk.userId,
-					isConsultant,
+					isWorker,
 					hasPasscode: Boolean(existingKiosk.passcode),
 				}
 
@@ -137,7 +136,7 @@ export async function POST(req: Request) {
 				fullName: existingUser.name,
 				email: existingUser.email,
 				userId: existingUser.id,
-				isConsultantCached: isConsultant,
+				isWorkerCached: isWorker,
 			}
 
 			const [created] = await db.insert(kioskPeople).values(insert).returning()
@@ -146,7 +145,7 @@ export async function POST(req: Request) {
 				id: created.id,
 				fullName: created.fullName,
 				userId: created.userId,
-				isConsultant,
+				isWorker,
 				hasPasscode: Boolean(created.passcode),
 			}
 
@@ -166,7 +165,7 @@ export async function POST(req: Request) {
 				userId: kioskPeople.userId,
 				passcode: kioskPeople.passcode,
 				role: user.role,
-				isConsultantCached: kioskPeople.isConsultantCached,
+				isWorkerCached: kioskPeople.isWorkerCached,
 			})
 			.from(kioskPeople)
 			.leftJoin(user, eq(kioskPeople.userId, user.id))
@@ -181,14 +180,14 @@ export async function POST(req: Request) {
 		}
 
 		const row = rows[0]
-		const isConsultant =
-			row.role !== null ? isConsultantRole(row.role) : row.isConsultantCached
+		const isWorker =
+			row.role !== null ? isWorkerRole(row.role) : row.isWorkerCached
 
 		const person: PersonSummary = {
 			id: row.id,
 			fullName: row.fullName,
 			userId: row.userId,
-			isConsultant,
+			isWorker,
 			hasPasscode: Boolean(row.passcode),
 		}
 
@@ -221,7 +220,7 @@ export async function POST(req: Request) {
 				userId: kioskPeople.userId,
 				passcode: kioskPeople.passcode,
 				role: user.role,
-				isConsultantCached: kioskPeople.isConsultantCached,
+				isWorkerCached: kioskPeople.isWorkerCached,
 			})
 			.from(kioskPeople)
 			.leftJoin(user, eq(kioskPeople.userId, user.id))
@@ -236,14 +235,14 @@ export async function POST(req: Request) {
 		}
 
 		const row = rows[0]
-		const isConsultant =
-			row.role !== null ? isConsultantRole(row.role) : row.isConsultantCached
+		const isWorker =
+			row.role !== null ? isWorkerRole(row.role) : row.isWorkerCached
 
 		const person: PersonSummary = {
 			id: row.id,
 			fullName: row.fullName,
 			userId: row.userId,
-			isConsultant,
+			isWorker,
 			hasPasscode: Boolean(row.passcode),
 		}
 
@@ -261,7 +260,7 @@ export async function POST(req: Request) {
 			userId: kioskPeople.userId,
 			passcode: kioskPeople.passcode,
 			role: user.role,
-			isConsultantCached: kioskPeople.isConsultantCached,
+			isWorkerCached: kioskPeople.isWorkerCached,
 		})
 		.from(kioskPeople)
 		.leftJoin(user, eq(kioskPeople.userId, user.id))
@@ -269,14 +268,14 @@ export async function POST(req: Request) {
 
 	if (kioskRows.length === 1) {
 		const row = kioskRows[0]
-		const isConsultant =
-			row.role !== null ? isConsultantRole(row.role) : row.isConsultantCached
+		const isWorker =
+			row.role !== null ? isWorkerRole(row.role) : row.isWorkerCached
 
 		const person: PersonSummary = {
 			id: row.id,
 			fullName: row.fullName,
 			userId: row.userId,
-			isConsultant,
+			isWorker,
 			hasPasscode: Boolean(row.passcode),
 		}
 
@@ -288,14 +287,14 @@ export async function POST(req: Request) {
 
 	if (kioskRows.length > 1) {
 		const people: PersonSummary[] = kioskRows.map((row) => {
-			const isConsultant =
-				row.role !== null ? isConsultantRole(row.role) : row.isConsultantCached
+			const isWorker =
+				row.role !== null ? isWorkerRole(row.role) : row.isWorkerCached
 
 			return {
 				id: row.id,
 				fullName: row.fullName,
 				userId: row.userId,
-				isConsultant,
+				isWorker,
 				hasPasscode: Boolean(row.passcode),
 			}
 		})

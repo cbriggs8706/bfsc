@@ -1,7 +1,7 @@
 // db/queries/get-availability-matches.ts
 import { db, kioskPeople, user } from '@/db'
 import {
-	consultantShiftAvailability,
+	workerShiftAvailability,
 	shiftSubRequests,
 } from '@/db/schema/tables/substitutes'
 import { eq, and, ne, isNull, or } from 'drizzle-orm'
@@ -33,26 +33,26 @@ export async function getAvailabilityMatchesForRequest(
 	const rows = await db
 		.select({
 			userId: user.id, // ✅ auth.users.id
-			level: consultantShiftAvailability.level,
+			level: workerShiftAvailability.level,
 			name: kioskPeople.fullName,
 			imageUrl: kioskPeople.profileImageUrl,
 		})
-		.from(consultantShiftAvailability)
+		.from(workerShiftAvailability)
 		.innerJoin(
 			user,
-			eq(user.id, consultantShiftAvailability.userId) // ✅ ENFORCES auth user
+			eq(user.id, workerShiftAvailability.userId) // ✅ ENFORCES auth user
 		)
 		.leftJoin(kioskPeople, eq(kioskPeople.userId, user.id))
 		.where(
 			and(
-				eq(consultantShiftAvailability.shiftId, request.shiftId),
+				eq(workerShiftAvailability.shiftId, request.shiftId),
 				ne(user.id, request.requestedByUserId),
 				or(
 					eq(
-						consultantShiftAvailability.shiftRecurrenceId,
+						workerShiftAvailability.shiftRecurrenceId,
 						request.shiftRecurrenceId
 					),
-					isNull(consultantShiftAvailability.shiftRecurrenceId)
+					isNull(workerShiftAvailability.shiftRecurrenceId)
 				)
 			)
 		)

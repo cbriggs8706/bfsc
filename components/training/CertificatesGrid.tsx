@@ -35,7 +35,7 @@ export function CertificatesGrid({ certificates, locale }: Props) {
 						You haven’t earned any certificates yet.
 					</p>
 					<Link href={`/${locale}/training`}>
-						<Button>View Consultant Training Courses</Button>
+						<Button>View Worker Training Courses</Button>
 					</Link>
 				</div>
 			</div>

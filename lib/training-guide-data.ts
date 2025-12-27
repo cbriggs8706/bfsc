@@ -18,7 +18,7 @@ export const TRAINING_GUIDE_INTRO = [
 	'For those completing this on their own, if more assistance is needed, come to the center for one to one assistance or attend some of the numerous classes offered at the center.',
 ] as const
 export const TRAINING_GUIDE_NOTE = [
-	'Note: Using beta.familysearch.org is a great option to practice these skills. Changes made there do not affect familysearch.org. So one may practice whatever skills they wish in beta.familysearch.org to get comfortable before working in familysearch.org It’s the same username and password to sign in there. As this is a beta website, sometimes there are issues when working within it. If you have problems with functionality, wait a couple of days and try the activity again. This is also a great resource for consultants in assisting others as they can take patrons directly to the websites to answer their questions.',
+	'Note: Using beta.familysearch.org is a great option to practice these skills. Changes made there do not affect familysearch.org. So one may practice whatever skills they wish in beta.familysearch.org to get comfortable before working in familysearch.org It’s the same username and password to sign in there. As this is a beta website, sometimes there are issues when working within it. If you have problems with functionality, wait a couple of days and try the activity again. This is also a great resource for workers in assisting others as they can take patrons directly to the websites to answer their questions.',
 ] as const
 
 export const TRAINING_GUIDE_SECTIONS: TrainingSection[] = [

@@ -11,7 +11,7 @@ import {
 } from 'drizzle-orm/pg-core'
 import { InferInsertModel, InferSelectModel, sql } from 'drizzle-orm'
 import { user } from './auth' // your existing user table
-import { faiths, positions, wards } from './faith'
+import { faiths, callings, wards } from './faith'
 
 export const kioskPeople = pgTable('kiosk_people', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -21,13 +21,13 @@ export const kioskPeople = pgTable('kiosk_people', {
 	phone: text('phone'),
 
 	passcode: varchar('passcode', { length: 6 }).unique(), // 6-digit passcode, optional, must be numeric if present
-	isConsultantCached: boolean('is_consultant_cached').notNull().default(false), // derived from user.role but cached for quick kiosk logic
+	isWorkerCached: boolean('is_worker_cached').notNull().default(false), // derived from user.role but cached for quick kiosk logic
 	profileImageUrl: text('profile_image_url'),
 	languagesSpoken: text('languages_spoken')
 		.array()
 		.notNull()
 		.default(sql`ARRAY[]::text[]`),
-
+	pid: text('pid'),
 	faithId: uuid('faith_id').references(() => faiths.id, {
 		onDelete: 'set null',
 	}),
@@ -107,8 +107,9 @@ export const kioskShiftLogs = pgTable('kiosk_shift_logs', {
 	notes: text('notes'),
 })
 
-export const kioskPersonPositions = pgTable(
-	'kiosk_person_positions',
+//TODO unused. delete?
+export const kioskPersonCallings = pgTable(
+	'kiosk_person_callings',
 	{
 		id: uuid('id').defaultRandom().primaryKey(),
 
@@ -116,9 +117,9 @@ export const kioskPersonPositions = pgTable(
 			.notNull()
 			.references(() => kioskPeople.id, { onDelete: 'cascade' }),
 
-		positionId: uuid('position_id')
+		callingId: uuid('calling_id')
 			.notNull()
-			.references(() => positions.id, { onDelete: 'cascade' }),
+			.references(() => callings.id, { onDelete: 'cascade' }),
 
 		// Optional but VERY useful
 		sustainedAt: timestamp('sustained_at', { withTimezone: true }),
@@ -126,6 +127,6 @@ export const kioskPersonPositions = pgTable(
 	},
 	(table) => ({
 		// Prevent duplicate assignments
-		uniqueAssignment: unique().on(table.personId, table.positionId),
+		uniqueAssignment: unique().on(table.personId, table.callingId),
 	})
 )

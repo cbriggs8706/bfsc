@@ -51,7 +51,7 @@ export async function volunteerForSub(requestId: string) {
 			.where(eq(kioskPeople.userId, user.id))
 			.then((r) => r[0])
 
-		const volunteerName = volunteer?.fullName ?? 'A consultant'
+		const volunteerName = volunteer?.fullName ?? 'A worker'
 
 		// 🔔 Notify requester ONLY
 		await notify(tx, {

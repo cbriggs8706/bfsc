@@ -6,7 +6,7 @@ import type { Resource } from '@/types/resource'
 import { getTranslations } from 'next-intl/server'
 import { readResources } from '@/lib/actions/resource/resource'
 import { getAppSettings } from '@/lib/actions/app-settings'
-import { PatronReservationClient } from './patron-reservation-client'
+import { PatronReservationForm } from '@/components/resource/PatronReservationForm'
 
 type Props = {
 	params: Promise<{ locale: string }>
@@ -36,7 +36,7 @@ export default async function Page({ params }: Props) {
 				</p>
 			</div>
 
-			<PatronReservationClient
+			<PatronReservationForm
 				locale={locale}
 				resources={resources}
 				timeFormat={settings.timeFormat}

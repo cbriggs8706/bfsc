@@ -1,7 +1,7 @@
 // app/api/kiosk/purposes/route.ts
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { kioskVisitPurposes } from '@/db/schema/tables/kiosk'
+import { kioskVisitPurposes } from '@/db'
 import { asc, eq } from 'drizzle-orm'
 
 export async function GET() {

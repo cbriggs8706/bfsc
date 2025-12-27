@@ -7,13 +7,13 @@
 		"freeForever": "Descobrir · Reunir · Conectar",
 		"language": "Idioma",
 		"chooseLanguage": "Escolher idioma",
-		"bfsc": "Burley FamilySearch",
+		"bfsc": "FamilySearch de Burley",
 		"groupVisits": "Visitas em grupo",
 		"researchSpecialists": "Especialistas em pesquisa",
 		"trainingGuide": "Guia de treinamento",
-		"consultantHelps": "Ajuda de consultores",
+		"consultantHelps": "Ajuda dos consultores",
 		"communityProjects": "Projetos comunitários",
-		"memoryLane": "Caminho da memória",
+		"memoryLane": "Caminho das memórias",
 		"activities": "Atividades",
 		"newsletters": "Boletins informativos"
 	},
@@ -40,8 +40,8 @@
 	},
 	"calendar": {
 		"expo": "Expo",
-		"memorylane": "Caminho da memória",
-		"classes": "Agenda de aulas",
+		"memorylane": "Caminho das memórias",
+		"classes": "Horário de aulas",
 		"niqqud": "Niqqud"
 	},
 	"secondary": {
@@ -82,20 +82,24 @@
 		"scheduleClosures": "Agendar fechamentos",
 		"shiftScheduler": "Agendador de turnos",
 		"announcements": "Anúncios",
-		"newsletter": "Boletim",
+		"newsletter": "Boletim informativo",
 		"addBookEquip": "Adicionar livro / equipamento",
 		"reservations": "Reservas",
 		"resources": "Recursos",
+		"rolePermissions": "Permissões de funções",
+		"userPermissions": "Permissões de usuários",
 		"training": "Treinamento"
 	},
-	"consultant": {
-		"title": "Consultor",
+	"worker": {
+		"title": "Funcionário",
 		"shiftReport": "Relatório de turno",
 		"teachClass": "Dar uma aula",
 		"library": "Biblioteca",
 		"training": "Treinamento",
-		"shiftAssignments": "Atribuições de turnos",
-		"substitutes": "Substituições"
+		"shifts": "Turnos",
+		"assignments": "Atribuições",
+		"substitutes": "Substitutos",
+		"availability": "Minha disponibilidade"
 	},
 	"patron": {
 		"title": "Usuário"
@@ -106,10 +110,10 @@
 		"open": "Novo",
 		"investigating": "Em investigação",
 		"myInvestigating": "Minhas investigações",
-		"waiting": "Pausado",
+		"waiting": "Em pausa",
 		"solved": "Resolvido",
 		"archived": "Arquivado",
-		"watching": "Acompanhando",
+		"watching": "Observando",
 		"mentions": "Menções"
 	}
 }

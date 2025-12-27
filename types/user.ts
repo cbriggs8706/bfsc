@@ -10,3 +10,12 @@ export type UserSummary = {
 	name: string
 	imageUrl: string | null
 }
+
+export const roles = [
+	'Admin',
+	'Director',
+	'Assistant Director',
+	'Shift Lead',
+	'Worker',
+	'Patron',
+]

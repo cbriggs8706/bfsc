@@ -31,6 +31,11 @@ export type Day = {
 	closesAt: string
 }
 
+export type DaySimple = {
+	weekday: number
+	label: string
+}
+
 export type ShiftInstance = {
 	shiftId: string
 	shiftRecurrenceId: string
@@ -45,4 +50,19 @@ export type ShiftInstance = {
 	exceptionType?: 'remove' | 'add' | 'replace'
 
 	notes?: string
+}
+
+export type AssignmentRole = 'worker' | 'shift_lead' | 'trainer'
+
+export type Assignment = {
+	id: string
+	shiftRecurrenceId: string
+	userId: string
+	// assignmentRole: string
+	assignmentRole: AssignmentRole
+	notes: string | null
+
+	userName: string | null
+	userRole: string
+	userEmail: string
 }

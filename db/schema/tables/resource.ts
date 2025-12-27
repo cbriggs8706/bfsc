@@ -78,10 +78,9 @@ export const reservation = pgTable(
 			onDelete: 'set null',
 		}),
 
-		assignedConsultantId: uuid('assigned_consultant_id').references(
-			() => user.id,
-			{ onDelete: 'set null' }
-		),
+		assignedWorkerId: uuid('assigned_worker_id').references(() => user.id, {
+			onDelete: 'set null',
+		}),
 
 		notes: text('notes'),
 

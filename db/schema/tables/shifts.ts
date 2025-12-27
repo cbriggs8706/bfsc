@@ -130,8 +130,8 @@ export const shiftAssignments = pgTable(
 		// NEW: bucket/role within the shift
 		assignmentRole: varchar('assignment_role', { length: 20 })
 			.notNull()
-			.default('consultant'),
-		// values: 'consultant' | 'shift_lead' | 'trainer'
+			.default('worker'),
+		// values: 'worker' | 'shift_lead' | 'trainer'
 
 		// NEW: optional per-assignment note
 		notes: varchar('notes', { length: 255 }),
@@ -153,7 +153,7 @@ export const shiftAssignments = pgTable(
 		// Optional: enforce allowed roles at DB level
 		roleCheck: check(
 			'shift_assignments_role_ck',
-			sql`${t.assignmentRole} in ('consultant','shift_lead','trainer')`
+			sql`${t.assignmentRole} in ('worker','shift_lead','trainer')`
 		),
 	})
 )

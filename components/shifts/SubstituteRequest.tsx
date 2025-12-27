@@ -173,7 +173,7 @@ export function SubstituteRequest({
 
 			<Separator />
 
-			{/* ================= Nominated Consultant ================= */}
+			{/* ================= Nominated Worker ================= */}
 			{isNominated && (
 				<div className="border rounded p-4 space-y-2 bg-(--orange-accent-soft) border-(--orange-accent)">
 					<div className="flex items-center gap-3">
@@ -292,9 +292,9 @@ export function SubstituteRequest({
 						<div className="border rounded p-4 space-y-4 bg-(--blue-accent-soft) border-(--blue-accent)">
 							<p>
 								By clicking volunteer, you are adding your name to a list of
-								consultants who are willing to cover this shift. The requester
-								will then accept your offer to confirm. The status will remain
-								open in the meantime.
+								workers who are willing to cover this shift. The requester will
+								then accept your offer to confirm. The status will remain open
+								in the meantime.
 							</p>
 							<Button
 								type="button"
@@ -410,17 +410,15 @@ export function SubstituteRequest({
 				request.status !== 'expired' &&
 				availabilityMatches.length > 0 && (
 					<>
-						<h3 className="text-xl font-semibold">
-							{t('availableConsultants')}
-						</h3>
+						<h3 className="text-xl font-semibold">{t('availableWorkers')}</h3>
 						<p>
-							Requesting a consultant makes this request private. When you click
+							Requesting a worker makes this request private. When you click
 							Request, the shift is removed from the public substitute calendar
-							and shown only to the consultant you selected. You may request one
-							consultant at a time. If you want the shift to remain visible to
-							all consultants, do not click Request below. If you have already
-							asked a consultant to cover your shift, this would be the place to
-							request it so that they show up in the system as your substitute.
+							and shown only to the worker you selected. You may request one
+							worker at a time. If you want the shift to remain visible to all
+							workers, do not click Request below. If you have already asked a
+							worker to cover your shift, this would be the place to request it
+							so that they show up in the system as your substitute.
 						</p>
 
 						<ul className="grid grid-cols-1 md:grid-cols-2 gap-4">

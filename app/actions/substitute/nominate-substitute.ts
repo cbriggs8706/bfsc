@@ -9,7 +9,7 @@ import { NotificationType } from '@/types/substitutes'
 
 export async function nominateSubstitute(
 	requestId: string,
-	consultantUserId: string
+	workerUserId: string
 ) {
 	const user = await getCurrentUser()
 	if (!user) throw new Error('Unauthorized')
@@ -31,28 +31,28 @@ export async function nominateSubstitute(
 			throw new Error('Request is not open')
 		}
 
-		const consultantAuthUser = await tx
+		const workerAuthUser = await tx
 			.select({ id: userTable.id })
 			.from(userTable)
-			.where(eq(userTable.id, consultantUserId))
+			.where(eq(userTable.id, workerUserId))
 			.then((r) => r[0])
 
-		if (!consultantAuthUser) {
-			throw new Error('Invalid consultantUserId (must be auth user id)')
+		if (!workerAuthUser) {
+			throw new Error('Invalid workerUserId (must be auth user id)')
 		}
 
 		await tx
 			.update(shiftSubRequests)
 			.set({
 				hasNominatedSub: true,
-				nominatedSubUserId: consultantUserId,
+				nominatedSubUserId: workerUserId,
 				status: 'awaiting_nomination_confirmation',
 				updatedAt: new Date(),
 			})
 			.where(eq(shiftSubRequests.id, requestId))
 
 		await tx.insert(notifications).values({
-			userId: consultantUserId,
+			userId: workerUserId,
 			type: 'sub_request_assignment' satisfies NotificationType,
 			message: `You have been requested to cover a shift on ${request.date}.`,
 		})

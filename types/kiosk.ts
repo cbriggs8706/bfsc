@@ -8,17 +8,18 @@ export type PersonSummary = {
 	id: string
 	fullName: string
 	userId: string | null
-	isConsultant: boolean
+	isWorker: boolean
 	hasPasscode: boolean
 	source?: PersonSource
 }
 
-export type OnShiftConsultant = {
+export type OnShiftWorker = {
 	personId: string
 	userId: string | null
 	fullName: string
 	profileImageUrl: string | null
 	languages: string[]
+	pid: string
 }
 
 export type Purpose = {
@@ -35,11 +36,11 @@ export type KioskStep =
 	| 'roleChoice'
 	| 'visit'
 	| 'shift'
-	| 'consultants'
+	| 'workers'
 	| 'checkout' // ← future
 
 export type CurrentPresence = {
-	consultants: OnShiftConsultant[]
+	workers: OnShiftWorker[]
 	patrons: {
 		personId: string
 		fullName: string

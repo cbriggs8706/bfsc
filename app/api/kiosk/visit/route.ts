@@ -52,10 +52,10 @@ export async function POST(req: Request) {
 		if (purpose?.name) purposeName = purpose.name
 	}
 
-	// 4️⃣ Find consultants currently on shift
+	// 4️⃣ Find workers currently on shift
 	const now = new Date()
 
-	const onShiftConsultants = await db
+	const onShiftWorkers = await db
 		.select({
 			userId: kioskShiftLogs.userId,
 		})
@@ -67,9 +67,9 @@ export async function POST(req: Request) {
 			)
 		)
 
-	// 5️⃣ Notify ONLY those consultants
-	for (const consultant of onShiftConsultants) {
-		await supabase.channel(`consultant-${consultant.userId}`).send({
+	// 5️⃣ Notify ONLY those workers
+	for (const worker of onShiftWorkers) {
+		await supabase.channel(`worker-${worker.userId}`).send({
 			type: 'broadcast',
 			event: 'new-patron',
 			payload: {

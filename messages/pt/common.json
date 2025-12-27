@@ -70,7 +70,7 @@
 		"dailyHist": "Diário e histórico"
 	},
 	"training": {
-		"consultantTraining": "Treinamento de consultores",
+		"workerTraining": "Treinamento de consultores",
 		"sub": "Cada curso concederá um certificado. Se novas lições forem adicionadas a um curso, será necessário atualizá-lo para manter sua certificação válida."
 	},
 	"resource": {

@@ -9,6 +9,7 @@ import { revalidatePath } from 'next/cache'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { AnnouncementForm } from '@/components/admin/announcements/AnnouncementForm'
+import { getTranslations } from 'next-intl/server'
 
 interface Props {
 	params: Promise<{ locale: string; id: string }>
@@ -17,6 +18,7 @@ interface Props {
 export default async function DeleteAnnouncementPage({ params }: Props) {
 	const { locale, id } = await params
 	const announcement = await getAnnouncementById(id)
+	const t = await getTranslations({ locale, namespace: 'common' })
 
 	if (!announcement) notFound()
 
@@ -30,8 +32,10 @@ export default async function DeleteAnnouncementPage({ params }: Props) {
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">Delete {announcement.title}</h1>
-				<p className="text-sm text-muted-foreground">Lorem ipsum</p>
+				<h1 className="text-3xl font-bold">
+					{t('delete')} {announcement.title}
+				</h1>
+				{/* <p className="text-sm text-muted-foreground">Lorem ipsum</p> */}
 			</div>
 
 			<AnnouncementForm

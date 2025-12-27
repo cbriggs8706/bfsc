@@ -8,8 +8,7 @@ const ALLOWED_ROLES = [
 	'Admin',
 	'Director',
 	'Assistant Director',
-	'High Councilman',
-	'Consultant',
+	'Worker',
 	'Shift Lead',
 	'Patron',
 ] as const

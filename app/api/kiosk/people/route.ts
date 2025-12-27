@@ -1,11 +1,11 @@
 // app/api/kiosk/people/route.ts
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { kioskPeople, kioskPersonPositions } from '@/db/schema/tables/kiosk'
-import { positions } from '@/db/schema/tables/faith'
+import { kioskPeople, kioskPersonCallings } from '@/db/schema/tables/kiosk'
+import { callings } from '@/db/schema/tables/faith'
 import { user } from '@/db/schema/tables/auth'
 import { eq } from 'drizzle-orm'
-import { isConsultantRole } from '@/lib/is-consultant-role'
+import { isWorkerRole } from '@/lib/is-worker-role'
 
 function generatePasscode() {
 	return Math.floor(100000 + Math.random() * 900000).toString()
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 		phone,
 		faithId,
 		wardId,
-		position,
+		calling,
 		notes,
 		userId,
 		wantsPasscode = false,
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 		phone?: string | null
 		faithId?: string | null
 		wardId?: string | null
-		position?: string | null
+		calling?: string | null
 		notes?: string | null
 		userId?: string | null
 		wantsPasscode?: boolean
@@ -54,15 +54,15 @@ export async function POST(req: Request) {
 	}
 
 	// ──────────────────────────────
-	// CONSULTANT CACHE
+	// WORKER CACHE
 	// ──────────────────────────────
-	let isConsultantCached = false
+	let isWorkerCached = false
 	if (userId) {
 		const u = await db.query.user.findFirst({
 			where: eq(user.id, userId),
 		})
 		if (u) {
-			isConsultantCached = isConsultantRole(u.role)
+			isWorkerCached = isWorkerRole(u.role)
 		}
 	}
 
@@ -80,25 +80,25 @@ export async function POST(req: Request) {
 			notes: notes ?? null,
 			userId: userId ?? null,
 			passcode,
-			isConsultantCached,
+			isWorkerCached,
 		})
 		.returning()
 
 	// ──────────────────────────────
 	// OPTIONAL POSITION ASSIGNMENT
 	// ──────────────────────────────
-	if (position) {
-		let pos = await db.query.positions.findFirst({
-			where: eq(positions.name, position),
+	if (calling) {
+		let pos = await db.query.callings.findFirst({
+			where: eq(callings.name, calling),
 		})
 
 		if (!pos) {
-			;[pos] = await db.insert(positions).values({ name: position }).returning()
+			;[pos] = await db.insert(callings).values({ name: calling }).returning()
 		}
 
-		await db.insert(kioskPersonPositions).values({
+		await db.insert(kioskPersonCallings).values({
 			personId: person.id,
-			positionId: pos.id,
+			callingId: pos.id,
 			sustainedAt: new Date(),
 		})
 	}
@@ -112,7 +112,7 @@ export async function POST(req: Request) {
 			fullName: person.fullName,
 			userId: person.userId,
 			hasPasscode: !!person.passcode,
-			isConsultant: person.isConsultantCached,
+			isWorker: person.isWorkerCached,
 		},
 		passcode,
 	})

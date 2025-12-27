@@ -1,0 +1,162 @@
+{
+	"categories": {
+		"users": "Users",
+		"center": "Center Operations",
+		"workers": "Workers",
+		"resources": "Resources",
+		"communication": "Communication"
+	},
+
+	"labels": {
+		"users": {
+			"view": "View users",
+			"edit": "Edit users",
+			"create": "Create users"
+		},
+		"newsletters": {
+			"view": "View newsletters",
+			"create": "Create newsletters",
+			"publish": "Publish newsletters"
+		},
+		"shifts": {
+			"assign": "Assign shifts",
+			"edit": "Edit shifts"
+		},
+		"shiftassignments": {
+			"view": "View shift assignments",
+			"edit": "Edit shift assignments"
+		},
+		"shiftavailability": {
+			"view": "View availability",
+			"edit": "Edit availability"
+		},
+		"substitutes": {
+			"view": "View substitutes",
+			"edit": "Edit substitutes"
+		},
+		"shiftreport": {
+			"view": "View shift reports",
+			"edit": "Edit shift reports"
+		},
+		"classes": {
+			"view": "View classes",
+			"edit": "Edit classes"
+		},
+		"cases": {
+			"view": "View cases",
+			"edit": "Edit cases",
+			"delete": "Delete cases"
+		},
+		"training": {
+			"view": "View training",
+			"create": "Create training",
+			"complete": "Complete training"
+		},
+		"centerdefinitions": {
+			"view": "View center definitions",
+			"edit": "Edit center definitions"
+		},
+		"closures": {
+			"view": "View closures",
+			"edit": "Edit closures"
+		},
+		"announcements": {
+			"view": "View announcements",
+			"edit": "Edit announcements"
+		},
+		"equipment": {
+			"view": "View equipment",
+			"edit": "Edit equipment"
+		},
+		"resources": {
+			"view": "View resources",
+			"edit": "Edit resources"
+		},
+		"reservations": {
+			"view": "View reservations",
+			"edit": "Edit reservations"
+		}
+	},
+
+	"descriptions": {
+		"users": {
+			"view": "See the list of users and their roles",
+			"edit": "Modify user details and roles",
+			"create": "Add new user accounts"
+		},
+		"newsletters": {
+			"view": "View existing newsletters",
+			"create": "Create newsletter drafts",
+			"publish": "Send newsletters to subscribers"
+		},
+		"shifts": {
+			"assign": "Assign workers to scheduled shifts",
+			"edit": "Create and modify shift schedules"
+		},
+		"shiftassignments": {
+			"view": "See which workers are assigned to shifts",
+			"edit": "Change shift assignments"
+		},
+		"shiftavailability": {
+			"view": "View worker availability",
+			"edit": "Update availability information"
+		},
+		"substitutes": {
+			"view": "View substitute workers",
+			"edit": "Manage substitute workers"
+		},
+		"shiftreport": {
+			"view": "View reports of completed shifts",
+			"edit": "Edit or correct shift reports"
+		},
+		"classes": {
+			"view": "View assigned classes",
+			"edit": "Edit class assignments"
+		},
+		"cases": {
+			"view": "View assistance cases",
+			"edit": "Edit case information",
+			"delete": "Permanently remove a case"
+		},
+		"training": {
+			"view": "View training materials",
+			"create": "Create new training content",
+			"complete": "Mark training as completed"
+		},
+		"centerdefinitions": {
+			"view": "View center configuration settings",
+			"edit": "Edit center configuration settings"
+		},
+		"closures": {
+			"view": "View scheduled or past closures",
+			"edit": "Create or edit closures"
+		},
+		"announcements": {
+			"view": "View center announcements",
+			"edit": "Create or edit announcements"
+		},
+		"equipment": {
+			"view": "View equipment inventory",
+			"edit": "Manage equipment inventory"
+		},
+		"resources": {
+			"view": "View available resources",
+			"edit": "Manage center resources"
+		},
+		"reservations": {
+			"view": "View reservations",
+			"edit": "Create or edit reservations"
+		}
+	},
+
+	"ui": {
+		"save": "Save",
+		"saving": "Saving…",
+		"grantPermission": "Grant permission",
+		"selectPermission": "Select permission",
+		"grant": "Grant",
+		"noExpiryHint": "Tip: consider setting an expiration date for temporary permissions.",
+		"selectAll": "Select all",
+		"clearAll": "Clear all"
+	}
+}

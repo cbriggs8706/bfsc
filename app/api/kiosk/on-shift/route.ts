@@ -10,13 +10,14 @@ export const revalidate = 0
 export async function GET() {
 	const now = new Date() // UTC-safe
 
-	const consultants = await db
+	const workers = await db
 		.select({
 			personId: kioskShiftLogs.personId,
 			userId: kioskPeople.userId, // 👈 ADD THIS
 			fullName: kioskPeople.fullName,
 			profileImageUrl: kioskPeople.profileImageUrl,
 			languages: kioskPeople.languagesSpoken,
+			pid: kioskPeople.pid,
 		})
 		.from(kioskShiftLogs)
 		.innerJoin(kioskPeople, eq(kioskShiftLogs.personId, kioskPeople.id))
@@ -25,9 +26,9 @@ export async function GET() {
 
 	// console.log('SHIFT LOGS FOUND', await db.select().from(kioskShiftLogs))
 
-	// console.log('CONSULTANTS RESULT', consultants)
+	// console.log('WORKERS RESULT', workers)
 
-	const userIds = consultants
+	const userIds = workers
 		.map((c) => c.userId)
 		.filter((id): id is string => Boolean(id))
 	// console.log('USER IDS FOR CERT LOOKUP:', userIds)
@@ -83,7 +84,7 @@ export async function GET() {
 			})
 		}
 	}
-	return new Response(JSON.stringify({ consultants, certificatesByUser }), {
+	return new Response(JSON.stringify({ workers, certificatesByUser }), {
 		headers: {
 			'Content-Type': 'application/json',
 			'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',

@@ -5,7 +5,7 @@ import { db } from '@/db'
 import { shiftAssignments } from '@/db/schema/tables/shifts'
 import { getCurrentUser } from '@/lib/auth'
 
-type AssignmentRole = 'consultant' | 'shift_lead' | 'trainer'
+type AssignmentRole = 'worker' | 'shift_lead' | 'trainer'
 
 /* -----------------------------------------------------
  * Helpers
@@ -23,7 +23,7 @@ async function assertRoleCapacity(
 	shiftRecurrenceId: string,
 	role: AssignmentRole
 ) {
-	if (role === 'consultant') return
+	if (role === 'worker') return
 
 	const limit = role === 'shift_lead' ? 3 : 2
 
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 		const {
 			userId,
 			shiftRecurrenceId,
-			assignmentRole = 'consultant',
+			assignmentRole = 'worker',
 			notes = null,
 		}: {
 			userId: string
@@ -146,7 +146,7 @@ export async function PATCH(req: NextRequest) {
 		const recurrenceChanged = nextRecurrenceId !== existing.shiftRecurrenceId
 		const roleChanged = nextRole !== existing.assignmentRole
 
-		if ((recurrenceChanged || roleChanged) && nextRole !== 'consultant') {
+		if ((recurrenceChanged || roleChanged) && nextRole !== 'worker') {
 			await assertRoleCapacity(nextRecurrenceId, nextRole)
 		}
 

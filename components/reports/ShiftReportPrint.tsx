@@ -1,6 +1,6 @@
 // components/reports/ShiftReportPrint.tsx
 import type {
-	ShiftReportConsultant,
+	ShiftReportWorker,
 	ShiftReportItem,
 	ShiftReportPatron,
 	TodayShift,
@@ -35,8 +35,8 @@ export function ShiftReportPrint({ header, date, shifts, offShift }: Props) {
 							</h2>
 
 							<p>
-								<strong>Consultants:</strong>{' '}
-								{shift.consultants.map((c) => c.fullName).join(', ') || '—'}
+								<strong>Workers:</strong>{' '}
+								{shift.workers.map((c) => c.fullName).join(', ') || '—'}
 							</p>
 
 							<table>
@@ -98,8 +98,8 @@ export function ShiftReportPrint({ header, date, shifts, offShift }: Props) {
 							<h3 className="text-lg font-semibold">Off Shift</h3>
 
 							<p>
-								<strong>Consultants:</strong>{' '}
-								{shift.consultants.map((c) => c.fullName).join(', ') || '—'}
+								<strong>Workers:</strong>{' '}
+								{shift.workers.map((c) => c.fullName).join(', ') || '—'}
 							</p>
 
 							<table>

@@ -1,0 +1,192 @@
+{
+	"categories": {
+		"users": "Usuários",
+		"center": "Operações do centro",
+		"workers": "Equipe",
+		"resources": "Recursos",
+		"communication": "Comunicação"
+	},
+
+	"labels": {
+		"users": {
+			"view": "Ver usuários",
+			"edit": "Editar usuários",
+			"create": "Criar usuários"
+		},
+
+		"newsletters": {
+			"view": "Ver boletins",
+			"create": "Criar boletins",
+			"publish": "Publicar boletins"
+		},
+
+		"shifts": {
+			"assign": "Atribuir turnos",
+			"edit": "Editar turnos"
+		},
+
+		"shiftassignments": {
+			"view": "Ver atribuições de turnos",
+			"edit": "Editar atribuições de turnos"
+		},
+
+		"shiftavailability": {
+			"view": "Ver disponibilidade",
+			"edit": "Editar disponibilidade"
+		},
+
+		"substitutes": {
+			"view": "Ver substitutos",
+			"edit": "Editar substitutos"
+		},
+
+		"shiftreport": {
+			"view": "Ver relatórios de turnos",
+			"edit": "Editar relatórios de turnos"
+		},
+
+		"classes": {
+			"view": "Ver aulas",
+			"edit": "Editar aulas"
+		},
+
+		"cases": {
+			"view": "Ver casos",
+			"edit": "Editar casos",
+			"delete": "Excluir casos"
+		},
+
+		"training": {
+			"view": "Ver treinamento",
+			"create": "Criar treinamento",
+			"complete": "Concluir treinamento"
+		},
+
+		"centerdefinitions": {
+			"view": "Ver definições do centro",
+			"edit": "Editar definições do centro"
+		},
+
+		"closures": {
+			"view": "Ver fechamentos",
+			"edit": "Editar fechamentos"
+		},
+
+		"announcements": {
+			"view": "Ver anúncios",
+			"edit": "Editar anúncios"
+		},
+
+		"equipment": {
+			"view": "Ver equipamentos",
+			"edit": "Editar equipamentos"
+		},
+
+		"resources": {
+			"view": "Ver recursos",
+			"edit": "Editar recursos"
+		},
+
+		"reservations": {
+			"view": "Ver reservas",
+			"edit": "Editar reservas"
+		}
+	},
+
+	"descriptions": {
+		"users": {
+			"view": "Visualizar a lista de usuários e suas funções",
+			"edit": "Modificar informações e funções dos usuários",
+			"create": "Criar novas contas de usuário"
+		},
+
+		"newsletters": {
+			"view": "Visualizar boletins existentes",
+			"create": "Criar rascunhos de boletins",
+			"publish": "Enviar boletins aos assinantes"
+		},
+
+		"shifts": {
+			"assign": "Atribuir membros da equipe aos turnos programados",
+			"edit": "Criar e modificar horários de turnos"
+		},
+
+		"shiftassignments": {
+			"view": "Ver quais membros da equipe estão atribuídos aos turnos",
+			"edit": "Alterar atribuições de turnos"
+		},
+
+		"shiftavailability": {
+			"view": "Ver a disponibilidade da equipe",
+			"edit": "Atualizar informações de disponibilidade"
+		},
+
+		"substitutes": {
+			"view": "Ver membros substitutos",
+			"edit": "Gerenciar membros substitutos"
+		},
+
+		"shiftreport": {
+			"view": "Ver relatórios de turnos concluídos",
+			"edit": "Editar ou corrigir relatórios de turnos"
+		},
+
+		"classes": {
+			"view": "Ver aulas atribuídas",
+			"edit": "Editar atribuições de aulas"
+		},
+
+		"cases": {
+			"view": "Ver casos de atendimento",
+			"edit": "Editar informações dos casos",
+			"delete": "Remover permanentemente um caso"
+		},
+
+		"training": {
+			"view": "Ver materiais de treinamento",
+			"create": "Criar novo conteúdo de treinamento",
+			"complete": "Marcar o treinamento como concluído"
+		},
+
+		"centerdefinitions": {
+			"view": "Ver configurações do centro",
+			"edit": "Editar configurações do centro"
+		},
+
+		"closures": {
+			"view": "Ver fechamentos programados ou anteriores",
+			"edit": "Criar ou editar fechamentos"
+		},
+
+		"announcements": {
+			"view": "Ver anúncios do centro",
+			"edit": "Criar ou editar anúncios"
+		},
+
+		"equipment": {
+			"view": "Ver inventário de equipamentos",
+			"edit": "Gerenciar inventário de equipamentos"
+		},
+
+		"resources": {
+			"view": "Ver recursos disponíveis",
+			"edit": "Gerenciar recursos do centro"
+		},
+
+		"reservations": {
+			"view": "Ver reservas",
+			"edit": "Criar ou editar reservas"
+		}
+	},
+
+	"ui": {
+		"save": "Salvar",
+		"saving": "Salvando…",
+		"grantPermission": "Conceder permissão",
+		"selectPermission": "Selecionar permissão",
+		"grant": "Conceder",
+		"noExpiryHint": "Dica: considere definir uma data de expiração para permissões temporárias.",
+		"selectAll": "Selecionar tudo",
+		"clearAll": "Limpar tudo"
+	}
+}

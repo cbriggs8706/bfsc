@@ -81,7 +81,7 @@ export function ShiftSummaryChart({
 					<Legend />
 
 					<Bar
-						dataKey="consultants"
+						dataKey="workers"
 						stackId="a"
 						fill="var(--chart-2)"
 						radius={[4, 4, 0, 0]}

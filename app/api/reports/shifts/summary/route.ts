@@ -39,7 +39,7 @@ export async function GET(req: Request) {
 	const startLocal = toPgLocalTimestamp(start)
 	const endLocal = toPgLocalTimestamp(end)
 
-	const consultantsResult = await db.execute<CountRow>(sql`
+	const workersResult = await db.execute<CountRow>(sql`
 		select
 			to_char((arrival_at at time zone ${tz}), ${groupFormat}) as label,
 			count(*)::int as count
@@ -61,16 +61,16 @@ export async function GET(req: Request) {
 		order by 1
 	`)
 
-	const map = new Map<string, { consultants: number; patrons: number }>()
+	const map = new Map<string, { workers: number; patrons: number }>()
 
-	for (const row of consultantsResult) {
-		map.set(row.label, { consultants: row.count, patrons: 0 })
+	for (const row of workersResult) {
+		map.set(row.label, { workers: row.count, patrons: 0 })
 	}
 
 	for (const row of patronsResult) {
 		const existing = map.get(row.label)
 		if (existing) existing.patrons = row.count
-		else map.set(row.label, { consultants: 0, patrons: row.count })
+		else map.set(row.label, { workers: 0, patrons: row.count })
 	}
 
 	const summary = Array.from(map.entries()).map(([label, values]) => ({

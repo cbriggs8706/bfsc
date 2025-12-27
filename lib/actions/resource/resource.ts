@@ -37,10 +37,10 @@ export async function createResource(input: Resource, locale?: string) {
 		maxConcurrent: input.type === 'activity' ? 1 : input.maxConcurrent,
 	})
 
-	revalidatePath('/admin/resource')
+	revalidatePath('/admin/center/resources')
 
 	// ✅ Redirect after successful create
-	redirect(`/${locale ?? 'en'}/admin/resource`)
+	redirect(`/${locale ?? 'en'}/admin/center/resources`)
 }
 
 export async function updateResource(id: string, input: Resource) {
@@ -56,7 +56,7 @@ export async function updateResource(id: string, input: Resource) {
 		.where(eq(resource.id, id))
 		.returning()
 
-	revalidatePath(`/admin/resource/${id}`)
+	revalidatePath(`/admin/center/resources/${id}`)
 	return row
 }
 
@@ -64,5 +64,5 @@ export async function deleteResource(id: string) {
 	if (!id) throw new Error('Missing resource id')
 
 	await db.delete(resource).where(eq(resource.id, id))
-	revalidatePath('/admin/resource')
+	revalidatePath('/admin/center/resources')
 }

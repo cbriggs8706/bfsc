@@ -1,17 +1,11 @@
 import {
 	GraduationCap,
 	Pencil,
-	Trophy,
 	Calendar,
-	LifeBuoy,
-	Send,
-	LetterText,
 	Camera,
 	Search,
 	User,
 	Megaphone,
-	Users2Icon,
-	CalendarX,
 	Lectern,
 	Ticket,
 	AtSign,
@@ -21,7 +15,6 @@ import {
 	MapIcon,
 	Newspaper,
 	PlusCircle,
-	ArrowRightLeft,
 	CalendarCheck,
 	CalendarPlus,
 } from 'lucide-react'
@@ -87,7 +80,7 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				items: [],
 			},
 			{
-				title: t('sidebar.consultant.library'),
+				title: t('sidebar.worker.library'),
 				url: `/${locale}/library`,
 				icon: Book,
 			},
@@ -98,42 +91,35 @@ export function buildSidebarData(t: TFunction, locale: string) {
 			},
 		],
 
-		navSecondary: [
-			{ title: t('sidebar.secondary.leaderboard'), url: '#', icon: Trophy },
-			{
-				title: t('sidebar.secondary.calendar'),
-				url: `/${locale}/calendar`,
-				icon: Calendar,
-			},
-			{ title: t('sidebar.secondary.help'), url: '#', icon: LifeBuoy },
-			{ title: t('sidebar.secondary.feedback'), url: '#', icon: Send },
-		],
-
 		patron: [],
 
-		consultant: [
+		worker: [
 			{
-				title: t('sidebar.consultant.shiftAssignments'),
+				title: t('sidebar.worker.shifts'),
 				url: `/${locale}/shifts/assignments`,
 				icon: Calendar,
+				items: [
+					{
+						title: t('sidebar.worker.assignments'),
+						url: `/${locale}/shifts/assignments`,
+					},
+					{
+						title: t('sidebar.worker.substitutes'),
+						url: `/${locale}/substitutes/calendar`,
+					},
+					{
+						title: t('sidebar.worker.availability'),
+						url: `/${locale}/substitutes/availability`,
+					},
+					{
+						title: t('sidebar.worker.shiftReport'),
+						url: `/${locale}/reports/shifts`,
+					},
+				],
 			},
+
 			{
-				title: t('substitutes.availability.title'),
-				url: `/${locale}/substitutes/availability`,
-				icon: CalendarCheck,
-			},
-			{
-				title: t('sidebar.consultant.substitutes'),
-				url: `/${locale}/substitutes/calendar`,
-				icon: ArrowRightLeft,
-			},
-			{
-				title: t('sidebar.consultant.shiftReport'),
-				url: `/${locale}/reports/shifts`,
-				icon: Users2Icon,
-			},
-			{
-				title: t('sidebar.consultant.teachClass'),
+				title: t('sidebar.worker.teachClass'),
 				url: `/${locale}/classes`,
 				icon: Lectern,
 			},
@@ -155,7 +141,7 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				items: [],
 			},
 			{
-				title: t('sidebar.consultant.training'),
+				title: t('sidebar.worker.training'),
 				url: `/${locale}/training`,
 				icon: GraduationCap,
 				// isMentionItem: true,
@@ -164,58 +150,90 @@ export function buildSidebarData(t: TFunction, locale: string) {
 		],
 		admin: [
 			{
-				name: t('sidebar.admin.users'),
+				title: t('sidebar.admin.users'),
 				url: `/${locale}/admin/users`,
 				icon: User,
+				items: [
+					{
+						title: t('sidebar.admin.shiftScheduler'),
+						url: `/${locale}/shifts/assignments`,
+					},
+					{
+						title: t('sidebar.admin.rolePermissions'),
+						url: `/${locale}/admin/users/permissions/roles`,
+					},
+					{
+						title: t('sidebar.admin.userPermissions'),
+						url: `/${locale}/admin/users/permissions/users`,
+					},
+				],
 			},
 			{
-				name: t('sidebar.admin.centerDefinitions'),
+				title: t('sidebar.admin.centerDefinitions'),
 				url: `/${locale}/admin/center`,
 				icon: Pencil,
-			},
-			{
-				name: t('sidebar.admin.scheduleClosures'),
-				url: `/${locale}/admin/kiosk/special-hours`,
-				icon: CalendarX,
+				items: [
+					{
+						title: t('sidebar.admin.defineHours'),
+						url: `/${locale}/admin/center/hours`,
+					},
+					{
+						title: t('sidebar.admin.defineShifts'),
+						url: `/${locale}/admin/center/shifts`,
+					},
+					{
+						title: t('sidebar.admin.definePurposes'),
+						url: `/${locale}/admin/center/purposes`,
+					},
+					{
+						title: t('sidebar.admin.defineCaseTypes'),
+						url: `/${locale}/admin/center/case-types`,
+					},
+					{
+						title: t('sidebar.admin.defineFaiths'),
+						url: `/${locale}/admin/center/faiths`,
+					},
+					{
+						title: t('sidebar.admin.defineCallings'),
+						url: `/${locale}/admin/center/faiths/callings`,
+					},
+					{
+						title: t('sidebar.admin.addBookEquip'),
+						url: `/${locale}/library/create`,
+					},
+					{
+						title: t('sidebar.admin.resources'),
+						url: `/${locale}/admin/center/resources`,
+						icon: PlusCircle,
+					},
+					{
+						title: t('sidebar.admin.scheduleClosures'),
+						url: `/${locale}/admin/center/special-hours`,
+					},
+				],
 			},
 
 			{
-				name: t('sidebar.admin.shiftScheduler'),
-				url: `/${locale}/shifts/assignments`,
-				icon: Calendar,
-			},
-			{
-				name: t('sidebar.admin.announcements'),
+				title: t('sidebar.admin.announcements'),
 				url: `/${locale}/admin/announcements`,
 				icon: Megaphone,
 			},
 			{
-				name: t('sidebar.admin.newsletter'),
+				title: t('sidebar.admin.newsletter'),
 				url: `/${locale}/admin/newsletter`,
 				icon: Pencil,
 			},
+
 			{
-				name: t('sidebar.admin.addBookEquip'),
-				url: `/${locale}/library/create`,
-				icon: PlusCircle,
-			},
-			{
-				name: t('sidebar.admin.resources'),
-				url: `/${locale}/admin/resource`,
-				icon: PlusCircle,
-			},
-			{
-				name: t('sidebar.admin.reservations'),
+				title: t('sidebar.admin.reservations'),
 				url: `/${locale}/admin/reservation`,
 				icon: CalendarCheck,
 			},
 			{
-				name: t('sidebar.admin.training'),
+				title: t('sidebar.admin.training'),
 				url: `/${locale}/admin/training`,
 				icon: GraduationCap,
 			},
 		],
-
-		lesson: [{ name: t('sidebar.lesson.scripts'), url: '#', icon: LetterText }],
 	}
 }

@@ -24,18 +24,18 @@ export function TodayShiftCard({ shift }: { shift: TodayShift }) {
 			</CardHeader>
 
 			<CardContent className="space-y-4">
-				{/* Consultants */}
+				{/* Workers */}
 				<div>
-					<p className="text-sm font-medium mb-2">Consultants</p>
+					<p className="text-sm font-medium mb-2">Workers</p>
 
 					<div className="flex gap-3 flex-wrap">
-						{shift.consultants.length === 0 && (
+						{shift.workers.length === 0 && (
 							<p className="text-sm text-muted-foreground">
-								No consultants checked in.
+								No workers checked in.
 							</p>
 						)}
 
-						{shift.consultants.map((c) => (
+						{shift.workers.map((c) => (
 							<div key={c.userId} className="flex items-center gap-2">
 								<Avatar>
 									<AvatarImage src={c.profileImageUrl ?? undefined} />

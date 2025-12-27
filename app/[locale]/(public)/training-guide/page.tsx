@@ -88,9 +88,7 @@ export default async function TrainingGuidePage({ params }: Props) {
 			{/* Sections */}
 			<Card>
 				<CardContent className="flex flex-col space-y-4 pt-6">
-					<h2 className="text-xl font-semibold">
-						Consultant Training Sections
-					</h2>
+					<h2 className="text-xl font-semibold">Worker Training Sections</h2>
 					<div className="flex flex-wrap gap-4">
 						<Link href="https://docs.google.com/document/d/1mYsK_qqDQfFNSpGZIsGK7Icg_6Hyd6WVkFQA6Vt2tvA/edit?usp=sharing">
 							<Button variant="default">Download this list for printing</Button>

@@ -18,7 +18,7 @@ export type Faith = {
 	stakes: Stake[]
 }
 
-export type Position = {
+export type Calling = {
 	id: string
 	name: string
 }

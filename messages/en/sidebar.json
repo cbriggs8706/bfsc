@@ -86,16 +86,26 @@
 		"addBookEquip": "Add Book / Equipment",
 		"reservations": "Reservations",
 		"resources": "Resources",
+		"rolePermissions": "Role Permissions",
+		"userPermissions": "User Permissions",
+		"defineHours": "Define Hours",
+		"defineShifts": "Define Shifts",
+		"definePurposes": "Define Purposes",
+		"defineCaseTypes": "Define Case Types",
+		"defineFaiths": "Define Faiths",
+		"defineCallings": "Define Callings",
 		"training": "Training"
 	},
-	"consultant": {
-		"title": "Consultant",
+	"worker": {
+		"title": "Worker",
 		"shiftReport": "Shift Report",
 		"teachClass": "Teach A Class",
 		"library": "Library",
 		"training": "Training",
-		"shiftAssignments": "Shift Assignments",
-		"substitutes": "Substitutes"
+		"shifts": "Shifts",
+		"assignments": "Assignments",
+		"substitutes": "Substitutes",
+		"availability": "My Availability"
 	},
 	"patron": {
 		"title": "Patron"

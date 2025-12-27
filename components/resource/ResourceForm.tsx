@@ -209,11 +209,11 @@ export function ResourceForm({
 			{/* Actions */}
 			{mode === 'read' && resourceId && locale && (
 				<div className="flex gap-2">
-					<Link href={`/${locale}/admin/resource/update/${resourceId}`}>
+					<Link href={`/${locale}/admin/center/resources/update/${resourceId}`}>
 						<Button>{t('edit')}</Button>
 					</Link>
 
-					<Link href={`/${locale}/admin/resource/delete/${resourceId}`}>
+					<Link href={`/${locale}/admin/center/resources/delete/${resourceId}`}>
 						<Button variant="destructive">{t('delete')}</Button>
 					</Link>
 				</div>

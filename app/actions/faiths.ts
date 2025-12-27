@@ -2,7 +2,7 @@
 'use server'
 
 import { db } from '@/db'
-import { faiths, positions, stakes, wards } from '@/db'
+import { faiths, callings, stakes, wards } from '@/db'
 import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
@@ -62,17 +62,17 @@ export async function deleteWard(id: string) {
 	revalidatePath('/admin/center/faiths')
 }
 
-export async function createPosition(name: string) {
-	await db.insert(positions).values({ name })
-	revalidatePath('/admin/center/positions')
+export async function createCalling(name: string) {
+	await db.insert(callings).values({ name })
+	revalidatePath('/admin/center/callings')
 }
 
-export async function updatePosition(id: string, name: string) {
-	await db.update(positions).set({ name }).where(eq(positions.id, id))
-	revalidatePath('/admin/center/positions')
+export async function updateCalling(id: string, name: string) {
+	await db.update(callings).set({ name }).where(eq(callings.id, id))
+	revalidatePath('/admin/center/callings')
 }
 
-export async function deletePosition(id: string) {
-	await db.delete(positions).where(eq(positions.id, id))
-	revalidatePath('/admin/center/positions')
+export async function deleteCalling(id: string) {
+	await db.delete(callings).where(eq(callings.id, id))
+	revalidatePath('/admin/center/callings')
 }

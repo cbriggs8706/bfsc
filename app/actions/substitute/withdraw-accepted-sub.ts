@@ -27,15 +27,15 @@ export async function withdrawAcceptedSub(requestId: string) {
 		}
 
 		/* -----------------------------
-		 * Load consultant name
+		 * Load worker name
 		 * --------------------------- */
-		const consultant = await tx
+		const worker = await tx
 			.select({ fullName: kioskPeople.fullName })
 			.from(kioskPeople)
 			.where(eq(kioskPeople.userId, user.id))
 			.then((r) => r[0])
 
-		const consultantName = consultant?.fullName ?? 'The consultant'
+		const workerName = worker?.fullName ?? 'The worker'
 
 		/* -----------------------------
 		 * Remove assignment exception
@@ -68,7 +68,7 @@ export async function withdrawAcceptedSub(requestId: string) {
 		await tx.insert(notifications).values({
 			userId: request.requestedByUserId,
 			type: 'sub_request_reopened',
-			message: `${consultantName} has withdrawn from covering the shift. The request is open again.`,
+			message: `${workerName} has withdrawn from covering the shift. The request is open again.`,
 		})
 	})
 }

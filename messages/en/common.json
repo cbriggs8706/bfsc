@@ -69,7 +69,7 @@
 		"dailyHist": "Daily and Historical"
 	},
 	"training": {
-		"consultantTraining": "Consultant Training",
+		"workerTraining": "Worker Training",
 		"sub": "Each course will earn a certificate. If additional lessons are added to a course, you'll need to update to keep your certification current."
 	},
 	"resource": {
@@ -110,7 +110,7 @@
 		"updateSub": "Update reservation information",
 		"noneFound": "No reservations found",
 		"requestTitle": "Reservation Request",
-		"requestSub": "This will request will appear under your name in the system.  If you are a consultant, make sure to put the patron's name in the notes.",
+		"requestSub": "This will request will appear under your name in the system.  If you are a worker, make sure to put the patron's name in the notes.",
 		"requestSuccess": "Reservation request submitted",
 		"requestSuccessSub": "Your request has been received and will be reviewed shortly.",
 		"statuses": {
@@ -119,6 +119,15 @@
 			"denied": "Denied",
 			"cancelled": "Cancelled"
 		}
+	},
+	"center": {
+		"definitions": "Center Definitions",
+		"definitionSub": "Set the main details of your center. You shouldn't need to change these very often other than initial setup.",
+		"announcement": "Announcement",
+		"announcementSub": "Make announcements to patrons, workers, shift leads etc.",
+		"announcementCreateSub": "Create an announcment for patrons, workers etc.",
+		"announcementEditSub": "To make edits, go back and click the edit button.",
+		"announcementUpdateSub": "Changes are not saved until you click Save below."
 	},
 	"startTime": "Start Time",
 	"endTime": "End Time",

@@ -2,7 +2,7 @@
 import { db, kioskPeople, user } from '@/db'
 import { weeklyShifts, shiftRecurrences, shiftAssignments } from '@/db'
 import {
-	consultantShiftAvailability,
+	workerShiftAvailability,
 	shiftSubRequests,
 	shiftSubVolunteers,
 } from '@/db'
@@ -16,7 +16,7 @@ import type {
 } from '@/types/substitutes'
 import { getAvailabilityMatchesForRequest } from './get-availability-matches'
 import { alias } from 'drizzle-orm/pg-core'
-import { OnShiftConsultant } from '@/types/kiosk'
+import { OnShiftWorker } from '@/types/kiosk'
 import { CertificateSummary } from '@/types/training'
 
 export async function getAvailabilityData(userId: string) {
@@ -42,12 +42,12 @@ export async function getAvailabilityData(userId: string) {
 	// 3️⃣ Load availability (raw)
 	const availabilityRaw = await db
 		.select({
-			shiftId: consultantShiftAvailability.shiftId,
-			shiftRecurrenceId: consultantShiftAvailability.shiftRecurrenceId,
-			level: consultantShiftAvailability.level,
+			shiftId: workerShiftAvailability.shiftId,
+			shiftRecurrenceId: workerShiftAvailability.shiftRecurrenceId,
+			level: workerShiftAvailability.level,
 		})
-		.from(consultantShiftAvailability)
-		.where(eq(consultantShiftAvailability.userId, userId))
+		.from(workerShiftAvailability)
+		.where(eq(workerShiftAvailability.userId, userId))
 
 	// 4️⃣ Narrow DB strings → strict client union
 	const availability = availabilityRaw.map((a) => {
@@ -259,7 +259,7 @@ export async function getSubstituteRequestDetail(requestId: string): Promise<{
 		status: v.status === 'withdrawn' ? 'withdrawn' : 'offered',
 	}))
 
-	const allConsultants = await getAllConsultants()
+	const allWorkers = await getAllWorkers()
 	const availabilityMatches = await getAvailabilityMatchesForRequest(requestId)
 
 	// Build lookup table
@@ -267,7 +267,7 @@ export async function getSubstituteRequestDetail(requestId: string): Promise<{
 		availabilityMatches.map((m) => [m.user.userId, m.matchLevel])
 	)
 
-	const consultants: AvailabilityMatch[] = allConsultants
+	const workers: AvailabilityMatch[] = allWorkers
 		.filter((c) => c.userId !== request.requestedBy.userId) // exclude requester
 		.map(
 			(c): AvailabilityMatch => ({
@@ -297,7 +297,7 @@ export async function getSubstituteRequestDetail(requestId: string): Promise<{
 	return {
 		request,
 		volunteers,
-		availabilityMatches: consultants,
+		availabilityMatches: workers,
 	}
 }
 
@@ -353,7 +353,7 @@ export async function findExistingSubRequest(input: {
 		.then((rows) => rows[0] ?? null)
 }
 
-export async function getAllConsultants(): Promise<
+export async function getAllWorkers(): Promise<
 	{ userId: string; name: string; imageUrl: string | null }[]
 > {
 	const rows = await db
@@ -366,7 +366,7 @@ export async function getAllConsultants(): Promise<
 		})
 		.from(user)
 		.leftJoin(kioskPeople, eq(kioskPeople.userId, user.id))
-		.where(eq(user.role, 'Consultant'))
+		.where(eq(user.role, 'Worker'))
 
 	return rows.map((r) => ({
 		userId: r.userId,

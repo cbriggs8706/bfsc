@@ -16,9 +16,9 @@ export default async function ClassesPage({ params }: Props) {
 			<div>
 				<h1 className="text-3xl font-bold">Research Specialists</h1>
 				<p className="text-sm text-muted-foreground max-w-3xl">
-					Each shift has consultants who can assist with basic family history
-					research and the use of our digitizing equipment. Some consultants
-					also have specialized expertise in locations, languages, and tools.
+					Each shift has workers who can assist with basic family history
+					research and the use of our digitizing equipment. Some workers also
+					have specialized expertise in locations, languages, and tools.
 				</p>
 			</div>
 
@@ -54,7 +54,7 @@ export default async function ClassesPage({ params }: Props) {
 							<li>Using Audacity (audio editing software)</li>
 							<li>Danish and Norwegian research</li>
 							<li>English and German research</li>
-							<li>Spanish-speaking consultant — Steve</li>
+							<li>Spanish-speaking worker — Steve</li>
 						</ul>
 					</div>
 
@@ -103,7 +103,7 @@ export default async function ClassesPage({ params }: Props) {
 						</div>
 						<ul className="list-disc pl-5 text-sm space-y-1">
 							<li>Using Audacity (audio editing software)</li>
-							<li>Spanish-speaking consultant — Sharon</li>
+							<li>Spanish-speaking worker — Sharon</li>
 							<li>
 								Germany, Netherlands, and French Canadian research (not record
 								translation)

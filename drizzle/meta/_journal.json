@@ -225,6 +225,20 @@
       "when": 1766713167518,
       "tag": "0031_swift_adam_warlock",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1766850040841,
+      "tag": "0032_plain_thing",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1766868604075,
+      "tag": "0033_deep_fabian_cortez",
+      "breakpoints": true
     }
   ]
 }

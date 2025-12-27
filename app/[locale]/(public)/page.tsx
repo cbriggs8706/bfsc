@@ -50,7 +50,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 			url: `/${locale}/calendar`,
 			icon: Calendar,
 			description:
-				'Plan a visit to attend a class or meet with a consultant 1-on-1.',
+				'Plan a visit to attend a class or meet with a worker 1-on-1.',
 		},
 		{
 			title: 'Group Visits',
@@ -305,10 +305,10 @@ export default async function HomePage({ params, searchParams }: Props) {
 				<p className="text-muted-foreground w-full">
 					The Burley FamilySearch Center is dedicated to assisting people in
 					researching their family and preserving their memories for future
-					generations. There are several consultants on staff to assist one to
-					one. We offer classes for all ages and skills. Additionally, we have
-					the capability of digitizing most media types. VHS and VHS-C tapes,
-					mini DV, 8 mm cassette movies, audio cassettes, audio reels, 8 mm reel
+					generations. There are several workers on staff to assist one to one.
+					We offer classes for all ages and skills. Additionally, we have the
+					capability of digitizing most media types. VHS and VHS-C tapes, mini
+					DV, 8 mm cassette movies, audio cassettes, audio reels, 8 mm reel
 					movies, slides, negatives, pictures, documents, newspaper clippings,
 					etc. Come see what we can do for you!
 				</p>

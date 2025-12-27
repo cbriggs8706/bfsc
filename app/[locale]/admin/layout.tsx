@@ -15,7 +15,7 @@ import { db, operatingHours, specialHours } from '@/db'
 import { eq } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 import { MentionAlerts } from '@/components/cases/MentionAlerts'
-import { ConsultantAlerts } from '@/components/consultant/ConsultantAlerts'
+import { WorkerAlerts } from '@/components/worker/WorkerAlerts'
 import { FloatingNavButton } from '@/components/nav/FloatingNavButton'
 
 export default async function Layout({
@@ -40,9 +40,9 @@ export default async function Layout({
 				weekly={weekly}
 				specials={specials}
 			/>
-			{/* 🔔 Consultant realtime alerts */}
+			{/* 🔔 Worker realtime alerts */}
 			<MentionAlerts />
-			{session?.user?.role !== 'Patron' ? <ConsultantAlerts /> : null}
+			{session?.user?.role !== 'Patron' ? <WorkerAlerts /> : null}
 			<SidebarInset>
 				<header className="flex h-16 shrink-0 items-center gap-2">
 					<div className="flex items-center gap-2 px-4">

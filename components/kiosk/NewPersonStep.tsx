@@ -11,18 +11,18 @@ type Props = {
 	phone: string
 	faithId: string
 	wardId: string
-	selectedPositionIds: string[]
+	selectedCallingIds: string[]
 	faiths: { id: string; name: string }[]
 	wards: {
 		stakeId: string
 		stakeName: string
 		wards: { id: string; name: string }[]
 	}[]
-	positions: { id: string; name: string }[]
+	callings: { id: string; name: string }[]
 
 	setFaithId: (v: string) => void
 	setWardId: (v: string) => void
-	setSelectedPositionIds: (v: string[]) => void
+	setSelectedCallingIds: (v: string[]) => void
 
 	setEmail: (v: string) => void
 	setPhone: (v: string) => void
@@ -109,18 +109,18 @@ export function NewPersonStep({
 						))}
 					</select>
 					{/* <div>
-						<Label>Positions (optional)</Label>
+						<Label>Calling (optional)</Label>
 						<div className="space-y-2">
-							{positions.map((p) => (
+							{callings.map((p) => (
 								<label key={p.id} className="flex items-center gap-2">
 									<input
 										type="checkbox"
-										checked={selectedPositionIds.includes(p.id)}
+										checked={selectedCallingIds.includes(p.id)}
 										onChange={(e) => {
-											setSelectedPositionIds(
+											setSelectedCallingIds(
 												e.target.checked
-													? [...selectedPositionIds, p.id]
-													: selectedPositionIds.filter((id) => id !== p.id)
+													? [...selectedCallingIds, p.id]
+													: selectedCallingIds.filter((id) => id !== p.id)
 											)
 										}}
 									/>

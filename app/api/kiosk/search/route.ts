@@ -5,24 +5,23 @@ import { kioskPeople } from '@/db/schema/tables/kiosk'
 import { user } from '@/db/schema/tables/auth'
 import { ilike, eq } from 'drizzle-orm'
 
-const CONSULTANT_ROLES = [
-	'Consultant',
+const WORKER_ROLES = [
+	'Worker',
 	'Shift Lead',
 	'Assistant Director',
 	'Director',
-	'High Councilman',
 	'Admin',
 ]
 
-function isConsultantRole(role: string | null): boolean {
-	return role !== null && CONSULTANT_ROLES.includes(role)
+function isWorkerRole(role: string | null): boolean {
+	return role !== null && WORKER_ROLES.includes(role)
 }
 
 type SearchPerson = {
 	id: string
 	fullName: string
 	userId: string | null
-	isConsultant: boolean
+	isWorker: boolean
 	hasPasscode: boolean
 	source: 'kiosk' | 'user'
 }
@@ -53,7 +52,7 @@ export async function GET(request: Request) {
 		id: row.id,
 		fullName: row.fullName,
 		userId: row.userId,
-		isConsultant: isConsultantRole(row.role),
+		isWorker: isWorkerRole(row.role),
 		hasPasscode: Boolean(row.passcode),
 		source: 'kiosk',
 	}))
@@ -83,7 +82,7 @@ export async function GET(request: Request) {
 		id: `user:${u.id}`, // mark as coming from user table
 		fullName: u.fullName as string,
 		userId: u.id,
-		isConsultant: isConsultantRole(u.role),
+		isWorker: isWorkerRole(u.role),
 		hasPasscode: false,
 		source: 'user',
 	}))

@@ -155,11 +155,11 @@ export const activities = [
 				],
 			},
 			{
-				text: 'Consultants select a few ward members to take a FamilySearch class.\u00a0 They meet every 2 weeks for 3 months to complete their training.',
+				text: 'Workers select a few ward members to take a FamilySearch class.\u00a0 They meet every 2 weeks for 3 months to complete their training.',
 				links: [],
 			},
 			{
-				text: 'Work with the elderly in the ward with their own family history in their own homes.\u00a0 Option:\u00a0 Work on their family tree, prepare names for them to take to the temple, interview them about their own lives (video or audio), scan their photos and documents and put into FamilySearch.\u00a0 They teach them how to do it, but for the most part the consultants are doing the actual work.\u00a0 Assist them in getting their own patriarchal blessings or being sealed to their parents, if those things have not been completed.\u00a0 The elderly sign up for the slots for weekly or monthly visits.\u00a0 One could also call or assign a youth consultant to accompany the adult consultant to assist with this project.',
+				text: 'Work with the elderly in the ward with their own family history in their own homes.\u00a0 Option:\u00a0 Work on their family tree, prepare names for them to take to the temple, interview them about their own lives (video or audio), scan their photos and documents and put into FamilySearch.\u00a0 They teach them how to do it, but for the most part the workers are doing the actual work.\u00a0 Assist them in getting their own patriarchal blessings or being sealed to their parents, if those things have not been completed.\u00a0 The elderly sign up for the slots for weekly or monthly visits.\u00a0 One could also call or assign a youth worker to accompany the adult worker to assist with this project.',
 				links: [],
 			},
 			{

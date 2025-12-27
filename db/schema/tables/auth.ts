@@ -24,7 +24,7 @@ export const user = pgTable(
 		username: varchar({ length: 100 }),
 		passwordHash: text('password_hash'),
 		role: varchar({ length: 50 }).default('Patron').notNull(),
-		isActiveConsultant: boolean('is_active_consultant').notNull().default(true),
+		isActiveWorker: boolean('is_active_worker').notNull().default(true),
 	},
 	(table) => [unique('user_email_unique').on(table.email)]
 )

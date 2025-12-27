@@ -23,7 +23,7 @@ import type {
 // TODO: implement these like your uploadAnnouncementImage
 import { uploadClassCoverImage } from '@/utils/upload-class-cover-image'
 import { uploadClassHandoutPdf } from '@/utils/upload-class-handout-pdf'
-import { PresenterMultiSelect } from '../custom/ConsultantMultiSelect'
+import { PresenterMultiSelect } from '../custom/WorkerMultiSelect'
 
 type Mode = 'create' | 'update'
 

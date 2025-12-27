@@ -1,6 +1,6 @@
 // db/queries/faiths.ts
 import { db } from '@/db'
-import { faiths, positions, stakes, wards } from '@/db'
+import { faiths, callings, stakes, wards } from '@/db'
 import { Faith } from '@/types/faiths'
 import { eq } from 'drizzle-orm'
 
@@ -38,8 +38,8 @@ export function getWardsByStake(stakeId: string) {
 		.orderBy(wards.name)
 }
 
-export function getPositions() {
-	return db.select().from(positions).orderBy(positions.name)
+export function getCallings() {
+	return db.select().from(callings).orderBy(callings.name)
 }
 
 export async function getFaithTree(): Promise<Faith[]> {

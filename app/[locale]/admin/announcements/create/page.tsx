@@ -1,6 +1,8 @@
 // app/[locale]/admin/announcements/create/page.tsx
 import { AnnouncementForm } from '@/components/admin/announcements/AnnouncementForm'
 import { insertAnnouncement } from '@/db/queries/announcements'
+import { requireRole } from '@/utils/require-role'
+import { getTranslations } from 'next-intl/server'
 import { revalidatePath } from 'next/cache'
 
 interface Props {
@@ -9,6 +11,13 @@ interface Props {
 
 export default async function NewAnnouncementPage({ params }: Props) {
 	const { locale } = await params
+	const t = await getTranslations({ locale, namespace: 'common' })
+
+	await requireRole(
+		locale,
+		['Admin', 'Director', 'Assistant Director'],
+		`/${locale}/admin/announcements`
+	)
 
 	async function createAction(input: Parameters<typeof insertAnnouncement>[0]) {
 		'use server'
@@ -19,9 +28,11 @@ export default async function NewAnnouncementPage({ params }: Props) {
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">Create Announcement</h1>
+				<h1 className="text-3xl font-bold">
+					{t('create')} {t('center.announcement')}
+				</h1>
 				<p className="text-sm text-muted-foreground">
-					Create an announcment for patrons, consultants etc.
+					{t('center.announcementCreateSub')}
 				</p>
 			</div>
 			<AnnouncementForm

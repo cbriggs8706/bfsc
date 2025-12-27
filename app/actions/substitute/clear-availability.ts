@@ -2,7 +2,7 @@
 'use server'
 
 import { db } from '@/db'
-import { consultantShiftAvailability } from '@/db/schema/tables/substitutes'
+import { workerShiftAvailability } from '@/db/schema/tables/substitutes'
 import { eq, and, isNull } from 'drizzle-orm'
 
 export async function clearAvailability(input: {
@@ -10,16 +10,16 @@ export async function clearAvailability(input: {
 	shiftRecurrenceId?: string
 }) {
 	await db
-		.delete(consultantShiftAvailability)
+		.delete(workerShiftAvailability)
 		.where(
 			and(
-				eq(consultantShiftAvailability.shiftId, input.shiftId),
+				eq(workerShiftAvailability.shiftId, input.shiftId),
 				input.shiftRecurrenceId
 					? eq(
-							consultantShiftAvailability.shiftRecurrenceId,
+							workerShiftAvailability.shiftRecurrenceId,
 							input.shiftRecurrenceId
 					  )
-					: isNull(consultantShiftAvailability.shiftRecurrenceId)
+					: isNull(workerShiftAvailability.shiftRecurrenceId)
 			)
 		)
 }

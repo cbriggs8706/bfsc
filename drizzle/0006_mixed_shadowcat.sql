@@ -4,7 +4,7 @@ CREATE TABLE "kiosk_people" (
 	"full_name" text NOT NULL,
 	"email" text,
 	"passcode" varchar(6),
-	"is_consultant_cached" boolean DEFAULT false NOT NULL,
+	"is_worker_cached" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "kiosk_people_passcode_unique" UNIQUE("passcode")

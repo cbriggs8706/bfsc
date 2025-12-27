@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { sql } from 'drizzle-orm'
 import { requireRole } from '@/utils/require-role'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,12 +25,14 @@ export default async function AdminUsersPage({
 	params: Promise<{ locale: string }>
 }) {
 	const { locale } = await params
+	const session = await getServerSession(authOptions)
+	const userRole = session?.user.role
 
-	// TODO new pattern
 	// if (!['Admin', 'Director', 'Assistant Director'].includes(userRole)) {
 	// 	return redirect(`/${locale}`)
 	// }
 
+	// TODO new access pattern
 	await requireRole(
 		locale,
 		['Admin', 'Director', 'Assistant Director'],
@@ -51,8 +55,7 @@ export default async function AdminUsersPage({
 				WHEN 'Director' THEN 2
 				WHEN 'Assistant Director' THEN 3
 				WHEN 'Shift Lead' THEN 4
-				WHEN 'Consultant' THEN 5
-				WHEN 'High Councilman' THEN 6
+				WHEN 'Worker' THEN 5
 				WHEN 'Patron' THEN 7
 				ELSE 8
 			END
@@ -60,11 +63,40 @@ export default async function AdminUsersPage({
 			sql`COALESCE(${user.name}, ${user.email}) ASC`
 		)
 
+	function canEditUser(viewerRole?: string, targetRole?: string) {
+		if (!viewerRole || !targetRole) return false
+
+		switch (viewerRole) {
+			case 'Admin':
+				return [
+					'Admin',
+					'Director',
+					'Assistant Director',
+					'Shift Lead',
+					'Worker',
+					'Patron',
+				].includes(targetRole)
+
+			case 'Director':
+				return !['Admin'].includes(targetRole)
+
+			case 'Assistant Director':
+				return !['Admin', 'Director', 'Assistant Director'].includes(targetRole)
+
+			default:
+				return false
+		}
+	}
+
 	return (
 		<div className="p-4 space-y-4">
 			<div>
 				<h1 className="text-3xl font-bold">Manage Users</h1>
-				<p className="text-sm text-muted-foreground">Lorem ipsum</p>
+				<p className="text-sm text-muted-foreground">
+					Use this judiciously! Any changes to an email address or username can
+					lock someone out of their account. Any changes to a role will require
+					them to logout and back in for those changes to take effect.
+				</p>
 			</div>
 
 			<Card>
@@ -93,11 +125,17 @@ export default async function AdminUsersPage({
 										<TableCell className="">{u.email}</TableCell>
 										<TableCell className="capitalize">{u.role}</TableCell>
 										<TableCell className="text-right">
-											<Link href={`/${locale}/admin/users/${u.id}/update`}>
-												<Button size="sm" variant="outline">
+											{canEditUser(userRole, u.role) ? (
+												<Link href={`/${locale}/admin/users/${u.id}/update`}>
+													<Button size="sm" variant="outline">
+														Edit
+													</Button>
+												</Link>
+											) : (
+												<Button size="sm" variant="outline" disabled>
 													Edit
 												</Button>
-											</Link>
+											)}
 										</TableCell>
 									</TableRow>
 								))}

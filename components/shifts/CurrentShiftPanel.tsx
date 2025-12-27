@@ -124,7 +124,7 @@ export function CurrentShiftPanel({
 	}
 
 	const hasAny =
-		shifts.some((s) => s.consultants.length > 0 || s.patrons.length > 0) ||
+		shifts.some((s) => s.workers.length > 0 || s.patrons.length > 0) ||
 		offShift.length > 0
 
 	if (!hasAny) {
@@ -135,7 +135,7 @@ export function CurrentShiftPanel({
 				</CardHeader>
 				<CardContent>
 					<p className="text-base">
-						No consultant or patron activity recorded today.
+						No worker or patron activity recorded today.
 					</p>
 				</CardContent>
 			</Card>
@@ -154,12 +154,12 @@ export function CurrentShiftPanel({
 							: 'Outside of Regular Shift'}
 					</p>
 
-					{/* Consultants */}
+					{/* Workers */}
 					<div>
-						<p className="text-xs font-medium mb-1">Consultants</p>
+						<p className="text-xs font-medium mb-1">Workers</p>
 
 						<ul className="space-y-2">
-							{shift.consultants.map((c) => (
+							{shift.workers.map((c) => (
 								<li
 									key={c.userId}
 									className="
@@ -179,9 +179,7 @@ export function CurrentShiftPanel({
 									<span className="font-medium">{c.fullName}</span>
 
 									{/* Role */}
-									<span className="text-sm text-muted-foreground">
-										Consultant
-									</span>
+									<span className="text-sm text-muted-foreground">Worker</span>
 
 									{/* Arrival */}
 									<span className="text-sm">
@@ -300,8 +298,8 @@ export function CurrentShiftPanel({
 							</p>
 
 							<p className="text-sm">
-								<strong>Consultants:</strong>{' '}
-								{shift.consultants.map((c) => c.fullName).join(', ') || '—'}
+								<strong>Workers:</strong>{' '}
+								{shift.workers.map((c) => c.fullName).join(', ') || '—'}
 							</p>
 
 							{showPatrons && (

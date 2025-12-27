@@ -28,15 +28,15 @@ export async function declineNominatedSub(requestId: string) {
 		}
 
 		/* -----------------------------
-		 * Load consultant name
+		 * Load worker name
 		 * --------------------------- */
-		const consultant = await tx
+		const worker = await tx
 			.select({ fullName: kioskPeople.fullName })
 			.from(kioskPeople)
 			.where(eq(kioskPeople.userId, user.id))
 			.then((r) => r[0])
 
-		const consultantName = consultant?.fullName ?? 'The consultant'
+		const workerName = worker?.fullName ?? 'The worker'
 
 		/* -----------------------------
 		 * Re-open request
@@ -57,7 +57,7 @@ export async function declineNominatedSub(requestId: string) {
 		await notify(tx, {
 			userId: request.requestedByUserId,
 			type: 'sub_request_cancelled',
-			message: `${consultantName} declined your substitute request.`,
+			message: `${workerName} declined your substitute request.`,
 		})
 	})
 }

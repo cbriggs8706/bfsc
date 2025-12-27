@@ -1,4 +1,4 @@
-CREATE TABLE "consultant_shift_availability" (
+CREATE TABLE "worker_shift_availability" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
 	"shift_id" uuid NOT NULL,
@@ -55,9 +55,9 @@ CREATE TABLE "shift_trade_offers" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "consultant_shift_availability" ADD CONSTRAINT "consultant_shift_availability_user_id_public.user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."public.user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "consultant_shift_availability" ADD CONSTRAINT "consultant_shift_availability_shift_id_weekly_shifts_id_fk" FOREIGN KEY ("shift_id") REFERENCES "public"."weekly_shifts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "consultant_shift_availability" ADD CONSTRAINT "consultant_shift_availability_shift_recurrence_id_shift_recurrences_id_fk" FOREIGN KEY ("shift_recurrence_id") REFERENCES "public"."shift_recurrences"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "worker_shift_availability" ADD CONSTRAINT "worker_shift_availability_user_id_public.user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."public.user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "worker_shift_availability" ADD CONSTRAINT "worker_shift_availability_shift_id_weekly_shifts_id_fk" FOREIGN KEY ("shift_id") REFERENCES "public"."weekly_shifts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "worker_shift_availability" ADD CONSTRAINT "worker_shift_availability_shift_recurrence_id_shift_recurrences_id_fk" FOREIGN KEY ("shift_recurrence_id") REFERENCES "public"."shift_recurrences"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "shift_sub_requests" ADD CONSTRAINT "shift_sub_requests_shift_id_weekly_shifts_id_fk" FOREIGN KEY ("shift_id") REFERENCES "public"."weekly_shifts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "shift_sub_requests" ADD CONSTRAINT "shift_sub_requests_shift_recurrence_id_shift_recurrences_id_fk" FOREIGN KEY ("shift_recurrence_id") REFERENCES "public"."shift_recurrences"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "shift_sub_requests" ADD CONSTRAINT "shift_sub_requests_requested_by_user_id_public.user_id_fk" FOREIGN KEY ("requested_by_user_id") REFERENCES "public"."public.user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -70,9 +70,9 @@ ALTER TABLE "shift_trade_offer_options" ADD CONSTRAINT "shift_trade_offer_option
 ALTER TABLE "shift_trade_offer_options" ADD CONSTRAINT "shift_trade_offer_options_shift_recurrence_id_shift_recurrences_id_fk" FOREIGN KEY ("shift_recurrence_id") REFERENCES "public"."shift_recurrences"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "shift_trade_offers" ADD CONSTRAINT "shift_trade_offers_request_id_shift_sub_requests_id_fk" FOREIGN KEY ("request_id") REFERENCES "public"."shift_sub_requests"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "shift_trade_offers" ADD CONSTRAINT "shift_trade_offers_offered_by_user_id_public.user_id_fk" FOREIGN KEY ("offered_by_user_id") REFERENCES "public"."public.user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "consultant_shift_availability_user_idx" ON "consultant_shift_availability" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "consultant_shift_availability_shift_idx" ON "consultant_shift_availability" USING btree ("shift_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "consultant_shift_availability_uq" ON "consultant_shift_availability" USING btree ("user_id","shift_id","shift_recurrence_id");--> statement-breakpoint
+CREATE INDEX "worker_shift_availability_user_idx" ON "worker_shift_availability" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "worker_shift_availability_shift_idx" ON "worker_shift_availability" USING btree ("shift_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "worker_shift_availability_uq" ON "worker_shift_availability" USING btree ("user_id","shift_id","shift_recurrence_id");--> statement-breakpoint
 CREATE INDEX "shift_sub_requests_date_idx" ON "shift_sub_requests" USING btree ("date");--> statement-breakpoint
 CREATE INDEX "shift_sub_requests_shift_idx" ON "shift_sub_requests" USING btree ("shift_id");--> statement-breakpoint
 CREATE INDEX "shift_sub_requests_requested_by_idx" ON "shift_sub_requests" USING btree ("requested_by_user_id");--> statement-breakpoint

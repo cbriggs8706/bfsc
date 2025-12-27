@@ -96,15 +96,27 @@ export const authOptions: NextAuthOptions = {
 				token.username = u.username ?? token.username ?? null
 				token.role = u.role ?? token.role ?? 'Patron'
 				token.image = u.image ?? token.image
-
-				if (account?.provider) {
-					token.authProvider = account.provider
-				}
+				token.authProvider = account?.provider ?? token.authProvider
 
 				// console.log('💠 JWT CALLBACK — token AFTER (with user):', token)
 				return token
 			}
+			if (token.id) {
+				const dbUser = await db.query.user.findFirst({
+					where: eq(userTable.id, token.id as string),
+					columns: {
+						role: true,
+						username: true,
+						image: true,
+					},
+				})
 
+				if (dbUser) {
+					token.role = dbUser.role ?? 'Patron'
+					token.username = dbUser.username ?? token.username
+					token.image = dbUser.image ?? token.image
+				}
+			}
 			// Subsequent calls (no `user`) → just keep token as-is
 			// console.log('💠 JWT CALLBACK — token AFTER (no user):', token)
 			return token

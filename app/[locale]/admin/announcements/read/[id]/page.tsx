@@ -2,6 +2,7 @@
 import { notFound } from 'next/navigation'
 import { getAnnouncementById } from '@/db/queries/announcements'
 import { AnnouncementForm } from '@/components/admin/announcements/AnnouncementForm'
+import { getTranslations } from 'next-intl/server'
 
 interface Props {
 	params: Promise<{ locale: string; id: string }>
@@ -10,6 +11,7 @@ interface Props {
 export default async function ReadAnnouncementPage({ params }: Props) {
 	const { locale, id } = await params
 	const announcement = await getAnnouncementById(id)
+	const t = await getTranslations({ locale, namespace: 'common' })
 
 	if (!announcement) notFound()
 
@@ -18,7 +20,7 @@ export default async function ReadAnnouncementPage({ params }: Props) {
 			<div>
 				<h1 className="text-3xl font-bold">{announcement.title}</h1>
 				<p className="text-sm text-muted-foreground">
-					To make edits, go back and click the edit button.
+					{t('center.announcementEditSub')}
 				</p>
 			</div>
 			<AnnouncementForm

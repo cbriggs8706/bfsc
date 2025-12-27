@@ -3,19 +3,18 @@ export type Role =
 	| 'Admin'
 	| 'Director'
 	| 'Assistant Director'
-	| 'High Councilman'
-	| 'Consultant'
+	| 'Worker'
 	| 'Shift Lead'
 	| 'Patron'
 
 export const ROLES: Role[] = [
-	'Admin',
-	'Director',
-	'Assistant Director',
-	'High Councilman',
-	'Consultant',
-	'Shift Lead',
-	'Patron',
+	'Admin', //cameronbriggs8706@gmail.com
+	'Director', //burleyfamilysearchcenter@gmail.com
+	'Assistant Director', //cbriggshdm@gmail.com
+	// 'High Councilman', //insurancenames@gmail.com
+	'Shift Lead', //cameron@minicassiachronicles.com
+	'Worker', //sassyscrapsidaho@gmail.com
+	'Patron', //buddb8706@gmail.com
 ]
 
 export interface AnnouncementPayloadWithId {

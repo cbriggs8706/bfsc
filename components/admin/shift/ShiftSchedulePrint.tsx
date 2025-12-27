@@ -3,7 +3,7 @@ import { toAmPm } from '@/utils/time'
 const ROLE_ORDER: Array<Assignment['assignmentRole']> = [
 	'shift_lead',
 	'trainer',
-	'consultant',
+	'worker',
 ]
 
 // components/admin/shift/ShiftSchedulePrint.tsx
@@ -16,7 +16,7 @@ type Assignment = {
 	id: string
 	shiftRecurrenceId: string
 	userName: string | null
-	assignmentRole: 'consultant' | 'shift_lead' | 'trainer'
+	assignmentRole: 'worker' | 'shift_lead' | 'trainer'
 	notes: string | null
 }
 
@@ -104,7 +104,7 @@ export function ShiftSchedulePrint({
 										{
 											shift_lead: [],
 											trainer: [],
-											consultant: [],
+											worker: [],
 										}
 									)
 									return (

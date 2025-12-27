@@ -19,9 +19,9 @@ export async function getCurrentPresence() {
 	const now = new Date()
 
 	// ──────────────────────────────
-	// CONSULTANTS CURRENTLY ON SHIFT
+	// WORKERS CURRENTLY ON SHIFT
 	// ──────────────────────────────
-	const consultants = await db
+	const workers = await db
 		.select({
 			personId: kioskShiftLogs.personId,
 			userId: kioskPeople.userId,
@@ -33,9 +33,9 @@ export async function getCurrentPresence() {
 		.where(gt(kioskShiftLogs.expectedDepartureAt, now))
 
 	// ──────────────────────────────
-	// CERTIFICATES FOR CONSULTANTS
+	// CERTIFICATES FOR WORKERS
 	// ──────────────────────────────
-	const userIds = consultants
+	const userIds = workers
 		.map((c) => c.userId)
 		.filter((id): id is string => Boolean(id))
 
@@ -106,7 +106,7 @@ export async function getCurrentPresence() {
 			kioskVisitPurposes,
 			eq(kioskVisitLogs.purposeId, kioskVisitPurposes.id)
 		)
-		// Join shift logs to EXCLUDE consultants currently on shift
+		// Join shift logs to EXCLUDE workers currently on shift
 		.leftJoin(
 			kioskShiftLogs,
 			and(
@@ -116,7 +116,7 @@ export async function getCurrentPresence() {
 		)
 		.where(
 			and(
-				// Not currently on a consultant shift
+				// Not currently on a worker shift
 				isNull(kioskShiftLogs.personId),
 
 				// Only visits from "today" in CENTER_TIMEZONE
@@ -132,7 +132,7 @@ export async function getCurrentPresence() {
 		)
 
 	return {
-		consultants,
+		workers,
 		patrons,
 		certificatesByUser,
 	}

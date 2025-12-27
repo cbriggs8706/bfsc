@@ -17,12 +17,12 @@ export async function POST(
 		return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 	}
 
-	// Verify requester is a consultant
+	// Verify requester is a worker
 	const person = await db.query.kioskPeople.findFirst({
 		where: eq(kioskPeople.userId, session.user.id),
 	})
 
-	if (!person?.isConsultantCached) {
+	if (!person?.isWorkerCached) {
 		return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 	}
 

@@ -40,7 +40,7 @@ export async function getShiftReportDay(dateStr: string) {
 		.where(eq(weeklyShifts.weekday, weekday))
 		.orderBy(asc(weeklyShifts.startTime))
 
-	const consultants = await db
+	const workers = await db
 		.select({
 			shiftLogId: kioskShiftLogs.id,
 			userId: kioskShiftLogs.userId,
@@ -125,7 +125,7 @@ export async function getShiftReportDay(dateStr: string) {
 				patronName: r.patronName ?? r.patronEmail,
 			}))
 
-		const consultantsInShift = consultants
+		const workersInShift = workers
 			.filter((c) => c.arrivalAt >= shiftStartUtc && c.arrivalAt <= shiftEndUtc)
 			.map((c) => ({
 				shiftLogId: c.shiftLogId,
@@ -151,14 +151,14 @@ export async function getShiftReportDay(dateStr: string) {
 			weekday,
 			startTime: shift.startTime,
 			endTime: shift.endTime,
-			consultants: consultantsInShift,
+			workers: workersInShift,
 			patrons: patronsInShift,
 			reservations: reservationsInShift,
 		}
 	})
 
-	const assignedConsultants = new Set(
-		results.flatMap((r) => r.consultants.map((c) => c.userId))
+	const assignedWorkers = new Set(
+		results.flatMap((r) => r.workers.map((c) => c.userId))
 	)
 	const assignedPatrons = new Set(
 		results.flatMap((r) => r.patrons.map((p) => p.visitId))
@@ -169,15 +169,15 @@ export async function getShiftReportDay(dateStr: string) {
 	)
 
 	const offShiftResults: TodayShift[] =
-		consultants.length > 0 || patrons.length > 0
+		workers.length > 0 || patrons.length > 0
 			? [
 					{
 						shiftId: 'off-shift',
 						weekday,
 						startTime: '—',
 						endTime: '—',
-						consultants: consultants
-							.filter((c) => !assignedConsultants.has(c.userId))
+						workers: workers
+							.filter((c) => !assignedWorkers.has(c.userId))
 							.map((c) => ({
 								shiftLogId: c.shiftLogId,
 								userId: c.userId,

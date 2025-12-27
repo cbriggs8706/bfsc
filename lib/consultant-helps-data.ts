@@ -167,7 +167,7 @@ export const consultantHelps = [
 		],
 	},
 	{
-		title: 'Adult Temple and Family History Consultants',
+		title: 'Adult Temple and Family History Workers',
 		items: [
 			{
 				text: "I've Been Called, Now What? Video",
@@ -188,10 +188,10 @@ export const consultantHelps = [
 				],
 			},
 			{
-				text: 'My Calling as a Ward Temple and Family History Consultant',
+				text: 'My Calling as a Ward Temple and Family History Worker',
 				links: [
 					{
-						label: 'Ward Temple and Family History Consultant',
+						label: 'Ward Temple and Family History Worker',
 						href: 'https://www.churchofjesuschrist.org/study/manual/my-calling-as-a-temple-and-family-history-consultant?lang=eng',
 					},
 				],
@@ -221,17 +221,17 @@ export const consultantHelps = [
 		],
 	},
 	{
-		title: 'Youth Temple and Family History Consultants',
+		title: 'Youth Temple and Family History Workers',
 		items: [
 			{
 				text: 'View those for adults as listed above',
 				links: [],
 			},
 			{
-				text: 'One specific for Youth-\u00a0 RootsTech 2022 Session for Youth Consultants',
+				text: 'One specific for Youth-\u00a0 RootsTech 2022 Session for Youth Workers',
 				links: [
 					{
-						label: 'Youth Consultants',
+						label: 'Youth Workers',
 						href: 'https://www.familysearch.org/rootstech/session/youth-serving-as-temple-and-family-history-consultants',
 					},
 				],
@@ -301,7 +301,7 @@ export const consultantHelps = [
 					{
 						label:
 							'The FamilySearch Center Workers and Volunteers Learning Resources',
-						href: 'https://www.familysearch.org/en/fieldops/familysearch-center-workers-and-volunteers-learning-resources',
+						href: 'https://www.familysearch.org/en/fieldops/familysearch-center-consultants-and-volunteers-learning-resources',
 					},
 				],
 			},

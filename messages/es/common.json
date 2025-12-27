@@ -70,7 +70,7 @@
 		"dailyHist": "Diario e histórico"
 	},
 	"training": {
-		"consultantTraining": "Capacitación de consultores",
+		"workerTraining": "Capacitación de consultores",
 		"sub": "Cada curso otorgará un certificado. Si se agregan lecciones adicionales a un curso, deberá actualizarlo para mantener su certificación vigente."
 	},
 	"resource": {

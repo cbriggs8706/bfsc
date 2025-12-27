@@ -76,7 +76,7 @@ export interface Reservation {
 	status?: ReservationStatus
 
 	approvedByUserId?: string | null
-	assignedConsultantId?: string | null
+	assignedWorkerId?: string | null
 
 	notes?: string | null
 

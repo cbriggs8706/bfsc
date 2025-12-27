@@ -8,7 +8,7 @@ import { user } from '@/db/schema/tables/auth'
 import { kioskPeople } from '@/db/schema/tables/kiosk'
 import {
 	shiftSubRequests,
-	consultantShiftAvailability,
+	workerShiftAvailability,
 } from '@/db/schema/tables/substitutes'
 
 type AvailabilityLevel = 'usually' | 'maybe'
@@ -54,8 +54,8 @@ export async function getAvailabilityMatches(
 
 	if (!request) throw new Error('Request not found')
 
-	// 1) All consultants (from kiosk_people cache)
-	const consultants = await db
+	// 1) All workers (from kiosk_people cache)
+	const workers = await db
 		.select({
 			userId: kioskPeople.userId,
 			fullName: kioskPeople.fullName,
@@ -63,18 +63,18 @@ export async function getAvailabilityMatches(
 			phone: kioskPeople.phone,
 		})
 		.from(kioskPeople)
-		.where(eq(kioskPeople.isConsultantCached, true))
+		.where(eq(kioskPeople.isWorkerCached, true))
 
-	const filteredConsultants = consultants.filter(
+	const filteredWorkers = workers.filter(
 		(c): c is typeof c & { userId: string } =>
 			typeof c.userId === 'string' && c.userId !== request.requestedByUserId
 	)
 
-	const consultantUserIds = filteredConsultants
+	const workerUserIds = filteredWorkers
 		.map((c) => c.userId)
 		.filter((id): id is string => typeof id === 'string')
 
-	if (consultantUserIds.length === 0) return []
+	if (workerUserIds.length === 0) return []
 
 	// 2) User emails as fallback (if kiosk email missing)
 	const userEmails = await db
@@ -83,7 +83,7 @@ export async function getAvailabilityMatches(
 			email: user.email,
 		})
 		.from(user)
-		.where(inArray(user.id, consultantUserIds))
+		.where(inArray(user.id, workerUserIds))
 
 	const emailByUserId = new Map<string, string>()
 	for (const u of userEmails) emailByUserId.set(u.id, u.email)
@@ -91,16 +91,16 @@ export async function getAvailabilityMatches(
 	// 3) Availability rows for this shift + recurrence (or shift-only)
 	const availability = await db
 		.select({
-			userId: consultantShiftAvailability.userId,
-			level: consultantShiftAvailability.level,
-			shiftRecurrenceId: consultantShiftAvailability.shiftRecurrenceId,
+			userId: workerShiftAvailability.userId,
+			level: workerShiftAvailability.level,
+			shiftRecurrenceId: workerShiftAvailability.shiftRecurrenceId,
 		})
-		.from(consultantShiftAvailability)
-		.where(eq(consultantShiftAvailability.shiftId, request.shiftId))
+		.from(workerShiftAvailability)
+		.where(eq(workerShiftAvailability.shiftId, request.shiftId))
 
 	const availabilityByUserId = new Map<string, AvailabilityRow[]>()
 	for (const a of availability) {
-		if (!consultantUserIds.includes(a.userId)) continue
+		if (!workerUserIds.includes(a.userId)) continue
 		const list = availabilityByUserId.get(a.userId) ?? []
 		list.push({
 			userId: a.userId,
@@ -110,8 +110,8 @@ export async function getAvailabilityMatches(
 		availabilityByUserId.set(a.userId, list)
 	}
 
-	// 4) Compute best match per consultant
-	const results: AvailabilityMatch[] = consultants
+	// 4) Compute best match per worker
+	const results: AvailabilityMatch[] = workers
 		.filter(
 			(c): c is typeof c & { userId: string } => typeof c.userId === 'string'
 		)

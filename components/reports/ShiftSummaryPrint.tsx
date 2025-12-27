@@ -86,12 +86,12 @@ export function ShiftSummaryPrint({
 									/>
 									{isPrint && (
 										<p style={{ fontSize: 10, marginBottom: 4 }}>
-											■ Consultants &nbsp;&nbsp; ▧ Patrons
+											■ Workers &nbsp;&nbsp; ▧ Patrons
 										</p>
 									)}
 
 									<defs>
-										{/* Solid fill (consultants) */}
+										{/* Solid fill (workers) */}
 										<pattern
 											id="solidFill"
 											patternUnits="userSpaceOnUse"
@@ -121,7 +121,7 @@ export function ShiftSummaryPrint({
 									</defs>
 
 									<Bar
-										dataKey="consultants"
+										dataKey="workers"
 										stackId="a"
 										fill={isPrint ? 'url(#solidFill)' : 'var(--chart-2)'}
 									/>

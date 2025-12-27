@@ -21,11 +21,10 @@ import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { buildSidebarData } from '@/lib/sidebar-data'
 import { Separator } from '../ui/separator'
-import { NavConsultant } from './NavConsultant'
 import { NavMain } from './NavMain'
 import { SidebarLanguageSwitcher } from './SidebarLanguageSwitcher'
-import { NavPatron } from './NavPatron'
 import { SidebarCalendar } from './SidebarCalendar'
+import { NavWorker } from './NavWorker'
 
 type Weekly = {
 	id: string
@@ -89,8 +88,7 @@ export function AppSidebar({
 					'Admin',
 					'Director',
 					'Assistant Director',
-					'High Councilman',
-					'Consultant',
+					'Worker',
 					'Shift Lead',
 					'Patron',
 				].includes(role) && (
@@ -103,21 +101,17 @@ export function AppSidebar({
 					'Admin',
 					'Director',
 					'Assistant Director',
-					'High Councilman',
-					'Consultant',
+					'Worker',
 					'Shift Lead',
 				].includes(role) && (
 					<>
-						<NavConsultant
-							items={data.consultant}
-							label={t('sidebar.consultant.title')}
-						/>
+						<NavWorker items={data.worker} label={t('sidebar.worker.title')} />
 						<Separator className="my-0" />
 					</>
 				)}
 				{['Admin', 'Director', 'Assistant Director'].includes(role) && (
 					<>
-						<NavAdmin admin={data.admin} label={t('sidebar.admin.title')} />
+						<NavAdmin items={data.admin} label={t('sidebar.admin.title')} />
 						<Separator className="my-0" />
 					</>
 				)}

@@ -1,4 +1,4 @@
-// app/api/consultants/active-duty/route.ts
+// app/api/workers/active-duty/route.ts
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { user } from '@/db/schema/tables/auth'
@@ -14,10 +14,10 @@ export async function PATCH(req: Request) {
 	const body = await req.json()
 	const {
 		userId,
-		isActiveConsultant,
-	}: { userId: string; isActiveConsultant: boolean } = body
+		isActiveWorker,
+	}: { userId: string; isActiveWorker: boolean } = body
 
-	await db.update(user).set({ isActiveConsultant }).where(eq(user.id, userId))
+	await db.update(user).set({ isActiveWorker }).where(eq(user.id, userId))
 
 	return NextResponse.json({ ok: true })
 }

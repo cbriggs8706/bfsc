@@ -271,11 +271,11 @@ export const shiftTradeOfferOptionsChecks = sql`
 `
 
 /* ======================================================
- * Consultant availability (usually/maybe)
+ * Worker availability (usually/maybe)
  * ==================================================== */
 
-export const consultantShiftAvailability = pgTable(
-	'consultant_shift_availability',
+export const workerShiftAvailability = pgTable(
+	'worker_shift_availability',
 	{
 		id: uuid('id').defaultRandom().primaryKey(),
 
@@ -300,10 +300,10 @@ export const consultantShiftAvailability = pgTable(
 			.defaultNow(),
 	},
 	(t) => ({
-		userIdx: index('consultant_shift_availability_user_idx').on(t.userId),
-		shiftIdx: index('consultant_shift_availability_shift_idx').on(t.shiftId),
+		userIdx: index('worker_shift_availability_user_idx').on(t.userId),
+		shiftIdx: index('worker_shift_availability_shift_idx').on(t.shiftId),
 
-		uniqAvailability: uniqueIndex('consultant_shift_availability_uq').on(
+		uniqAvailability: uniqueIndex('worker_shift_availability_uq').on(
 			t.userId,
 			t.shiftId,
 			t.shiftRecurrenceId
@@ -314,9 +314,9 @@ export const consultantShiftAvailability = pgTable(
 	})
 )
 
-export const consultantShiftAvailabilityChecks = sql`
-  ALTER TABLE "consultant_shift_availability"
-    ADD CONSTRAINT consultant_shift_availability_level_ck
+export const workerShiftAvailabilityChecks = sql`
+  ALTER TABLE "worker_shift_availability"
+    ADD CONSTRAINT worker_shift_availability_level_ck
       CHECK (level IN ('usually','maybe'));
 `
 
@@ -371,7 +371,7 @@ export type ShiftTradeOfferOptionRow =
 export type ShiftTradeOfferOptionInsert =
 	typeof shiftTradeOfferOptions.$inferInsert
 
-export type ConsultantShiftAvailabilityRow =
-	typeof consultantShiftAvailability.$inferSelect
-export type ConsultantShiftAvailabilityInsert =
-	typeof consultantShiftAvailability.$inferInsert
+export type WorkerShiftAvailabilityRow =
+	typeof workerShiftAvailability.$inferSelect
+export type WorkerShiftAvailabilityInsert =
+	typeof workerShiftAvailability.$inferInsert

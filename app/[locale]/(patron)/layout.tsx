@@ -1,3 +1,4 @@
+//TODO investigate why this is sometimes giving an error about exceeded db conncections
 // app/[locale]/(patron)/layout.tsx
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -11,12 +12,10 @@ import { Separator } from '@/components/ui/separator'
 import AppBreadcrumbs from '@/components/nav/AppBreadcrumbs'
 
 import { AppSidebar } from '@/components/nav/AppSidebar'
-import { ConsultantAlerts } from '@/components/consultant/ConsultantAlerts'
-import { redirect } from 'next/navigation'
+import { WorkerAlerts } from '@/components/worker/WorkerAlerts'
 import { MentionAlerts } from '@/components/cases/MentionAlerts'
 import { db, operatingHours, specialHours } from '@/db'
 import { eq } from 'drizzle-orm'
-import { FloatingNavButton } from '@/components/nav/FloatingNavButton'
 
 export default async function Layout({
 	children,
@@ -42,9 +41,9 @@ export default async function Layout({
 				specials={specials}
 			/>
 			<SidebarInset>
-				{/* 🔔 Consultant realtime alerts */}
+				{/* 🔔 Worker realtime alerts */}
 				<MentionAlerts />
-				{session?.user?.role !== 'Patron' ? <ConsultantAlerts /> : null}
+				{session?.user?.role !== 'Patron' ? <WorkerAlerts /> : null}
 				<header className="flex h-16 shrink-0 items-center gap-2">
 					<div className="flex items-center gap-2 px-4">
 						<SidebarTrigger className="-ml-1" />
@@ -61,7 +60,6 @@ export default async function Layout({
 				{/* Actual dashboard content */}
 				<div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
 			</SidebarInset>{' '}
-			{/* <FloatingNavButton /> */}
 		</SidebarProvider>
 	)
 }

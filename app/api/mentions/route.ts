@@ -12,7 +12,7 @@ export async function GET() {
 			image: kioskPeople.profileImageUrl,
 		})
 		.from(kioskPeople)
-		.where(eq(kioskPeople.isConsultantCached, true))
+		.where(eq(kioskPeople.isWorkerCached, true))
 
 	const fallbackUsers = await db
 		.select({

@@ -9,7 +9,7 @@ import { sql } from 'drizzle-orm'
 import { AnnouncementBanner } from '@/components/custom/AnnouncementBanner'
 import { getUserCertificates } from '@/db/queries/training'
 import { CertificatesGrid } from '@/components/training/CertificatesGrid'
-import ConsultantShiftsDashboard from '@/components/shifts/ConsultantShifts'
+import WorkerShiftsDashboard from '@/components/shifts/WorkerShifts'
 import { getUpcomingShiftInstances } from '@/db/queries/shift-instances'
 import { OpenRequestsSection } from '@/components/shifts/OpenRequestsSection'
 import { getOpenSubstituteRequests } from '@/db/queries/shifts'
@@ -64,7 +64,7 @@ export default async function Page({ params }: DashboardPageProps) {
 					collapsible={true}
 					defaultCollapsed={true}
 				/>
-				<ConsultantShiftsDashboard
+				<WorkerShiftsDashboard
 					shifts={shiftInstances}
 					currentUserId={session.user.id}
 					locale={locale}

@@ -24,7 +24,7 @@ type ShiftSlot = {
 	endAtIso: string // UTC ISO
 }
 
-type SlotConsultant = {
+type SlotWorker = {
 	kioskShiftLogId: string
 	userId: string
 	fullName: string
@@ -40,7 +40,7 @@ type SlotPatron = {
 }
 
 export type ShiftSlotReport = ShiftSlot & {
-	consultants: SlotConsultant[]
+	workers: SlotWorker[]
 	patrons: SlotPatron[]
 }
 
@@ -242,8 +242,8 @@ export async function GET(req: Request) {
 		)
 	)
 
-	// 3) Pull consultant arrivals (kiosk_shift_logs.arrival_at) in the overall window
-	const consultantArrivals = await db
+	// 3) Pull worker arrivals (kiosk_shift_logs.arrival_at) in the overall window
+	const workerArrivals = await db
 		.select({
 			kioskShiftLogId: kioskShiftLogs.id,
 			userId: kioskShiftLogs.userId,
@@ -295,7 +295,7 @@ export async function GET(req: Request) {
 			const slotStart = new Date(slot.startAtIso).getTime()
 			const slotEnd = new Date(slot.endAtIso).getTime()
 
-			const consultants: SlotConsultant[] = consultantArrivals
+			const workers: SlotWorker[] = workerArrivals
 				.filter((c) => {
 					const t = c.arrivalAt.getTime()
 					return t >= slotStart && t < slotEnd
@@ -320,7 +320,7 @@ export async function GET(req: Request) {
 					createdAtIso: p.createdAt.toISOString(),
 				}))
 
-			return { ...slot, consultants, patrons }
+			return { ...slot, workers, patrons }
 		})
 
 	return NextResponse.json({ report })

@@ -18,7 +18,7 @@ type Day = {
 	label: string
 }
 
-type AssignmentRole = 'consultant' | 'shift_lead' | 'trainer'
+type AssignmentRole = 'worker' | 'shift_lead' | 'trainer'
 
 type Assignment = {
 	id: string
@@ -55,7 +55,7 @@ const WEEKDAY_LABELS = [
 ]
 
 function isAssignmentRole(v: string): v is AssignmentRole {
-	return v === 'consultant' || v === 'shift_lead' || v === 'trainer'
+	return v === 'worker' || v === 'shift_lead' || v === 'trainer'
 }
 
 /* ======================================================
@@ -102,7 +102,7 @@ export async function getShiftPrintData(): Promise<{
 		userName: a.userName,
 		assignmentRole: isAssignmentRole(a.assignmentRole)
 			? a.assignmentRole
-			: 'consultant',
+			: 'worker',
 	}))
 
 	/* --------------------------------------------------

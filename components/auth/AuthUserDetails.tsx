@@ -25,6 +25,7 @@ export interface UserDetailsData {
 	kioskPersonId?: string
 	profileImageUrl?: string | null
 	languagesSpoken?: string[]
+	pid?: string | null
 	// user
 	id: string
 	name: string | null
@@ -127,6 +128,7 @@ export default function UserDetails() {
 	const [file, setFile] = useState<File | null>(null)
 	const [isPending, startTransition] = useTransition()
 	const [languagesSpoken, setLanguagesSpoken] = useState<string[]>([])
+	const [pid, setPid] = useState('')
 
 	const isCredentialsUser = session?.user?.authProvider === 'credentials'
 
@@ -179,6 +181,7 @@ export default function UserDetails() {
 						kioskPersonId: details.kioskPersonId,
 						profileImageUrl: uploadedProfileImageUrl,
 						languagesSpoken,
+						pid,
 					})
 				}
 
@@ -292,7 +295,10 @@ export default function UserDetails() {
 								<strong>Role:</strong> {details.role}
 							</p>
 							<p>
-								<strong>Credentials Provider:</strong>{' '}
+								<strong>FamilySearch PID:</strong> {details.pid}
+							</p>
+							<p>
+								<strong>Credentials Provider (signed in using):</strong>{' '}
 								{details.providers?.length
 									? details.providers.join(', ').toUpperCase()
 									: 'Username/Password'}
@@ -387,6 +393,11 @@ export default function UserDetails() {
 									value={email}
 									onChange={(e) => setEmail(e.target.value)}
 								/>
+							</div>
+							{/* PID */}
+							<div>
+								<label className="text-sm font-medium">FamilySearch PID</label>
+								<Input value={pid} onChange={(e) => setPid(e.target.value)} />
 							</div>
 
 							<div>

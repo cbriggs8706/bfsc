@@ -2,7 +2,7 @@
 'use server'
 
 import { db } from '@/db'
-import { consultantShiftAvailability } from '@/db/schema/tables/substitutes'
+import { workerShiftAvailability } from '@/db/schema/tables/substitutes'
 import { getCurrentUser } from '@/lib/auth'
 import { eq, and } from 'drizzle-orm'
 import type { AvailabilityLevel } from '@/db/schema/tables/substitutes'
@@ -18,7 +18,7 @@ export async function setAvailability(input: SetAvailabilityInput) {
 	if (!user) throw new Error('Unauthorized')
 
 	await db
-		.insert(consultantShiftAvailability)
+		.insert(workerShiftAvailability)
 		.values({
 			userId: user.id,
 			shiftId: input.shiftId,
@@ -27,9 +27,9 @@ export async function setAvailability(input: SetAvailabilityInput) {
 		})
 		.onConflictDoUpdate({
 			target: [
-				consultantShiftAvailability.userId,
-				consultantShiftAvailability.shiftId,
-				consultantShiftAvailability.shiftRecurrenceId,
+				workerShiftAvailability.userId,
+				workerShiftAvailability.shiftId,
+				workerShiftAvailability.shiftRecurrenceId,
 			],
 			set: {
 				level: input.level,

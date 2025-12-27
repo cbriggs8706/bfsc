@@ -47,7 +47,7 @@ type Shift = {
 	recurrences: Recurrence[]
 }
 
-type AssignmentRole = 'consultant' | 'shift_lead' | 'trainer'
+type AssignmentRole = 'worker' | 'shift_lead' | 'trainer'
 
 type Assignment = {
 	id: string
@@ -60,7 +60,7 @@ type Assignment = {
 	userEmail: string
 }
 
-type Consultant = {
+type Worker = {
 	id: string
 	name: string | null
 	email: string
@@ -71,7 +71,7 @@ type Props = {
 	days: Day[]
 	shifts: Shift[]
 	assignments: Assignment[]
-	consultants: Consultant[]
+	workers: Worker[]
 	canEdit: boolean
 }
 
@@ -145,7 +145,7 @@ function RoleBucket({
 export function ShiftScheduler({
 	shifts,
 	assignments,
-	consultants,
+	workers,
 	canEdit,
 }: Props) {
 	const [localAssignments, setLocalAssignments] =
@@ -303,7 +303,7 @@ export function ShiftScheduler({
 									shift={card.shift}
 									recurrence={card.recurrence}
 									assignments={cardAssignments}
-									consultants={consultants}
+									workers={workers}
 									setLocalAssignments={setLocalAssignments}
 									canEdit={canEdit}
 								/>
@@ -320,14 +320,14 @@ function ShiftCard({
 	shift,
 	recurrence,
 	assignments,
-	consultants,
+	workers,
 	setLocalAssignments,
 	canEdit,
 }: {
 	shift: Shift
 	recurrence: Recurrence
 	assignments: Assignment[]
-	consultants: Consultant[]
+	workers: Worker[]
 	setLocalAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>
 	canEdit: boolean
 }) {
@@ -340,7 +340,7 @@ function ShiftCard({
 
 	const leads = assignments.filter((a) => a.assignmentRole === 'shift_lead')
 	const trainers = assignments.filter((a) => a.assignmentRole === 'trainer')
-	const helpers = assignments.filter((a) => a.assignmentRole === 'consultant')
+	const helpers = assignments.filter((a) => a.assignmentRole === 'worker')
 
 	return (
 		<Card
@@ -360,9 +360,9 @@ function ShiftCard({
 				</div>
 
 				{canEdit && (
-					<AddConsultantDialog
+					<AddWorkerDialog
 						shiftRecurrenceId={recurrence.id}
-						consultants={consultants}
+						workers={workers}
 						setLocalAssignments={setLocalAssignments}
 					/>
 				)}
@@ -386,8 +386,8 @@ function ShiftCard({
 				/>
 
 				<RoleBucket
-					title="Consultants"
-					droppableId={`${recurrence.id}|consultant`}
+					title="Workers"
+					droppableId={`${recurrence.id}|worker`}
 					assignments={helpers}
 					canEdit={canEdit}
 					onEdit={openEditDialog}
@@ -404,26 +404,26 @@ function ShiftCard({
 	)
 }
 
-function AddConsultantDialog({
+function AddWorkerDialog({
 	shiftRecurrenceId,
-	consultants,
+	workers,
 	setLocalAssignments,
 }: {
 	shiftRecurrenceId: string
-	consultants: Consultant[]
+	workers: Worker[]
 	setLocalAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>
 }) {
 	const [open, setOpen] = useState(false)
 	const [query, setQuery] = useState('')
 	const [loading, setLoading] = useState(false)
-	const [role, setRole] = useState<AssignmentRole>('consultant')
+	const [role, setRole] = useState<AssignmentRole>('worker')
 	const [notes, setNotes] = useState('')
 
-	const filtered = consultants.filter((c) =>
+	const filtered = workers.filter((c) =>
 		(c.name ?? c.email).toLowerCase().includes(query.toLowerCase())
 	)
 
-	const handleAdd = async (consultant: Consultant) => {
+	const handleAdd = async (worker: Worker) => {
 		setLoading(true)
 		const tempId = `temp-${Date.now()}`
 
@@ -433,12 +433,12 @@ function AddConsultantDialog({
 			{
 				id: tempId,
 				shiftRecurrenceId,
-				userId: consultant.id,
+				userId: worker.id,
 				assignmentRole: role,
 				notes: notes || null,
-				userName: consultant.name,
-				userEmail: consultant.email,
-				userRole: consultant.role,
+				userName: worker.name,
+				userEmail: worker.email,
+				userRole: worker.role,
 			},
 		])
 
@@ -447,7 +447,7 @@ function AddConsultantDialog({
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					userId: consultant.id,
+					userId: worker.id,
 					shiftRecurrenceId,
 					assignmentRole: role,
 					notes: notes || null,
@@ -475,7 +475,7 @@ function AddConsultantDialog({
 		setOpen(false)
 		setQuery('')
 		setNotes('')
-		setRole('consultant')
+		setRole('worker')
 	}
 
 	return (
@@ -488,7 +488,7 @@ function AddConsultantDialog({
 
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Add Consultant</DialogTitle>
+					<DialogTitle>Add Worker</DialogTitle>
 				</DialogHeader>
 				<div className="space-y-2 mb-3">
 					<label className="text-xs font-medium text-muted-foreground">
@@ -499,10 +499,10 @@ function AddConsultantDialog({
 						<Button
 							type="button"
 							size="sm"
-							variant={role === 'consultant' ? 'default' : 'outline'}
-							onClick={() => setRole('consultant')}
+							variant={role === 'worker' ? 'default' : 'outline'}
+							onClick={() => setRole('worker')}
 						>
-							Consultant
+							Worker
 						</Button>
 
 						<Button
@@ -654,10 +654,10 @@ function EditAssignmentDialog({
 						<Button
 							type="button"
 							size="sm"
-							variant={role === 'consultant' ? 'default' : 'outline'}
-							onClick={() => setRole('consultant')}
+							variant={role === 'worker' ? 'default' : 'outline'}
+							onClick={() => setRole('worker')}
 						>
-							Consultant
+							Worker
 						</Button>
 
 						<Button
@@ -765,7 +765,7 @@ function DraggableAssignmentChip({
 					? 'Lead'
 					: assignment.assignmentRole === 'trainer'
 					? 'Trainer'
-					: 'Consult'}
+					: 'Worker'}
 			</Badge>
 		</div>
 	)

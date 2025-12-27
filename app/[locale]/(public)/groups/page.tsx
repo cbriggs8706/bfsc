@@ -151,7 +151,7 @@ export default async function ClassesPage({ params }: Props) {
 						<li>Full Name Review</li>
 						<li>Get Involved App</li>
 						<li>Record Linking Lab</li>
-						<li>Consultant & committee training</li>
+						<li>Worker & committee training</li>
 						<li>Facility tours</li>
 						<li>Memory digitizing devices</li>
 					</ul>

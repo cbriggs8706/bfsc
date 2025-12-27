@@ -7,7 +7,7 @@ export type PatronVisit = {
 	purposeName: string | null
 }
 
-export type ConsultantShift = {
+export type WorkerShift = {
 	personId: string
 	fullName: string
 	profileImageUrl: string | null
@@ -17,7 +17,7 @@ export type ConsultantShift = {
 }
 
 export type ShiftReportItem = {
-	consultant: ConsultantShift
+	worker: WorkerShift
 	patrons: PatronVisit[]
 }
 
@@ -35,7 +35,7 @@ export interface ShiftReportPatron {
 
 export interface ShiftReportRow {
 	shiftId: string
-	consultantName: string
+	workerName: string
 	arrivalAt: Date
 	departureAt: Date
 	patrons: ShiftReportPatron[]
@@ -46,7 +46,7 @@ export interface DateRange {
 	end: Date
 }
 
-export type ShiftSlotConsultant = {
+export type ShiftSlotWorker = {
 	kioskShiftLogId: string
 	userId: string
 	fullName: string
@@ -73,7 +73,7 @@ export type ShiftSlotReport = {
 	sortOrder: number
 	startAtIso: string
 	endAtIso: string
-	consultants: ShiftSlotConsultant[]
+	workers: ShiftSlotWorker[]
 	patrons: ShiftSlotPatron[]
 }
 
@@ -82,7 +82,7 @@ export type TodayShift = {
 	weekday: number
 	startTime: string
 	endTime: string
-	consultants: ShiftReportConsultant[]
+	workers: ShiftReportWorker[]
 	patrons: {
 		visitId: string
 		fullName: string
@@ -104,7 +104,7 @@ export type ShiftReservation = {
 
 export type SummaryPoint = {
 	label: string // "Mon", "Dec", etc
-	consultants: number
+	workers: number
 	patrons: number
 }
 
@@ -123,11 +123,11 @@ export type DateRangePreset =
 
 export type ShiftSummaryPoint = {
 	label: string // day or month label
-	consultants: number
+	workers: number
 	patrons: number
 }
 
-export type ShiftReportConsultant = {
+export type ShiftReportWorker = {
 	shiftLogId: string
 	userId: string
 	fullName: string
