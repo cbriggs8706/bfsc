@@ -12,9 +12,8 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
-import { authOptions } from '@/lib/auth'
-import { getServerSession } from 'next-auth'
-import { redirect } from 'next/navigation'
+import { sql } from 'drizzle-orm'
+import { requireRole } from '@/utils/require-role'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,13 +22,18 @@ export default async function AdminUsersPage({
 }: {
 	params: Promise<{ locale: string }>
 }) {
-	const session = await getServerSession(authOptions)
-	const userRole = session?.user.role ?? 'Patron'
 	const { locale } = await params
 
-	if (!['Admin', 'Director', 'Assistant Director'].includes(userRole)) {
-		return redirect(`/${locale}`)
-	}
+	// TODO new pattern
+	// if (!['Admin', 'Director', 'Assistant Director'].includes(userRole)) {
+	// 	return redirect(`/${locale}`)
+	// }
+
+	await requireRole(
+		locale,
+		['Admin', 'Director', 'Assistant Director'],
+		`/${locale}/admin/users`
+	)
 
 	const users = await db
 		.select({
@@ -40,6 +44,21 @@ export default async function AdminUsersPage({
 			role: user.role,
 		})
 		.from(user)
+		.orderBy(
+			sql`
+			CASE ${user.role}
+				WHEN 'Admin' THEN 1
+				WHEN 'Director' THEN 2
+				WHEN 'Assistant Director' THEN 3
+				WHEN 'Shift Lead' THEN 4
+				WHEN 'Consultant' THEN 5
+				WHEN 'High Councilman' THEN 6
+				WHEN 'Patron' THEN 7
+				ELSE 8
+			END
+		`,
+			sql`COALESCE(${user.name}, ${user.email}) ASC`
+		)
 
 	return (
 		<div className="p-4 space-y-4">
@@ -60,6 +79,7 @@ export default async function AdminUsersPage({
 							<TableHeader>
 								<TableRow>
 									<TableHead>Name</TableHead>
+									<TableHead>Email</TableHead>
 									<TableHead>Role</TableHead>
 									<TableHead className="w-[120px] text-right">
 										Actions
@@ -70,6 +90,7 @@ export default async function AdminUsersPage({
 								{users.map((u) => (
 									<TableRow key={u.id}>
 										<TableCell>{u.name ?? '—'}</TableCell>
+										<TableCell className="">{u.email}</TableCell>
 										<TableCell className="capitalize">{u.role}</TableCell>
 										<TableCell className="text-right">
 											<Link href={`/${locale}/admin/users/${u.id}/update`}>
