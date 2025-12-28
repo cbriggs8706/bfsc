@@ -1,12 +1,10 @@
 // app/[locale]/admin/center/resources/page.tsx
-import { redirect } from 'next/navigation'
-
 import { readResources } from '@/lib/actions/resource/resource'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
-import { requireCurrentUser } from '@/utils/require-current-user'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { requireRole } from '@/utils/require-role'
 
 type Props = {
 	params: Promise<{ locale: string }>
@@ -16,10 +14,11 @@ export default async function ResourcePage({ params }: Props) {
 	const { locale } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
 
-	const currentUser = await requireCurrentUser(locale)
-	if (currentUser.role !== 'Admin') {
-		redirect(`/${locale}`)
-	}
+	await requireRole(
+		locale,
+		['Admin', 'Director', 'Assistant Director'],
+		`/${locale}/memory-lane`
+	)
 
 	const resources = await readResources()
 	const grouped = resources.reduce<Record<string, typeof resources>>(

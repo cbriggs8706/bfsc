@@ -14,6 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import type { CurrentUser } from '@/components/classes/ClassesTable'
 import { Card } from '../ui/card'
+import { useTranslations } from 'next-intl'
 
 export type LibraryItemRow = {
 	id: string
@@ -43,6 +44,7 @@ export function LibraryItemsDesktopTable({
 	locale,
 	currentUser,
 }: Props) {
+	const t = useTranslations('common')
 	return (
 		<Card className="p-6">
 			<Table className="">
@@ -58,7 +60,13 @@ export function LibraryItemsDesktopTable({
 
 				<TableBody>
 					{items.map((item) => (
-						<TableRow key={item.id}>
+						<TableRow
+							key={item.id}
+							className="cursor-pointer hover:bg-muted/50"
+							onClick={() => {
+								window.location.href = `/${locale}/library/${item.id}`
+							}}
+						>
 							<TableCell className="font-medium">
 								{item.name}
 								{item.authorManufacturer && (
@@ -67,11 +75,9 @@ export function LibraryItemsDesktopTable({
 									</div>
 								)}
 							</TableCell>
-
 							<TableCell>
 								{item.type === 'book' ? 'Book' : 'Equipment'}
 							</TableCell>
-
 							<TableCell>
 								<div className="flex flex-wrap gap-1">
 									{item.tags.map((tag) => (
@@ -79,7 +85,8 @@ export function LibraryItemsDesktopTable({
 											key={tag}
 											variant="secondary"
 											className="cursor-pointer"
-											onClick={() => {
+											onClick={(e) => {
+												e.stopPropagation()
 												const params = new URLSearchParams(
 													window.location.search
 												)
@@ -93,30 +100,55 @@ export function LibraryItemsDesktopTable({
 									))}
 								</div>
 							</TableCell>
-
 							<TableCell>
 								<div className="flex gap-2 flex-wrap">
-									<Badge variant="outline">Total {item.counts.total}</Badge>
-									<Badge className="bg-(--green-logo)">
+									<Badge
+										variant="outline"
+										onClick={(e) => {
+											e.stopPropagation()
+										}}
+									>
+										Total {item.counts.total}
+									</Badge>
+									<Badge
+										className="bg-(--green-logo)"
+										onClick={(e) => {
+											e.stopPropagation()
+										}}
+									>
 										Avail {item.counts.available}
 									</Badge>
-									<Badge className="bg-(--orange-accent)">
+									<Badge
+										className="bg-(--orange-accent)"
+										onClick={(e) => {
+											e.stopPropagation()
+										}}
+									>
 										Out {item.counts.checkedOut}
 									</Badge>
 								</div>
 							</TableCell>
-
 							<TableCell className="text-right space-x-2">
 								{canEdit(currentUser) && (
 									<>
-										<Button size="sm" variant="outline" asChild>
+										<Button
+											size="sm"
+											variant="outline"
+											asChild
+											onClick={(e) => e.stopPropagation()}
+										>
 											<Link href={`/${locale}/library/update/${item.id}`}>
-												Edit
+												{t('edit')}
 											</Link>
 										</Button>
-										<Button size="sm" variant="destructive" asChild>
+										<Button
+											size="sm"
+											variant="destructive"
+											asChild
+											onClick={(e) => e.stopPropagation()}
+										>
 											<Link href={`/${locale}/library/delete/${item.id}`}>
-												Delete
+												{t('delete')}
 											</Link>
 										</Button>
 									</>

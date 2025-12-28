@@ -45,8 +45,12 @@ export function LibraryItemCard({ item, locale, currentUser }: Props) {
 
 	return (
 		<Card className="p-4 space-y-2">
-			<div className="font-semibold">{item.name}</div>
-
+			<div
+				className="font-semibold cursor-pointer"
+				onClick={() => router.push(`/${locale}/library/${item.id}`)}
+			>
+				{item.name}
+			</div>
 			<div className="text-sm text-muted-foreground">
 				{item.type === 'book' ? 'Book' : 'Equipment'}
 				{item.authorManufacturer && ` • ${item.authorManufacturer}`}

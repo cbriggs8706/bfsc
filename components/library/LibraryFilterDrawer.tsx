@@ -1,7 +1,6 @@
 // components/library/LibraryFilterDrawer.tsx
 'use client'
 
-import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
 	Sheet,
@@ -12,7 +11,11 @@ import {
 } from '@/components/ui/sheet'
 import { LibraryFilters } from './LibraryFilters'
 
-export function LibraryFilterDrawer() {
+interface Props {
+	tags: string[]
+}
+
+export function LibraryFilterDrawer({ tags }: Props) {
 	return (
 		<div className="md:hidden">
 			<Sheet>
@@ -28,7 +31,7 @@ export function LibraryFilterDrawer() {
 					</SheetHeader>
 
 					<div className="mt-4">
-						<LibraryFilters />
+						<LibraryFilters tags={tags} />
 					</div>
 				</SheetContent>
 			</Sheet>

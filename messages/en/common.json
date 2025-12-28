@@ -55,10 +55,12 @@
 	},
 	"library": {
 		"title": "Library",
+		"item": "Library Item",
 		"inventory": "Library Inventory",
 		"sub": "Books and equipment available at the center",
 		"create": "Create Library Item",
 		"createSub": "Add a book or piece of equipment to inventory.",
+		"updateSub": "Update details about a book or piece of equipment to inventory.",
 		"deleteSub": "This permanently deletes the item and all copies."
 	},
 	"shifts": {
@@ -143,5 +145,26 @@
 	"startup": "Startup Help",
 	"full": "Full Assistance",
 
-	"user": "User"
+	"user": "User",
+	"book": "Book",
+	"author": "Author",
+	"equipment": "Equipment",
+
+	"copyCodes": "Copy Codes",
+	"copyCodesSub": "One per line. Each code must be a unique id for your library.",
+
+	"year": "Year",
+	"brandManuf": "Brand / Manufacturer",
+	"isbn": "ISBN",
+	"tags": "Tags",
+
+	"nameRequired": "Name is required.",
+	"lastName": "Last Name",
+	"firstName": "First Name",
+	"city": "City",
+	"history": "History",
+	"digital": "Digital",
+
+	"descriptionRequired": "Description is required.",
+	"atLeast1CopyCode": "At least one copy code is required."
 }

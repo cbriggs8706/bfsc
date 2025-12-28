@@ -1,4 +1,4 @@
-// app/[locale]/(workers)/library/update/[id]/page.tsx
+// app/[locale]/(workers)/library/[id]/page.tsx
 import { LibraryItemForm } from '@/components/library/LibraryItemForm'
 import { readLibraryItem } from '@/lib/actions/library/library-actions'
 import { requireCurrentUser } from '@/utils/require-current-user'
@@ -9,7 +9,7 @@ interface Props {
 	params: Promise<{ locale: string; id: string }>
 }
 
-export default async function UpdateLibraryItemPage({ params }: Props) {
+export default async function ReadLibraryItemPage({ params }: Props) {
 	const { locale, id } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
 	const currentUser = await requireCurrentUser(locale)
@@ -20,16 +20,16 @@ export default async function UpdateLibraryItemPage({ params }: Props) {
 	return (
 		<div className="p-4 space-y-4">
 			<div>
-				<h1 className="text-3xl font-bold">{t('update')}</h1>
+				<h1 className="text-3xl font-bold">{item.name}</h1>
 				<p className="text-sm text-muted-foreground">
-					{t('library.updateSub')}
+					{item.authorManufacturer}
 				</p>
 			</div>
 
 			<LibraryItemForm
 				userId={currentUser.id}
 				locale={locale}
-				mode="update"
+				mode="read"
 				itemId={id}
 				initialValues={item}
 			/>

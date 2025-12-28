@@ -3,9 +3,11 @@ import { LibraryItemsTable } from '@/components/library/LibraryItemsTable'
 import { requireCurrentUser } from '@/utils/require-current-user'
 import { LibraryFilters } from '@/components/library/LibraryFilters'
 import { LibraryFilterDrawer } from '@/components/library/LibraryFilterDrawer'
-import { listLibraryItems } from '@/db/queries/library'
+import { readAllLibraryItems } from '@/lib/actions/library/library-actions'
 import { LibraryPagination } from '@/components/library/LibraryPagination'
 import { getTranslations } from 'next-intl/server'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 interface Props {
 	params: Promise<{ locale: string }>
@@ -29,15 +31,17 @@ export default async function LibraryPage({ params, searchParams }: Props) {
 	} catch {
 		// public allowed
 	}
-
 	const PAGE_SIZE = 25
 
-	const { items, total } = await listLibraryItems({
+	const { items, total } = await readAllLibraryItems({
 		q: sp.q,
 		type: sp.type,
 		tag: sp.tag,
 		page: sp.page ? Number(sp.page) : 1,
+		pageSize: PAGE_SIZE,
 	})
+
+	const tags = Array.from(new Set(items.flatMap((item) => item.tags))).sort()
 
 	return (
 		<div className="p-4 space-y-4">
@@ -46,15 +50,22 @@ export default async function LibraryPage({ params, searchParams }: Props) {
 					<h1 className="text-3xl font-bold">{t('library.inventory')}</h1>
 					<p className="text-sm text-muted-foreground">{t('library.sub')}</p>
 				</div>
+				{currentUser && currentUser.role !== 'Patron' && (
+					<Link href={`/${locale}/library/create`}>
+						<Button variant="default">
+							{t('create')} {t('library.item')}
+						</Button>
+					</Link>
+				)}
 			</div>
 
 			{/* Desktop filters */}
 			<div className="hidden md:block">
-				<LibraryFilters />
+				<LibraryFilters tags={tags} />
 			</div>
 
 			{/* Mobile filters */}
-			<LibraryFilterDrawer />
+			<LibraryFilterDrawer tags={tags} />
 
 			<LibraryItemsTable
 				items={items}

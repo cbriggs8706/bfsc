@@ -11,6 +11,7 @@ import {
 	index,
 } from 'drizzle-orm/pg-core'
 import { user } from '@/db/schema/tables/auth' // adjust path if needed
+import { relations } from 'drizzle-orm'
 
 export const libraryItemType = pgEnum('library_item_type', [
 	'book',
@@ -128,3 +129,14 @@ export const libraryLoans = pgTable(
 		),
 	})
 )
+
+export const libraryItemsRelations = relations(libraryItems, ({ many }) => ({
+	copies: many(libraryCopies),
+}))
+
+export const libraryCopiesRelations = relations(libraryCopies, ({ one }) => ({
+	item: one(libraryItems, {
+		fields: [libraryCopies.itemId],
+		references: [libraryItems.id],
+	}),
+}))
