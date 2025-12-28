@@ -314,7 +314,7 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 	// ======================================================
 
 	return (
-		<div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
+		<div className="grid gap-5 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
 			{days.map((day) => {
 				const dayShifts = localShifts
 					.filter((s) => s.weekday === day.weekday)
@@ -322,7 +322,7 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 
 				return (
 					<Card key={day.weekday}>
-						<CardHeader className="flex items-center justify-between">
+						<CardHeader className="flex items-start justify-between gap-3 sm:flex-row sm:items-center">
 							<div className="flex flex-col">
 								<span className="font-semibold text-xl">{day.label}</span>
 								<span className="text-[13px] text-muted-foreground">
@@ -333,7 +333,7 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 							<Button
 								size="icon"
 								variant="outline"
-								className="h-7 w-7"
+								className="h-8 w-8"
 								onClick={() => handleAddShift(day)}
 							>
 								<Plus className="h-4 w-4" />
@@ -354,12 +354,12 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 									<Card
 										key={shift.id}
 										className={cn(
-											'p-3 space-y-3 border rounded-lg',
+											'border rounded-lg p-3 sm:p-4 space-y-3',
 											!shift.isActive && 'opacity-50'
 										)}
 									>
 										{/* Shift Header */}
-										<div className="flex items-center justify-between">
+										<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 											<div className="font-semibold text-sm">
 												{toAmPm(shift.startTime)} – {toAmPm(shift.endTime)}
 											</div>
@@ -367,16 +367,16 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 											<Button
 												size="icon"
 												variant="ghost"
-												className="text-destructive h-8 w-8"
+												className="h-8 w-8 text-destructive self-end sm:self-auto"
 												disabled={busy}
 												onClick={() => handleDeleteShift(shift.id)}
 											>
-												<Trash2 className="w-4 h-4" />
+												<Trash2 className="h-4 w-4" />
 											</Button>
 										</div>
 
 										{/* Start / End Inputs */}
-										<div className="grid grid-cols-[1fr_1fr] gap-3">
+										<div className="grid gap-3 sm:grid-cols-2">
 											<div>
 												<Label className="text-[10px]">Start</Label>
 												<Input
@@ -385,7 +385,9 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 													className="h-8 text-xs"
 													disabled={busy}
 													onChange={(e) =>
-														updateDraft(shift.id, { startTime: e.target.value })
+														updateDraft(shift.id, {
+															startTime: e.target.value,
+														})
 													}
 													onBlur={() => saveDraft(shift.id)}
 													onKeyDown={(e) => {
@@ -402,7 +404,9 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 													className="h-8 text-xs"
 													disabled={busy}
 													onChange={(e) =>
-														updateDraft(shift.id, { endTime: e.target.value })
+														updateDraft(shift.id, {
+															endTime: e.target.value,
+														})
 													}
 													onBlur={() => saveDraft(shift.id)}
 													onKeyDown={(e) => {
@@ -419,9 +423,7 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 												checked={shift.isActive}
 												disabled={busy}
 												onCheckedChange={(checked) =>
-													handleUpdateShift(shift.id, {
-														isActive: checked,
-													})
+													handleUpdateShift(shift.id, { isActive: checked })
 												}
 											/>
 											<Label htmlFor={`active-${shift.id}`} className="text-xs">
@@ -446,6 +448,8 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 												}}
 											/>
 										</div>
+
+										{/* Recurrences */}
 										<div className="space-y-2 pt-2 border-t">
 											<div className="flex items-center justify-between">
 												<span className="text-xs font-semibold">
@@ -465,9 +469,10 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 											{shift.recurrences.map((r) => (
 												<div
 													key={r.id}
-													className="flex items-center gap-2 text-xs"
+													className="flex flex-col gap-2 sm:flex-row sm:items-center text-xs"
 												>
 													<Input
+														className="sm:w-40"
 														value={r.label}
 														onChange={(e) =>
 															setLocalShifts((prev) =>
@@ -475,14 +480,19 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 																	...s,
 																	recurrences: s.recurrences.map((rec) =>
 																		rec.id === r.id
-																			? { ...rec, label: e.target.value }
+																			? {
+																					...rec,
+																					label: e.target.value,
+																			  }
 																			: rec
 																	),
 																}))
 															)
 														}
 														onBlur={(e) =>
-															updateRecurrence(r.id, { label: e.target.value })
+															updateRecurrence(r.id, {
+																label: e.target.value,
+															})
 														}
 													/>
 
@@ -490,6 +500,7 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 														type="number"
 														min={1}
 														max={5}
+														className="sm:w-20"
 														placeholder="Week"
 														value={r.weekOfMonth ?? ''}
 														onChange={(e) =>
@@ -521,7 +532,7 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 													<Button
 														size="icon"
 														variant="ghost"
-														className="h-7 w-7 text-destructive"
+														className="h-7 w-7 text-destructive self-end sm:self-auto"
 														onClick={() => deleteRecurrence(shift.id, r.id)}
 													>
 														<Trash2 className="h-4 w-4" />

@@ -91,40 +91,56 @@ export function CenterHoursForm({ initialRows }: Props) {
 			{rows.map((r) => (
 				<div
 					key={r.id}
-					className="flex items-center justify-between gap-4 border-b pb-3"
+					className="rounded-md border p-4 md:p-0 md:border-0 md:border-b md:pb-3"
 				>
-					<div className="w-32 font-semibold">{weekdayNames[r.weekday]}</div>
+					<div className="grid gap-3 md:grid-cols-[120px_auto_1fr_1fr] md:items-center">
+						{/* Day */}
+						<div className="font-semibold md:w-32">
+							{weekdayNames[r.weekday]}
+						</div>
 
-					{/* Closed toggle */}
-					<div className="flex items-center gap-2">
-						<Switch
-							checked={r.isClosed}
-							onCheckedChange={(v) => updateRow(r.id, { isClosed: v })}
-						/>
-						<Label>Closed</Label>
+						{/* Closed toggle */}
+						<div className="flex items-center gap-2">
+							<Switch
+								checked={r.isClosed}
+								onCheckedChange={(v) => updateRow(r.id, { isClosed: v })}
+							/>
+							<Label>Closed</Label>
+						</div>
+
+						{/* Time inputs */}
+						{!r.isClosed ? (
+							<>
+								<div className="flex items-center gap-2">
+									<Label className="w-14 md:hidden">Open</Label>
+									<Input
+										type="time"
+										value={getValue(r, 'opensAt')}
+										onChange={(e) =>
+											updateDraft(r.id, { opensAt: e.target.value })
+										}
+										onBlur={() => saveDraft(r.id)}
+									/>
+								</div>
+
+								<div className="flex items-center gap-2">
+									<Label className="w-14 md:hidden">Close</Label>
+									<Input
+										type="time"
+										value={getValue(r, 'closesAt')}
+										onChange={(e) =>
+											updateDraft(r.id, { closesAt: e.target.value })
+										}
+										onBlur={() => saveDraft(r.id)}
+									/>
+								</div>
+							</>
+						) : (
+							<div className="text-sm text-muted-foreground md:col-span-2">
+								Closed all day
+							</div>
+						)}
 					</div>
-
-					{/* Time inputs */}
-					{!r.isClosed && (
-						<>
-							<Input
-								type="time"
-								className="w-28"
-								value={getValue(r, 'opensAt')}
-								onChange={(e) => updateDraft(r.id, { opensAt: e.target.value })}
-								onBlur={() => saveDraft(r.id)}
-							/>
-							<Input
-								type="time"
-								className="w-28"
-								value={getValue(r, 'closesAt')}
-								onChange={(e) =>
-									updateDraft(r.id, { closesAt: e.target.value })
-								}
-								onBlur={() => saveDraft(r.id)}
-							/>
-						</>
-					)}
 				</div>
 			))}
 

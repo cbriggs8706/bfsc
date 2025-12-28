@@ -63,15 +63,18 @@ export function AdminCaseTypes({ initialTypes }: { initialTypes: CaseType[] }) {
 				<Button onClick={handleCreate}>Add</Button>
 			</Card>
 
-			<div className="space-y-3">
+			<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 				{types.map((t) => (
-					<Card key={t.id} className="p-4 flex items-center justify-between">
+					<Card
+						key={t.id}
+						className="p-4 flex flex-col sm:items-center sm:justify-between"
+					>
 						<div className="flex items-center gap-3">
 							<span className="text-lg">{t.icon}</span>
 							<span className="font-medium">{t.name}</span>
 						</div>
 
-						<div className="flex items-center gap-2">
+						<div className="flex items-center gap-2 mt-3 sm:mt-0">
 							<span className="text-sm text-muted-foreground">
 								{t.isActive ? 'Active' : 'Disabled'}
 							</span>

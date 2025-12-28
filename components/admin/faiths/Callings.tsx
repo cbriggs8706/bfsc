@@ -10,6 +10,7 @@ import {
 	deleteCalling,
 } from '@/app/actions/faiths'
 import type { Calling } from '@/types/faiths'
+import { Card } from '@/components/ui/card'
 
 export function CallingsManager({
 	initialCallings,
@@ -21,7 +22,7 @@ export function CallingsManager({
 	const [isSaving, setIsSaving] = useState(false)
 
 	return (
-		<div className="space-y-4 max-w-lg">
+		<div className="space-y-4">
 			{/* Add calling */}
 			<div className="flex gap-2">
 				<Input
@@ -59,7 +60,7 @@ export function CallingsManager({
 			</div>
 
 			{/* Existing callings */}
-			<div className="space-y-2">
+			<Card className=" p-4">
 				{callings.map((calling) => (
 					<CallingRow
 						key={calling.id}
@@ -69,7 +70,7 @@ export function CallingsManager({
 						}
 					/>
 				))}
-			</div>
+			</Card>
 		</div>
 	)
 }

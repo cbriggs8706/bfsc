@@ -18,12 +18,12 @@ export function FaithRow({ faith }: { faith: Faith }) {
 	const [isSaving, setIsSaving] = useState(false)
 
 	return (
-		<div className="border rounded p-3 space-y-2">
+		<div className="border bg-card rounded-md p-3 space-y-2">
 			{/* Faith header */}
 			<div className="flex items-center gap-2">
 				<Button
 					size="sm"
-					variant="ghost"
+					variant="outline"
 					onClick={() => setOpen((prev) => !prev)}
 				>
 					{open ? '−' : '+'}
@@ -37,7 +37,7 @@ export function FaithRow({ faith }: { faith: Faith }) {
 							updateFaith(faith.id, { name })
 						}
 					}}
-					className="max-w-xs"
+					className="w-full"
 				/>
 
 				<Button

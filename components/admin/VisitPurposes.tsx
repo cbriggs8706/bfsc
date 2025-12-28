@@ -82,7 +82,7 @@ export function VisitPurposes({ initialPurposes }: Props) {
 	return (
 		<div className="space-y-6">
 			{/* Create */}
-			<div className="flex items-end gap-3">
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-end">
 				<div className="flex-1">
 					<Label>Name</Label>
 					<Input
@@ -96,24 +96,36 @@ export function VisitPurposes({ initialPurposes }: Props) {
 				</Button>
 			</div>
 
-			{/* Table */}
-			<Table>
-				<TableHeader>
-					<TableRow>
-						<TableHead>Sort</TableHead>
-						<TableHead>Name</TableHead>
-						<TableHead>Active</TableHead>
-						<TableHead className="text-right">Actions</TableHead>
-					</TableRow>
-				</TableHeader>
+			{/* ========================= */}
+			{/* Mobile view (cards) */}
+			{/* ========================= */}
+			<div className="space-y-3 md:hidden">
+				{purposes.map((p) => (
+					<div key={p.id} className="border rounded-lg p-3 space-y-3">
+						<div className="flex items-center justify-between">
+							<span className="font-semibold text-sm">Visit Purpose</span>
+							<Button
+								variant="destructive"
+								size="sm"
+								onClick={() => deletePurpose(p.id)}
+							>
+								Delete
+							</Button>
+						</div>
 
-				<TableBody>
-					{purposes.map((p) => (
-						<TableRow key={p.id}>
-							<TableCell>
+						<div>
+							<Label className="text-xs">Name</Label>
+							<Input
+								value={p.name}
+								onChange={(e) => updatePurpose(p.id, { name: e.target.value })}
+							/>
+						</div>
+
+						<div className="flex items-center gap-3">
+							<div className="flex-1">
+								<Label className="text-xs">Sort Order</Label>
 								<Input
 									type="number"
-									className="w-20"
 									value={p.sortOrder ?? 0}
 									onChange={(e) =>
 										updatePurpose(p.id, {
@@ -121,38 +133,84 @@ export function VisitPurposes({ initialPurposes }: Props) {
 										})
 									}
 								/>
-							</TableCell>
+							</div>
 
-							<TableCell>
-								<Input
-									value={p.name}
-									onChange={(e) =>
-										updatePurpose(p.id, { name: e.target.value })
-									}
-								/>
-							</TableCell>
-
-							<TableCell>
+							<div className="flex items-center gap-2 pt-5">
 								<Switch
 									checked={p.isActive}
 									onCheckedChange={(value) =>
 										updatePurpose(p.id, { isActive: value })
 									}
 								/>
-							</TableCell>
+								<Label className="text-xs">Active</Label>
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
 
-							<TableCell className="text-right">
-								<Button
-									variant="destructive"
-									onClick={() => deletePurpose(p.id)}
-								>
-									Delete
-								</Button>
-							</TableCell>
+			{/* ========================= */}
+			{/* Desktop view (table) */}
+			{/* ========================= */}
+			<div className="hidden md:block">
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead className="w-24">Sort</TableHead>
+							<TableHead>Name</TableHead>
+							<TableHead className="w-24">Active</TableHead>
+							<TableHead className="text-right w-32">Actions</TableHead>
 						</TableRow>
-					))}
-				</TableBody>
-			</Table>
+					</TableHeader>
+
+					<TableBody>
+						{purposes.map((p) => (
+							<TableRow key={p.id}>
+								<TableCell>
+									<Input
+										type="number"
+										className="w-20"
+										value={p.sortOrder ?? 0}
+										onChange={(e) =>
+											updatePurpose(p.id, {
+												sortOrder: Number(e.target.value),
+											})
+										}
+									/>
+								</TableCell>
+
+								<TableCell>
+									<Input
+										value={p.name}
+										onChange={(e) =>
+											updatePurpose(p.id, { name: e.target.value })
+										}
+									/>
+								</TableCell>
+
+								<TableCell>
+									<Switch
+										checked={p.isActive}
+										onCheckedChange={(value) =>
+											updatePurpose(p.id, { isActive: value })
+										}
+									/>
+								</TableCell>
+
+								<TableCell className="text-right">
+									<Button
+										variant="destructive"
+										size="sm"
+										onClick={() => deletePurpose(p.id)}
+									>
+										Delete
+									</Button>
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
+			</div>
 		</div>
 	)
 }
