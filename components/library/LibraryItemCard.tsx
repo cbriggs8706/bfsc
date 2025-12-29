@@ -44,9 +44,9 @@ export function LibraryItemCard({ item, locale, currentUser }: Props) {
 	}
 
 	return (
-		<Card className="p-4 space-y-2">
+		<Card className="p-4 -space-y-2">
 			<div
-				className="font-semibold cursor-pointer"
+				className="text-lg font-semibold cursor-pointer"
 				onClick={() => router.push(`/${locale}/library/${item.id}`)}
 			>
 				{item.name}
@@ -56,7 +56,7 @@ export function LibraryItemCard({ item, locale, currentUser }: Props) {
 				{item.authorManufacturer && ` • ${item.authorManufacturer}`}
 			</div>
 
-			<div className="flex flex-wrap gap-1">
+			<div className="flex flex-wrap gap-6">
 				{item.tags.map((tag) => (
 					<Badge
 						key={tag}
@@ -69,14 +69,14 @@ export function LibraryItemCard({ item, locale, currentUser }: Props) {
 				))}
 			</div>
 
-			<div className="flex gap-2 text-sm flex-wrap">
-				<Badge variant="outline">Total {item.counts.total}</Badge>
-				<Badge className="bg-green-600">Avail {item.counts.available}</Badge>
-				<Badge className="bg-amber-500">Out {item.counts.checkedOut}</Badge>
+			<div className="flex gap-6 text-sm flex-wrap">
+				<span>Total: {item.counts.total}</span>
+				<span>Avail: {item.counts.available}</span>
+				<span>Out: {item.counts.checkedOut}</span>
 			</div>
 
 			{canEdit && (
-				<div className="flex gap-2 pt-2">
+				<div className="flex gap-6 pt-2">
 					<Button size="sm" variant="outline" asChild>
 						<Link href={`/${locale}/library/update/${item.id}`}>Edit</Link>
 					</Button>

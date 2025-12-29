@@ -57,7 +57,7 @@
 		"title": "Library",
 		"item": "Library Item",
 		"inventory": "Library Inventory",
-		"sub": "Books and equipment available at the center",
+		"sub": "Books and equipment available for checking out at the center.",
 		"create": "Create Library Item",
 		"createSub": "Add a book or piece of equipment to inventory.",
 		"updateSub": "Update details about a book or piece of equipment to inventory.",

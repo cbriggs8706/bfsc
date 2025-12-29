@@ -9,8 +9,7 @@ import {
 import { ReservationForm } from '@/components/resource/ReservationForm'
 import type { Reservation, Resource } from '@/types/resource'
 import { getTranslations } from 'next-intl/server'
-import { resource } from '@/db'
-import { readResources } from '@/lib/actions/resource/resource'
+import { readAllResources } from '@/lib/actions/resource/resource'
 import { getAppSettings } from '@/lib/actions/app-settings'
 
 type Props = {
@@ -37,9 +36,9 @@ export default async function Page({ params }: Props) {
 		redirect(`/${locale}/admin/reservation`)
 	}
 
-	const rawResources = await readResources()
+	const { items } = await readAllResources()
 
-	const resources = rawResources.map((r) => ({
+	const resources = items.map((r) => ({
 		...r,
 		type: r.type as Resource['type'],
 	}))

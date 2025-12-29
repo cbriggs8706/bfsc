@@ -1,4 +1,4 @@
-// lib/actions/library/library-actions.ts
+// lib/actions/library/library.ts
 'use server'
 
 import { db } from '@/db'
@@ -154,7 +154,6 @@ export async function readAllLibraryItems(filters?: {
 /* ------------------------------------------------------------------ */
 
 export async function createLibraryItem(
-	userId: string,
 	input: LibraryItemInput
 ): Promise<LibraryActionResult & { id?: string }> {
 	try {

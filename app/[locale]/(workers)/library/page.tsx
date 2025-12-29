@@ -3,7 +3,7 @@ import { LibraryItemsTable } from '@/components/library/LibraryItemsTable'
 import { requireCurrentUser } from '@/utils/require-current-user'
 import { LibraryFilters } from '@/components/library/LibraryFilters'
 import { LibraryFilterDrawer } from '@/components/library/LibraryFilterDrawer'
-import { readAllLibraryItems } from '@/lib/actions/library/library-actions'
+import { readAllLibraryItems } from '@/lib/actions/library/library'
 import { LibraryPagination } from '@/components/library/LibraryPagination'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
@@ -45,7 +45,7 @@ export default async function LibraryPage({ params, searchParams }: Props) {
 
 	return (
 		<div className="p-4 space-y-4">
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col md:flex-row gap-4 justify-between">
 				<div>
 					<h1 className="text-3xl font-bold">{t('library.inventory')}</h1>
 					<p className="text-sm text-muted-foreground">{t('library.sub')}</p>

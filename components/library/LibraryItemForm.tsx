@@ -11,7 +11,7 @@ import {
 	createLibraryItem,
 	updateLibraryItem,
 	deleteLibraryItem,
-} from '@/lib/actions/library/library-actions'
+} from '@/lib/actions/library/library'
 
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import {
@@ -39,7 +39,7 @@ import Link from 'next/link'
 
 /* ---------------- ZOD = SINGLE SOURCE OF TRUTH ---------------- */
 
-function createFormSchema(t: (key: string) => string) {
+function libraryItemSchema(t: (key: string) => string) {
 	return z.object({
 		type: z.enum(['book', 'equipment']),
 		name: z.string().min(1, t('nameRequired')),
@@ -54,16 +54,14 @@ function createFormSchema(t: (key: string) => string) {
 }
 
 /* ---------------- COMPONENT ---------------- */
-type BaseFormValues = z.infer<ReturnType<typeof createFormSchema>>
+type BaseFormValues = z.infer<ReturnType<typeof libraryItemSchema>>
 
 export function LibraryItemForm({
-	userId,
 	locale,
 	mode,
 	initialValues,
 	itemId,
 }: {
-	userId: string
 	locale: string
 	mode?: Mode
 	initialValues?: Partial<BaseFormValues>
@@ -76,7 +74,7 @@ export function LibraryItemForm({
 	const disabled = mode === 'read' || mode === 'delete'
 
 	const formSchema = React.useMemo(() => {
-		const base = createFormSchema(t)
+		const base = libraryItemSchema(t)
 		if (mode === 'read' || mode === 'delete') {
 			return base.partial()
 		}
@@ -158,7 +156,7 @@ export function LibraryItemForm({
 			const result =
 				mode === 'update'
 					? await updateLibraryItem(itemId!, payload)
-					: await createLibraryItem(userId, payload)
+					: await createLibraryItem(payload)
 
 			if (!result.ok) {
 				if (result.fieldErrors?.copyCodesText) {

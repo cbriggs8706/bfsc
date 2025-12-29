@@ -102,30 +102,22 @@ export function LibraryItemsDesktopTable({
 							</TableCell>
 							<TableCell>
 								<div className="flex gap-2 flex-wrap">
-									<Badge
-										variant="outline"
+									<span
+										className=""
 										onClick={(e) => {
 											e.stopPropagation()
 										}}
 									>
-										Total {item.counts.total}
-									</Badge>
-									<Badge
-										className="bg-(--green-logo)"
+										Avail: {item.counts.available}
+									</span>
+									<span
+										className=""
 										onClick={(e) => {
 											e.stopPropagation()
 										}}
 									>
-										Avail {item.counts.available}
-									</Badge>
-									<Badge
-										className="bg-(--orange-accent)"
-										onClick={(e) => {
-											e.stopPropagation()
-										}}
-									>
-										Out {item.counts.checkedOut}
-									</Badge>
+										Out: {item.counts.checkedOut}
+									</span>
 								</div>
 							</TableCell>
 							<TableCell className="text-right space-x-2">

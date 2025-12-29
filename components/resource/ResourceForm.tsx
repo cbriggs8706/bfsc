@@ -1,10 +1,26 @@
-// components/resource/ResourceForm.tsx
 'use client'
 
-import { useState, useTransition } from 'react'
-import { Button } from '@/components/ui/button'
+import * as React from 'react'
+import { useTransition } from 'react'
+import { Controller, useForm, useWatch } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+
+import {
+	createResource,
+	updateResource,
+	deleteResource,
+} from '@/lib/actions/resource/resource'
+
+import { Card, CardContent, CardFooter } from '@/components/ui/card'
+import {
+	Field,
+	FieldGroup,
+	FieldLabel,
+	FieldError,
+} from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { InputGroupTextarea } from '@/components/ui/input-group'
 import { Switch } from '@/components/ui/switch'
 import {
 	Select,
@@ -13,228 +29,321 @@ import {
 	SelectContent,
 	SelectItem,
 } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
-import { Card } from '@/components/ui/card'
-import { Resource } from '@/types/resource'
-import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Required } from '@/components/Required'
+
 import { useTranslations } from 'next-intl'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { Mode } from '@/types/crud'
 
-type Mode = 'create' | 'read' | 'update' | 'delete'
+/* ------------------------------------------------------------------ */
+/* ZOD — single source of truth (FORM SHAPE) */
+/* ------------------------------------------------------------------ */
 
-type Props = {
-	initial?: Partial<Resource>
-	mode: Mode
-	onSubmit?: (data: Resource) => Promise<unknown>
-	resourceId?: string
-	locale?: string
+function resourceSchema(t: (key: string) => string) {
+	return z.object({
+		name: z.string().min(1, t('nameRequired')),
+		type: z.enum(['equipment', 'room', 'booth', 'activity']),
+
+		defaultDurationMinutes: z.preprocess((v) => Number(v), z.number().min(1)),
+
+		maxConcurrent: z.preprocess((v) => Number(v), z.number().min(1)),
+
+		// ⚠️ undefined only — NEVER null in forms
+		capacity: z.preprocess(
+			(v) => (v === '' ? undefined : Number(v)),
+			z.number().min(1).optional()
+		),
+
+		isActive: z.boolean(),
+
+		description: z.string().optional(),
+		requiredItems: z.string().optional(),
+		prep: z.string().optional(),
+		notes: z.string().optional(),
+		link: z.string().url().optional().or(z.literal('')),
+	})
 }
 
-export function ResourceForm({
-	initial = {},
-	mode,
-	onSubmit,
-	resourceId,
-	locale,
-}: Props) {
-	const [pending, startTransition] = useTransition()
-	const disabled = mode === 'read' || mode === 'delete'
-	const t = useTranslations('common')
+type BaseFormValues = z.infer<ReturnType<typeof resourceSchema>>
 
-	const [form, setForm] = useState<Resource>({
-		id: initial.id ?? '',
-		name: initial.name ?? '',
-		type: initial.type ?? 'equipment',
-		defaultDurationMinutes: initial.defaultDurationMinutes ?? 120,
-		maxConcurrent: initial.maxConcurrent ?? 1,
-		capacity: initial.capacity ?? null,
-		isActive: initial.isActive ?? true,
-		description: initial.description ?? '',
-		requiredItems: initial.requiredItems ?? '',
-		prep: initial.prep ?? '',
-		notes: initial.notes ?? '',
-		link: initial.link ?? '',
+/* ------------------------------------------------------------------ */
+/* COMPONENT */
+/* ------------------------------------------------------------------ */
+
+export function ResourceForm({
+	locale,
+	mode,
+	initialValues,
+	resourceId,
+}: {
+	locale: string
+	mode?: Mode
+	initialValues?: Partial<BaseFormValues>
+	resourceId?: string
+}) {
+	const [pending, startTransition] = useTransition()
+	const router = useRouter()
+	const t = useTranslations('common')
+	const disabled = mode === 'read' || mode === 'delete'
+
+	const baseSchema = React.useMemo(() => resourceSchema(t), [t])
+
+	const formSchema = React.useMemo(() => {
+		return mode === 'read' || mode === 'delete'
+			? baseSchema.partial()
+			: baseSchema
+	}, [baseSchema, mode])
+
+	type FormValues = z.output<typeof baseSchema>
+
+	const form = useForm<FormValues>({
+		resolver: zodResolver(formSchema),
+		defaultValues: {
+			name: '',
+			type: 'equipment',
+			defaultDurationMinutes: 120,
+			maxConcurrent: 1,
+			capacity: undefined,
+			isActive: true,
+			description: '',
+			requiredItems: '',
+			prep: '',
+			notes: '',
+			link: '',
+			...initialValues,
+		},
 	})
 
-	function submit() {
-		if (!onSubmit) return
+	const {
+		control,
+		handleSubmit,
+		reset,
+		formState: { isSubmitting },
+	} = form
+
+	const type = useWatch({ control, name: 'type' })
+
+	async function onSubmit(values: FormValues) {
 		startTransition(async () => {
-			await onSubmit(form)
+			if (mode === 'delete') {
+				await deleteResource(resourceId!)
+				router.push(`/${locale}/admin/center/resources`)
+				return
+			}
+
+			// 🔁 FORM → ACTION normalization (Library pattern)
+			const payload = {
+				name: values.name!,
+				type: values.type!,
+				defaultDurationMinutes: values.defaultDurationMinutes!,
+				maxConcurrent: values.type === 'activity' ? 1 : values.maxConcurrent!,
+				capacity: values.type === 'activity' ? values.capacity ?? null : null,
+				isActive: values.isActive ?? true,
+
+				description: values.description || undefined,
+				requiredItems: values.requiredItems || undefined,
+				prep: values.prep || undefined,
+				notes: values.notes || undefined,
+				link: values.link || undefined,
+			}
+
+			if (mode === 'update') {
+				await updateResource(resourceId!, payload)
+			} else {
+				await createResource(payload)
+			}
+
+			reset()
+			router.push(`/${locale}/admin/center/resources`)
 		})
 	}
 
 	return (
-		<Card className="p-6">
-			{/* Name */}
-			<div className="space-y-1">
-				<Label>{t('name')}</Label>
-				<Input
-					value={form.name}
-					disabled={disabled}
-					onChange={(e) => setForm({ ...form, name: e.target.value })}
-				/>
-			</div>
-
-			{/* Type / Duration / Capacity / Active */}
-			<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-				<div className="space-y-1">
-					<Label>{t('resource.type')}</Label>
-					<Select
-						value={form.type}
-						disabled={disabled}
-						onValueChange={(v) =>
-							setForm({ ...form, type: v as Resource['type'] })
-						}
-					>
-						<SelectTrigger>
-							<SelectValue />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="equipment">
-								{t('resource.types.equipment')}
-							</SelectItem>
-							<SelectItem value="room">{t('resource.types.room')}</SelectItem>
-							<SelectItem value="booth">{t('resource.types.booth')}</SelectItem>
-							<SelectItem value="activity">
-								{t('resource.types.activity')}
-							</SelectItem>
-						</SelectContent>
-					</Select>
-				</div>
-
-				<div className="space-y-1">
-					<Label>
-						{t('resource.defaultDuration')} ({t('minutes')})
-					</Label>
-					<Input
-						type="number"
-						disabled={disabled}
-						value={form.defaultDurationMinutes}
-						onChange={(e) =>
-							setForm({
-								...form,
-								defaultDurationMinutes: +e.target.value,
-							})
-						}
-					/>
-				</div>
-
-				<div className="space-y-1">
-					<Label>
-						{form.type === 'activity'
-							? `${t('resource.capacity')}`
-							: `${t('resource.maxConcurrent')}`}
-					</Label>
-
-					{form.type === 'activity' ? (
-						<Input
-							type="number"
-							disabled={disabled}
-							value={form.capacity ?? ''}
-							onChange={(e) => setForm({ ...form, capacity: +e.target.value })}
+		<Card className="w-full">
+			<CardContent>
+				<form id="resource-form" onSubmit={handleSubmit(onSubmit)}>
+					<FieldGroup>
+						{/* Name */}
+						<Controller
+							name="name"
+							control={control}
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid}>
+									<FieldLabel>
+										<Required>{t('name')}</Required>
+									</FieldLabel>
+									<Input {...field} disabled={disabled} />
+									{fieldState.invalid && (
+										<FieldError errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
 						/>
-					) : (
-						<Input
-							type="number"
-							disabled={disabled}
-							value={form.maxConcurrent}
-							onChange={(e) =>
-								setForm({
-									...form,
-									maxConcurrent: +e.target.value,
-								})
-							}
-						/>
-					)}
-				</div>
 
-				<div className="space-y-1">
-					<Label>{t('status')}</Label>
-					<div className="flex items-center gap-2 h-10">
-						<Switch
-							checked={form.isActive}
-							disabled={disabled}
-							onCheckedChange={(v) => setForm({ ...form, isActive: v })}
+						{/* Type */}
+						<Controller
+							name="type"
+							control={control}
+							render={({ field }) => (
+								<Field>
+									<FieldLabel>{t('resource.type')}</FieldLabel>
+									<Select
+										value={field.value}
+										onValueChange={field.onChange}
+										disabled={disabled}
+									>
+										<SelectTrigger>
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="equipment">
+												{t('resource.types.equipment')}
+											</SelectItem>
+											<SelectItem value="room">
+												{t('resource.types.room')}
+											</SelectItem>
+											<SelectItem value="booth">
+												{t('resource.types.booth')}
+											</SelectItem>
+											<SelectItem value="activity">
+												{t('resource.types.activity')}
+											</SelectItem>
+										</SelectContent>
+									</Select>
+								</Field>
+							)}
 						/>
-						<span className="text-sm">Active</span>
+
+						{/* Duration */}
+						<Controller
+							name="defaultDurationMinutes"
+							control={control}
+							render={({ field }) => (
+								<Field>
+									<FieldLabel>
+										{t('resource.defaultDuration')} ({t('minutes')})
+									</FieldLabel>
+									<Input type="number" {...field} disabled={disabled} />
+								</Field>
+							)}
+						/>
+
+						{/* Capacity / Max Concurrent */}
+						<Controller
+							name={type === 'activity' ? 'capacity' : 'maxConcurrent'}
+							control={control}
+							render={({ field }) => (
+								<Field>
+									<FieldLabel>
+										{type === 'activity'
+											? t('resource.capacity')
+											: t('resource.maxConcurrent')}
+									</FieldLabel>
+									<Input
+										type="number"
+										{...field}
+										value={field.value ?? ''}
+										disabled={disabled}
+									/>
+								</Field>
+							)}
+						/>
+
+						{/* Active */}
+						<Controller
+							name="isActive"
+							control={control}
+							render={({ field }) => (
+								<Field>
+									<FieldLabel>{t('status')}</FieldLabel>
+									<div className="flex items-center gap-2 h-10">
+										<Switch
+											checked={field.value}
+											onCheckedChange={field.onChange}
+											disabled={disabled}
+										/>
+										<span className="text-sm">
+											{field.value ? t('active') : t('inactive')}
+										</span>
+									</div>
+								</Field>
+							)}
+						/>
+
+						{/* Text Areas */}
+						{(['description', 'requiredItems', 'prep', 'notes'] as const).map(
+							(name) => (
+								<Controller
+									key={name}
+									name={name}
+									control={control}
+									render={({ field }) => (
+										<Field>
+											<FieldLabel>{t(name)}</FieldLabel>
+											<InputGroupTextarea
+												{...field}
+												rows={3}
+												disabled={disabled}
+											/>
+										</Field>
+									)}
+								/>
+							)
+						)}
+
+						{/* Link */}
+						<Controller
+							name="link"
+							control={control}
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid}>
+									<FieldLabel>{t('link')}</FieldLabel>
+									<Input {...field} disabled={disabled} />
+									{fieldState.invalid && (
+										<FieldError errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+					</FieldGroup>
+				</form>
+			</CardContent>
+
+			<CardFooter>
+				{mode === 'read' && resourceId && (
+					<div className="flex gap-2">
+						<Link
+							href={`/${locale}/admin/center/resources/update/${resourceId}`}
+						>
+							<Button>{t('edit')}</Button>
+						</Link>
+						<Link
+							href={`/${locale}/admin/center/resources/delete/${resourceId}`}
+						>
+							<Button variant="destructive">{t('delete')}</Button>
+						</Link>
 					</div>
-				</div>
-			</div>
+				)}
 
-			{/* Text areas */}
-			<div className="space-y-1">
-				<Label>{t('description')}</Label>
-				<Textarea
-					disabled={disabled}
-					value={form.description ?? ''}
-					onChange={(e) => setForm({ ...form, description: e.target.value })}
-				/>
-			</div>
-
-			<div className="space-y-1">
-				<Label>{t('resource.requiredItems')}</Label>
-				<Textarea
-					disabled={disabled}
-					value={form.requiredItems ?? ''}
-					onChange={(e) => setForm({ ...form, requiredItems: e.target.value })}
-				/>
-			</div>
-
-			<div className="space-y-1">
-				<Label>{t('resource.preparation')}</Label>
-				<Textarea
-					disabled={disabled}
-					value={form.prep ?? ''}
-					onChange={(e) => setForm({ ...form, prep: e.target.value })}
-				/>
-			</div>
-
-			<div className="space-y-1">
-				<Label>{t('notes')}</Label>
-				<Textarea
-					disabled={disabled}
-					value={form.notes ?? ''}
-					onChange={(e) => setForm({ ...form, notes: e.target.value })}
-				/>
-			</div>
-
-			<div className="space-y-1">
-				<Label>{t('link')}</Label>
-				<Input
-					disabled={disabled}
-					value={form.link ?? ''}
-					onChange={(e) => setForm({ ...form, link: e.target.value })}
-				/>
-			</div>
-
-			{/* Actions */}
-			{mode === 'read' && resourceId && locale && (
-				<div className="flex gap-2">
-					<Link href={`/${locale}/admin/center/resources/update/${resourceId}`}>
-						<Button>{t('edit')}</Button>
-					</Link>
-
-					<Link href={`/${locale}/admin/center/resources/delete/${resourceId}`}>
-						<Button variant="destructive">{t('delete')}</Button>
-					</Link>
-				</div>
-			)}
-
-			{/* Submit */}
-			{mode !== 'read' && (
-				<Button
-					variant={mode === 'delete' ? 'destructive' : 'default'}
-					onClick={submit}
-					disabled={pending}
-				>
-					{pending
-						? 'Working…'
-						: mode === 'delete'
-						? `${t('delete')} ${t('resource.title')}`
-						: mode === 'update'
-						? `${t('update')} ${t('resource.title')}`
-						: `${t('create')} ${t('resource.title')}`}
-				</Button>
-			)}
+				{mode !== 'read' && (
+					<Button
+						type="submit"
+						form="resource-form"
+						variant={mode === 'delete' ? 'destructive' : 'default'}
+						disabled={pending || isSubmitting}
+					>
+						{pending
+							? 'Working…'
+							: mode === 'delete'
+							? `${t('delete')} ${t('resource.title')}`
+							: mode === 'update'
+							? `${t('update')} ${t('resource.title')}`
+							: `${t('create')} ${t('resource.title')}`}
+					</Button>
+				)}
+			</CardFooter>
 		</Card>
 	)
 }

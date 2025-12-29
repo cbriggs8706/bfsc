@@ -77,40 +77,40 @@ export function LibraryFilters({ tags }: Props) {
 				value={value}
 				onChange={(e) => setValue(e.target.value)}
 			/>
+			<div className="flex-row flex justify-between gap-4">
+				{/* Tags */}
+				<Select
+					value={params.get('tag') ?? 'all'}
+					onValueChange={(v) => update('tag', v === 'all' ? undefined : v)}
+				>
+					<SelectTrigger className="w-1/2 md:w-48">
+						<SelectValue placeholder="All tags" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">All tags</SelectItem>
+						{tags.map((tag) => (
+							<SelectItem key={tag} value={tag}>
+								{tag}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
 
-			{/* Tags */}
-			<Select
-				value={params.get('tag') ?? 'all'}
-				onValueChange={(v) => update('tag', v === 'all' ? undefined : v)}
-			>
-				<SelectTrigger className="md:w-48">
-					<SelectValue placeholder="All tags" />
-				</SelectTrigger>
-				<SelectContent>
-					<SelectItem value="all">All tags</SelectItem>
-					{tags.map((tag) => (
-						<SelectItem key={tag} value={tag}>
-							{tag}
-						</SelectItem>
-					))}
-				</SelectContent>
-			</Select>
+				<Select
+					value={params.get('type') ?? 'all'}
+					onValueChange={(v) => update('type', v === 'all' ? undefined : v)}
+				>
+					<SelectTrigger className="w-1/2 md:w-48">
+						<SelectValue placeholder="All types" />
+					</SelectTrigger>
 
-			<Select
-				value={params.get('type') ?? 'all'}
-				onValueChange={(v) => update('type', v === 'all' ? undefined : v)}
-			>
-				<SelectTrigger className="md:w-48">
-					<SelectValue placeholder="All types" />
-				</SelectTrigger>
-
-				<SelectContent>
-					<SelectItem value="all">All Types</SelectItem>
-					<SelectItem value="book">Books</SelectItem>
-					<SelectItem value="equipment">Equipment</SelectItem>
-				</SelectContent>
-			</Select>
-
+					<SelectContent>
+						<SelectItem value="all">All Types</SelectItem>
+						<SelectItem value="book">Books</SelectItem>
+						<SelectItem value="equipment">Equipment</SelectItem>
+					</SelectContent>
+				</Select>
+			</div>
 			<Button
 				variant="outline"
 				onClick={() => {
@@ -118,7 +118,7 @@ export function LibraryFilters({ tags }: Props) {
 					router.push('?')
 				}}
 			>
-				Clear
+				Clear Filters
 			</Button>
 		</div>
 	)

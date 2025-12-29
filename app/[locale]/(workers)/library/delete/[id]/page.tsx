@@ -1,7 +1,6 @@
 // app/[locale]/(workers)/library/delete/[id]/page.tsx
 import { LibraryItemForm } from '@/components/library/LibraryItemForm'
-import { readLibraryItem } from '@/lib/actions/library/library-actions'
-import { requireCurrentUser } from '@/utils/require-current-user'
+import { readLibraryItem } from '@/lib/actions/library/library'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 
@@ -12,7 +11,6 @@ interface Props {
 export default async function DeleteLibraryItemPage({ params }: Props) {
 	const { locale, id } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
-	const currentUser = await requireCurrentUser(locale)
 
 	const item = await readLibraryItem(id)
 	if (!item) notFound()
@@ -27,7 +25,6 @@ export default async function DeleteLibraryItemPage({ params }: Props) {
 			</div>
 
 			<LibraryItemForm
-				userId={currentUser.id}
 				locale={locale}
 				mode="delete"
 				itemId={id}

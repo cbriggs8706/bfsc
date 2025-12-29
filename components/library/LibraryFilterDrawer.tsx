@@ -25,12 +25,12 @@ export function LibraryFilterDrawer({ tags }: Props) {
 					</Button>
 				</SheetTrigger>
 
-				<SheetContent side="bottom">
+				<SheetContent side="top">
 					<SheetHeader>
 						<SheetTitle>Filter library</SheetTitle>
 					</SheetHeader>
 
-					<div className="mt-4">
+					<div className="mt-4 p-4">
 						<LibraryFilters tags={tags} />
 					</div>
 				</SheetContent>

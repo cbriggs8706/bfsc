@@ -1,10 +1,9 @@
 // app/[locale]/admin/center/resources/update/[id]/page.tsx
-import { redirect } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { readResource } from '@/lib/actions/resource/resource'
 import { ResourceForm } from '@/components/resource/ResourceForm'
-import type { Resource } from '@/types/resource'
 import { getTranslations } from 'next-intl/server'
 
 type Props = {
@@ -19,7 +18,7 @@ export default async function Page({ params }: Props) {
 	if (!session) redirect(`/${locale}`)
 
 	const resource = await readResource(id)
-	if (!resource) redirect(`/${locale}/admin/center/resources`)
+	if (!resource) notFound()
 
 	return (
 		<div className="p-4 space-y-4">
@@ -28,13 +27,10 @@ export default async function Page({ params }: Props) {
 				<p className="text-sm text-muted-foreground">{t('resource.readSub')}</p>
 			</div>
 			<ResourceForm
-				mode="read"
-				initial={{
-					...resource,
-					type: resource.type as Resource['type'],
-				}}
-				resourceId={resource.id}
 				locale={locale}
+				mode="read"
+				resourceId={id}
+				initialValues={resource}
 			/>
 		</div>
 	)

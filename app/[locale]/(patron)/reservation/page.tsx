@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import type { Resource } from '@/types/resource'
 import { getTranslations } from 'next-intl/server'
-import { readResources } from '@/lib/actions/resource/resource'
+import { readAllResources } from '@/lib/actions/resource/resource'
 import { getAppSettings } from '@/lib/actions/app-settings'
 import { PatronReservationForm } from '@/components/resource/PatronReservationForm'
 
@@ -19,8 +19,9 @@ export default async function Page({ params }: Props) {
 	const session = await getServerSession(authOptions)
 	if (!session) redirect(`/${locale}/login?redirect=/${locale}/reservation`)
 
-	const rawResources = await readResources()
-	const resources = rawResources.map((r) => ({
+	const { items } = await readAllResources()
+
+	const resources = items.map((r) => ({
 		...r,
 		type: r.type as Resource['type'],
 	}))

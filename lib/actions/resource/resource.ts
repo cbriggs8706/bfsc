@@ -1,68 +1,206 @@
 // lib/actions/resource/resource.ts
 'use server'
-import { unstable_noStore as noStore, revalidatePath } from 'next/cache'
 
-import { eq } from 'drizzle-orm'
-import { db, resource } from '@/db'
-import { Resource } from '@/types/resource'
-import { redirect } from 'next/navigation'
-export async function readResource(id: string) {
-	noStore()
-	return db.query.resource.findFirst({
-		where: eq(resource.id, id),
-	})
+import { db } from '@/db'
+import { eq, and, ilike, count } from 'drizzle-orm'
+import { resource } from '@/db/schema/tables/resource'
+
+/* ------------------------------------------------------------------ */
+/* Types */
+/* ------------------------------------------------------------------ */
+
+export type ResourceType = 'equipment' | 'room' | 'booth' | 'activity'
+
+export type ResourceInput = {
+	name: string
+	type: ResourceType
+	defaultDurationMinutes: number
+	maxConcurrent: number
+	capacity?: number | null
+	isActive: boolean
+
+	description?: string
+	requiredItems?: string
+	prep?: string
+	notes?: string
+	link?: string
 }
 
-export async function readResources() {
-	noStore()
-	return db.query.resource.findMany({
-		orderBy: resource.name,
+export type ResourceActionResult = { ok: true; id?: string } | { ok: false }
+
+/* ------------------------------------------------------------------ */
+/* READ (FORM-SHAPED) */
+/* ------------------------------------------------------------------ */
+
+export async function readResource(resourceId: string) {
+	const row = await db.query.resource.findFirst({
+		where: eq(resource.id, resourceId),
 	})
+
+	if (!row) return null
+
+	// 🔁 Normalize DB → form shape HERE
+	return {
+		name: row.name,
+		type: row.type as ResourceType,
+
+		defaultDurationMinutes: row.defaultDurationMinutes,
+		maxConcurrent: row.maxConcurrent,
+		capacity: row.capacity ?? undefined,
+		isActive: row.isActive,
+
+		description: row.description ?? '',
+		requiredItems: row.requiredItems ?? '',
+		prep: row.prep ?? '',
+		notes: row.notes ?? '',
+		link: row.link ?? '',
+	}
 }
 
-/* -------------------------------------------------
- * Writes
- * ------------------------------------------------- */
+/* ------------------------------------------------------------------ */
+/* READ ALL (TABLE / LIST SHAPE) */
+/* ------------------------------------------------------------------ */
 
-export async function createResource(input: Resource, locale?: string) {
-	const { id, ...data } = input
+export async function readAllResources(filters?: {
+	q?: string
+	type?: ResourceType
+	page?: number
+	pageSize?: number
+}) {
+	const page = filters?.page ?? 1
+	const pageSize = filters?.pageSize ?? 25
 
-	if (!input.name || input.name.length < 3) {
-		throw new Error('Name is required')
+	const where = []
+
+	if (filters?.type) {
+		where.push(eq(resource.type, filters.type))
 	}
 
-	await db.insert(resource).values({
-		...data,
-		capacity: input.type === 'activity' ? input.capacity : null,
-		maxConcurrent: input.type === 'activity' ? 1 : input.maxConcurrent,
+	if (filters?.q) {
+		where.push(ilike(resource.name, `%${filters.q}%`))
+	}
+
+	const rows = await db
+		.select({
+			id: resource.id,
+			name: resource.name,
+			type: resource.type,
+			isActive: resource.isActive,
+			defaultDurationMinutes: resource.defaultDurationMinutes,
+			maxConcurrent: resource.maxConcurrent,
+			capacity: resource.capacity,
+			description: resource.description,
+			requiredItems: resource.requiredItems,
+			prep: resource.prep,
+			notes: resource.notes,
+			link: resource.link,
+		})
+		.from(resource)
+		.where(and(...where))
+		.limit(pageSize)
+		.offset((page - 1) * pageSize)
+		.orderBy(resource.name)
+
+	const [{ count: total }] = await db
+		.select({ count: count() })
+		.from(resource)
+		.where(and(...where))
+
+	return {
+		items: rows.map((r) => ({
+			id: r.id,
+			name: r.name,
+			type: r.type as ResourceType,
+			isActive: r.isActive,
+			defaultDurationMinutes: r.defaultDurationMinutes,
+			maxConcurrent: r.maxConcurrent,
+			capacity: r.capacity,
+			description: r.description,
+			requiredItems: r.requiredItems,
+			prep: r.prep,
+			notes: r.notes,
+			link: r.link,
+		})),
+		total: Number(total),
+	}
+}
+
+/* ------------------------------------------------------------------ */
+/* CREATE */
+/* ------------------------------------------------------------------ */
+
+export async function createResource(
+	input: ResourceInput
+): Promise<ResourceActionResult> {
+	const id = await db.transaction(async (tx) => {
+		const [row] = await tx
+			.insert(resource)
+			.values({
+				name: input.name,
+				type: input.type,
+				defaultDurationMinutes: input.defaultDurationMinutes,
+
+				maxConcurrent: input.type === 'activity' ? 1 : input.maxConcurrent,
+
+				capacity: input.type === 'activity' ? input.capacity ?? null : null,
+
+				isActive: input.isActive,
+
+				description: input.description ?? null,
+				requiredItems: input.requiredItems ?? null,
+				prep: input.prep ?? null,
+				notes: input.notes ?? null,
+				link: input.link ?? null,
+			})
+			.returning({ id: resource.id })
+
+		return row.id
 	})
 
-	revalidatePath('/admin/center/resources')
-
-	// ✅ Redirect after successful create
-	redirect(`/${locale ?? 'en'}/admin/center/resources`)
+	return { ok: true, id }
 }
 
-export async function updateResource(id: string, input: Resource) {
-	if (!id) throw new Error('Missing resource id')
+/* ------------------------------------------------------------------ */
+/* UPDATE */
+/* ------------------------------------------------------------------ */
 
-	const [row] = await db
-		.update(resource)
-		.set({
-			...input,
-			capacity: input.type === 'activity' ? input.capacity : null,
-			maxConcurrent: input.type === 'activity' ? 1 : input.maxConcurrent,
-		})
-		.where(eq(resource.id, id))
-		.returning()
+export async function updateResource(
+	resourceId: string,
+	input: ResourceInput
+): Promise<ResourceActionResult> {
+	await db.transaction(async (tx) => {
+		await tx
+			.update(resource)
+			.set({
+				name: input.name,
+				type: input.type,
+				defaultDurationMinutes: input.defaultDurationMinutes,
 
-	revalidatePath(`/admin/center/resources/${id}`)
-	return row
+				maxConcurrent: input.type === 'activity' ? 1 : input.maxConcurrent,
+
+				capacity: input.type === 'activity' ? input.capacity ?? null : null,
+
+				isActive: input.isActive,
+
+				description: input.description ?? null,
+				requiredItems: input.requiredItems ?? null,
+				prep: input.prep ?? null,
+				notes: input.notes ?? null,
+				link: input.link ?? null,
+			})
+			.where(eq(resource.id, resourceId))
+	})
+
+	return { ok: true }
 }
 
-export async function deleteResource(id: string) {
-	if (!id) throw new Error('Missing resource id')
+/* ------------------------------------------------------------------ */
+/* DELETE */
+/* ------------------------------------------------------------------ */
 
-	await db.delete(resource).where(eq(resource.id, id))
-	revalidatePath('/admin/center/resources')
+export async function deleteResource(
+	resourceId: string
+): Promise<{ ok: true }> {
+	await db.delete(resource).where(eq(resource.id, resourceId))
+	return { ok: true }
 }
