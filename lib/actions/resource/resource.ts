@@ -1,52 +1,43 @@
-// lib/actions/resource/resource.ts
 'use server'
 
 import { db } from '@/db'
-import { eq, and, ilike, count } from 'drizzle-orm'
-import { resource } from '@/db/schema/tables/resource'
-
-/* ------------------------------------------------------------------ */
-/* Types */
-/* ------------------------------------------------------------------ */
+import { and, eq, ilike, count } from 'drizzle-orm'
+import { resources } from '@/db/schema/tables/resources'
+import { z } from 'zod'
 
 export type ResourceType = 'equipment' | 'room' | 'booth' | 'activity'
 
-export type ResourceInput = {
-	name: string
-	type: ResourceType
-	defaultDurationMinutes: number
-	maxConcurrent: number
-	capacity?: number | null
-	isActive: boolean
+const ResourceInputSchema = z.object({
+	name: z.string().min(1),
+	type: z.enum(['equipment', 'room', 'booth', 'activity']),
+	defaultDurationMinutes: z.coerce.number().min(1),
+	maxConcurrent: z.coerce.number().optional(),
+	capacity: z.coerce.number().nullable().optional(),
+	isActive: z.coerce.boolean(),
+	description: z.string().optional(),
+	requiredItems: z.string().optional(),
+	prep: z.string().optional(),
+	notes: z.string().optional(),
+	link: z.union([z.literal(''), z.string().url()]).optional(),
+})
 
-	description?: string
-	requiredItems?: string
-	prep?: string
-	notes?: string
-	link?: string
-}
-
-export type ResourceActionResult = { ok: true; id?: string } | { ok: false }
-
-/* ------------------------------------------------------------------ */
-/* READ (FORM-SHAPED) */
-/* ------------------------------------------------------------------ */
+export type ResourceActionResult = { ok: true } | { ok: false; message: string }
 
 export async function readResource(resourceId: string) {
-	const row = await db.query.resource.findFirst({
-		where: eq(resource.id, resourceId),
+	const row = await db.query.resources.findFirst({
+		where: eq(resources.id, resourceId),
 	})
 
 	if (!row) return null
 
-	// 🔁 Normalize DB → form shape HERE
 	return {
 		name: row.name,
 		type: row.type as ResourceType,
 
-		defaultDurationMinutes: row.defaultDurationMinutes,
-		maxConcurrent: row.maxConcurrent,
-		capacity: row.capacity ?? undefined,
+		defaultDurationMinutes: String(row.defaultDurationMinutes),
+		maxConcurrent: String(row.maxConcurrent),
+		capacity: row.capacity !== null ? String(row.capacity) : '',
+
 		isActive: row.isActive,
 
 		description: row.description ?? '',
@@ -56,10 +47,6 @@ export async function readResource(resourceId: string) {
 		link: row.link ?? '',
 	}
 }
-
-/* ------------------------------------------------------------------ */
-/* READ ALL (TABLE / LIST SHAPE) */
-/* ------------------------------------------------------------------ */
 
 export async function readAllResources(filters?: {
 	q?: string
@@ -73,37 +60,37 @@ export async function readAllResources(filters?: {
 	const where = []
 
 	if (filters?.type) {
-		where.push(eq(resource.type, filters.type))
+		where.push(eq(resources.type, filters.type))
 	}
 
 	if (filters?.q) {
-		where.push(ilike(resource.name, `%${filters.q}%`))
+		where.push(ilike(resources.name, `%${filters.q}%`))
 	}
 
 	const rows = await db
 		.select({
-			id: resource.id,
-			name: resource.name,
-			type: resource.type,
-			isActive: resource.isActive,
-			defaultDurationMinutes: resource.defaultDurationMinutes,
-			maxConcurrent: resource.maxConcurrent,
-			capacity: resource.capacity,
-			description: resource.description,
-			requiredItems: resource.requiredItems,
-			prep: resource.prep,
-			notes: resource.notes,
-			link: resource.link,
+			id: resources.id,
+			name: resources.name,
+			type: resources.type,
+			isActive: resources.isActive,
+			defaultDurationMinutes: resources.defaultDurationMinutes,
+			maxConcurrent: resources.maxConcurrent,
+			capacity: resources.capacity,
+			description: resources.description,
+			requiredItems: resources.requiredItems,
+			prep: resources.prep,
+			notes: resources.notes,
+			link: resources.link,
 		})
-		.from(resource)
+		.from(resources)
 		.where(and(...where))
+		.orderBy(resources.name)
 		.limit(pageSize)
 		.offset((page - 1) * pageSize)
-		.orderBy(resource.name)
 
 	const [{ count: total }] = await db
 		.select({ count: count() })
-		.from(resource)
+		.from(resources)
 		.where(and(...where))
 
 	return {
@@ -125,82 +112,53 @@ export async function readAllResources(filters?: {
 	}
 }
 
-/* ------------------------------------------------------------------ */
-/* CREATE */
-/* ------------------------------------------------------------------ */
-
-export async function createResource(
-	input: ResourceInput
+export async function saveResource(
+	mode: 'create' | 'update',
+	resourceId: string | null,
+	raw: unknown
 ): Promise<ResourceActionResult> {
-	const id = await db.transaction(async (tx) => {
-		const [row] = await tx
-			.insert(resource)
-			.values({
-				name: input.name,
-				type: input.type,
-				defaultDurationMinutes: input.defaultDurationMinutes,
+	const parsed = ResourceInputSchema.safeParse(raw)
 
-				maxConcurrent: input.type === 'activity' ? 1 : input.maxConcurrent,
+	if (!parsed.success) {
+		return {
+			ok: false,
+			message: parsed.error.issues[0]?.message ?? 'Invalid data',
+		}
+	}
 
-				capacity: input.type === 'activity' ? input.capacity ?? null : null,
+	const data = parsed.data
 
-				isActive: input.isActive,
-
-				description: input.description ?? null,
-				requiredItems: input.requiredItems ?? null,
-				prep: input.prep ?? null,
-				notes: input.notes ?? null,
-				link: input.link ?? null,
+	try {
+		if (mode === 'create') {
+			await db.insert(resources).values({
+				...data,
+				maxConcurrent: data.type === 'activity' ? 1 : data.maxConcurrent ?? 1,
+				capacity: data.type === 'activity' ? data.capacity ?? null : null,
 			})
-			.returning({ id: resource.id })
+		} else {
+			await db
+				.update(resources)
+				.set({
+					...data,
+					maxConcurrent: data.type === 'activity' ? 1 : data.maxConcurrent ?? 1,
+					capacity: data.type === 'activity' ? data.capacity ?? null : null,
+				})
+				.where(eq(resources.id, resourceId!))
+		}
 
-		return row.id
-	})
-
-	return { ok: true, id }
+		return { ok: true }
+	} catch {
+		return { ok: false, message: 'Database error' }
+	}
 }
-
-/* ------------------------------------------------------------------ */
-/* UPDATE */
-/* ------------------------------------------------------------------ */
-
-export async function updateResource(
-	resourceId: string,
-	input: ResourceInput
-): Promise<ResourceActionResult> {
-	await db.transaction(async (tx) => {
-		await tx
-			.update(resource)
-			.set({
-				name: input.name,
-				type: input.type,
-				defaultDurationMinutes: input.defaultDurationMinutes,
-
-				maxConcurrent: input.type === 'activity' ? 1 : input.maxConcurrent,
-
-				capacity: input.type === 'activity' ? input.capacity ?? null : null,
-
-				isActive: input.isActive,
-
-				description: input.description ?? null,
-				requiredItems: input.requiredItems ?? null,
-				prep: input.prep ?? null,
-				notes: input.notes ?? null,
-				link: input.link ?? null,
-			})
-			.where(eq(resource.id, resourceId))
-	})
-
-	return { ok: true }
-}
-
-/* ------------------------------------------------------------------ */
-/* DELETE */
-/* ------------------------------------------------------------------ */
 
 export async function deleteResource(
 	resourceId: string
-): Promise<{ ok: true }> {
-	await db.delete(resource).where(eq(resource.id, resourceId))
-	return { ok: true }
+): Promise<{ ok: true } | { ok: false; message: string }> {
+	try {
+		await db.delete(resources).where(eq(resources.id, resourceId))
+		return { ok: true }
+	} catch {
+		return { ok: false, message: 'Delete failed' }
+	}
 }

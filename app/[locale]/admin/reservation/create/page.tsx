@@ -2,9 +2,8 @@
 import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { createReservation } from '@/lib/actions/resource/reservation'
 import { ReservationForm } from '@/components/resource/ReservationForm'
-import type { Reservation, Resource } from '@/types/resource'
+import type { Resource } from '@/types/resource'
 import { getTranslations } from 'next-intl/server'
 import { readAllResources } from '@/lib/actions/resource/resource'
 import { getAppSettings } from '@/lib/actions/app-settings'
@@ -20,12 +19,6 @@ export default async function Page({ params }: Props) {
 	const session = await getServerSession(authOptions)
 	if (!session || session.user.role !== 'Admin') {
 		redirect(`/${locale}`)
-	}
-
-	async function submit(data: Reservation) {
-		'use server'
-		await createReservation(data)
-		redirect(`/${locale}/admin/reservation`)
 	}
 
 	const { items } = await readAllResources()
@@ -49,8 +42,8 @@ export default async function Page({ params }: Props) {
 				</p>
 			</div>
 			<ReservationForm
+				locale={locale}
 				mode="create"
-				onSubmit={submit}
 				resources={resources}
 				timeFormat={timeFormat}
 				canSetStatus

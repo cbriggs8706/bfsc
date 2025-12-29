@@ -2,7 +2,7 @@
 'use server'
 
 import { db } from '@/db'
-import { resource } from '@/db/schema/tables/resource'
+import { resources } from '@/db/schema/tables/resources'
 import { requireAdmin } from '@/lib/requireAdmin'
 import { eq } from 'drizzle-orm'
 import { ResourceType } from '@/types/resource'
@@ -23,7 +23,7 @@ export async function createResource(input: {
 	await requireAdmin()
 
 	const [created] = await db
-		.insert(resource)
+		.insert(resources)
 		.values({
 			name: input.name,
 			type: input.type,
@@ -70,7 +70,7 @@ export async function updateResource(input: {
 	await requireAdmin()
 
 	await db
-		.update(resource)
+		.update(resources)
 		.set({
 			name: input.name,
 			type: input.type,
@@ -78,11 +78,14 @@ export async function updateResource(input: {
 			maxConcurrent: input.maxConcurrent,
 			isActive: input.isActive,
 		})
-		.where(eq(resource.id, input.id))
+		.where(eq(resources.id, input.id))
 }
 
 export async function deactivateResource(id: string) {
 	await requireAdmin()
 
-	await db.update(resource).set({ isActive: false }).where(eq(resource.id, id))
+	await db
+		.update(resources)
+		.set({ isActive: false })
+		.where(eq(resources.id, id))
 }

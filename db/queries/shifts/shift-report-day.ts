@@ -1,5 +1,5 @@
 // db/queries/shifts/shift-report-day.ts
-import { db, reservation, resource, user } from '@/db'
+import { db, reservations, resources, user } from '@/db'
 import {
 	weeklyShifts,
 	kioskShiftLogs,
@@ -18,7 +18,7 @@ const TZ = 'America/Boise'
 function toReservationStatus(value: string): ReservationStatus {
 	switch (value) {
 		case 'pending':
-		case 'approved':
+		case 'confirmed':
 		case 'denied':
 		case 'cancelled':
 			return value
@@ -81,23 +81,23 @@ export async function getShiftReportDay(dateStr: string) {
 			)
 		)
 
-	const reservations = await db
+	const allReservations = await db
 		.select({
-			id: reservation.id,
-			startTime: reservation.startTime,
-			endTime: reservation.endTime,
-			status: reservation.status,
-			resourceName: resource.name,
+			id: reservations.id,
+			startTime: reservations.startTime,
+			endTime: reservations.endTime,
+			status: reservations.status,
+			resourceName: resources.name,
 			patronName: user.name,
 			patronEmail: user.email,
 		})
-		.from(reservation)
-		.innerJoin(resource, eq(reservation.resourceId, resource.id))
-		.innerJoin(user, eq(reservation.userId, user.id))
+		.from(reservations)
+		.innerJoin(resources, eq(reservations.resourceId, resources.id))
+		.innerJoin(user, eq(reservations.userId, user.id))
 		.where(
 			and(
-				gte(reservation.startTime, startUtc),
-				lte(reservation.startTime, endUtc)
+				gte(reservations.startTime, startUtc),
+				lte(reservations.startTime, endUtc)
 			)
 		)
 
@@ -114,7 +114,7 @@ export async function getShiftReportDay(dateStr: string) {
 		const shiftStartUtc = fromZonedTime(shiftStartBoise, TZ)
 		const shiftEndUtc = fromZonedTime(shiftEndBoise, TZ)
 
-		const reservationsInShift = reservations
+		const reservationsInShift = allReservations
 			.filter((r) => r.startTime >= shiftStartUtc && r.startTime <= shiftEndUtc)
 			.map((r) => ({
 				id: r.id,
@@ -195,7 +195,7 @@ export async function getShiftReportDay(dateStr: string) {
 								arrivedAt: p.arrivedAt,
 								departedAt: p.departedAt,
 							})),
-						reservations: reservations
+						reservations: allReservations
 							.filter((r) => !assignedReservationIds.has(r.id))
 							.map((r) => ({
 								id: r.id,

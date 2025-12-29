@@ -28,7 +28,7 @@ export async function notifyReservationSubmitted(
 	}
 }
 
-export async function notifyReservationApproved(
+export async function notifyReservationConfirmation(
 	tx: Tx,
 	input: {
 		userId: string
@@ -38,10 +38,10 @@ export async function notifyReservationApproved(
 ) {
 	await notify(tx, {
 		userId: input.userId,
-		type: 'reservation_approved',
+		type: 'reservation_confirmed',
 		message: `Your reservation for ${
 			input.resourceName
-		} on ${input.startTime.toLocaleString()} was approved.`,
+		} on ${input.startTime.toLocaleString()} was confirmed.`,
 	})
 }
 

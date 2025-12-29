@@ -2,15 +2,14 @@
 import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import {
-	readReservation,
-	updateReservation,
-} from '@/lib/actions/resource/reservation'
+
+import { readReservationForForm } from '@/lib/actions/resource/reservation'
+
 import { ReservationForm } from '@/components/resource/ReservationForm'
-import type { Reservation, Resource } from '@/types/resource'
 import { getTranslations } from 'next-intl/server'
 import { readAllResources } from '@/lib/actions/resource/resource'
 import { getAppSettings } from '@/lib/actions/app-settings'
+import type { Resource } from '@/types/resource'
 
 type Props = {
 	params: Promise<{ locale: string; id: string }>
@@ -25,22 +24,17 @@ export default async function Page({ params }: Props) {
 		redirect(`/${locale}`)
 	}
 
-	const reservation = await readReservation(id)
+	// ✅ FORM-SHAPED READ
+	const reservation = await readReservationForForm(id)
 	if (!reservation) {
 		redirect(`/${locale}/admin/reservation`)
 	}
 
 	const { items } = await readAllResources()
-
 	const resources = items.map((r) => ({
 		...r,
 		type: r.type as Resource['type'],
 	}))
-	async function submit(data: Reservation) {
-		'use server'
-		await updateReservation(id, data)
-		redirect(`/${locale}/admin/reservation`)
-	}
 
 	const settings = await getAppSettings()
 	const timeFormat = settings.timeFormat
@@ -57,18 +51,10 @@ export default async function Page({ params }: Props) {
 			</div>
 
 			<ReservationForm
-				mode="update"
-				initial={{
-					...reservation,
-					startTime: new Date(reservation.startTime),
-					endTime: new Date(reservation.endTime),
-					assistanceLevel:
-						reservation.assistanceLevel as Reservation['assistanceLevel'],
-					status: reservation.status as Reservation['status'],
-				}}
-				onSubmit={submit}
-				reservationId={reservation.id}
 				locale={locale}
+				mode="update"
+				reservationId={reservation.id}
+				initialValues={reservation}
 				resources={resources}
 				timeFormat={timeFormat}
 				canSetStatus

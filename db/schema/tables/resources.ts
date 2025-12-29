@@ -14,8 +14,8 @@ import {
 import { sql } from 'drizzle-orm'
 import { user } from './auth'
 
-export const resource = pgTable(
-	'resource',
+export const resources = pgTable(
+	'resources',
 	{
 		id: uuid('id').defaultRandom().primaryKey(),
 		name: varchar('name', { length: 100 }).notNull(), // "VHS Digitization Station 1", "Recording Booth A"
@@ -47,14 +47,14 @@ export const resource = pgTable(
 	})
 )
 
-export const reservation = pgTable(
-	'reservation',
+export const reservations = pgTable(
+	'reservations',
 	{
 		id: uuid('id').defaultRandom().primaryKey(),
 
 		resourceId: uuid('resource_id')
 			.notNull()
-			.references(() => resource.id, { onDelete: 'restrict' }),
+			.references(() => resources.id, { onDelete: 'restrict' }),
 
 		userId: uuid('user_id')
 			.notNull()
@@ -72,9 +72,9 @@ export const reservation = pgTable(
 			.default(false),
 
 		status: varchar('status', { length: 20 }).notNull().default('pending'),
-		// 'pending' | 'approved' | 'denied' | 'cancelled'
+		// 'pending' | 'confirmed' | 'denied' | 'cancelled'
 
-		approvedByUserId: uuid('approved_by_user_id').references(() => user.id, {
+		confirmedByUserId: uuid('confirmed_by_user_id').references(() => user.id, {
 			onDelete: 'set null',
 		}),
 
@@ -96,7 +96,7 @@ export const reservation = pgTable(
 		),
 		statusCheck: check(
 			'reservation_status_ck',
-			sql`${t.status} in ('pending','approved','denied','cancelled')`
+			sql`${t.status} in ('pending','confirmed','denied','cancelled')`
 		),
 		assistanceCheck: check(
 			'reservation_assistance_level_ck',
@@ -116,11 +116,11 @@ export const resourceBlock = pgTable(
 
 		resourceId: uuid('resource_id')
 			.notNull()
-			.references(() => resource.id, { onDelete: 'cascade' }),
+			.references(() => resources.id, { onDelete: 'cascade' }),
 
 		blockResourceId: uuid('block_resource_id')
 			.notNull()
-			.references(() => resource.id, { onDelete: 'cascade' }),
+			.references(() => resources.id, { onDelete: 'cascade' }),
 	},
 	(t) => ({
 		uniq: uniqueIndex('resource_block_unique_idx').on(

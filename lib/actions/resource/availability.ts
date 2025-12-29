@@ -3,7 +3,7 @@
 
 import { unstable_noStore as noStore } from 'next/cache'
 import { and, eq, lt, gt, ne } from 'drizzle-orm'
-import { db, reservation, resource } from '@/db'
+import { db, reservations, resources } from '@/db'
 import { operatingHours, specialHours } from '@/db/schema/tables/shifts'
 import type { AvailabilityResponse, TimeSlot } from '@/types/resource'
 import { addMinutes } from 'date-fns'
@@ -31,8 +31,8 @@ export async function getAvailability({
 	 * 1) Load resource
 	 * ------------------------------------------- */
 
-	const r = await db.query.resource.findFirst({
-		where: eq(resource.id, resourceId),
+	const r = await db.query.resources.findFirst({
+		where: eq(resources.id, resourceId),
 		columns: {
 			id: true,
 			defaultDurationMinutes: true,
@@ -103,19 +103,19 @@ export async function getAvailability({
 	 * 4) Fetch overlapping reservations
 	 * ------------------------------------------- */
 
-	const existing = await db.query.reservation.findMany({
+	const existing = await db.query.reservations.findMany({
 		where: and(
-			eq(reservation.resourceId, resourceId),
+			eq(reservations.resourceId, resourceId),
 
 			// overlaps the open window
-			lt(reservation.startTime, closeDt),
-			gt(reservation.endTime, openDt),
+			lt(reservations.startTime, closeDt),
+			gt(reservations.endTime, openDt),
 
-			ne(reservation.status, 'cancelled'),
-			ne(reservation.status, 'denied'),
+			ne(reservations.status, 'cancelled'),
+			ne(reservations.status, 'denied'),
 
 			excludeReservationId
-				? ne(reservation.id, excludeReservationId)
+				? ne(reservations.id, excludeReservationId)
 				: undefined
 		),
 		columns: {

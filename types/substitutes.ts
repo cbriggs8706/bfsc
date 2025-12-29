@@ -80,5 +80,5 @@ export type NotificationType =
 	| 'sub_request_reopened'
 	| 'sub_request_volunteered'
 	| 'reservation_submitted'
-	| 'reservation_approved'
+	| 'reservation_confirmed'
 	| 'reservation_denied'

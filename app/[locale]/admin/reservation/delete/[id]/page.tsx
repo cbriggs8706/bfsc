@@ -2,12 +2,9 @@
 import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import {
-	readReservation,
-	deleteReservation,
-} from '@/lib/actions/resource/reservation'
+import { readReservationForForm } from '@/lib/actions/resource/reservation'
 import { ReservationForm } from '@/components/resource/ReservationForm'
-import type { Reservation, Resource } from '@/types/resource'
+import type { Resource } from '@/types/resource'
 import { getTranslations } from 'next-intl/server'
 import { readAllResources } from '@/lib/actions/resource/resource'
 import { getAppSettings } from '@/lib/actions/app-settings'
@@ -25,14 +22,8 @@ export default async function Page({ params }: Props) {
 		redirect(`/${locale}`)
 	}
 
-	const reservation = await readReservation(id)
+	const reservation = await readReservationForForm(id)
 	if (!reservation) {
-		redirect(`/${locale}/admin/reservation`)
-	}
-
-	async function submit(_: Reservation) {
-		'use server'
-		await deleteReservation(id)
 		redirect(`/${locale}/admin/reservation`)
 	}
 
@@ -56,15 +47,7 @@ export default async function Page({ params }: Props) {
 
 			<ReservationForm
 				mode="delete"
-				initial={{
-					...reservation,
-					startTime: new Date(reservation.startTime),
-					endTime: new Date(reservation.endTime),
-					assistanceLevel:
-						reservation.assistanceLevel as Reservation['assistanceLevel'],
-					status: reservation.status as Reservation['status'],
-				}}
-				onSubmit={submit}
+				initialValues={reservation}
 				reservationId={reservation.id}
 				locale={locale}
 				resources={resources}

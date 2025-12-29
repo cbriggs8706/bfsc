@@ -41,9 +41,7 @@ export type AvailabilityResponse = {
 
 export type ResourceType = 'equipment' | 'room' | 'booth' | 'activity'
 
-export type ReservationStatus = 'pending' | 'approved' | 'denied' | 'cancelled'
-
-export type ReservationApprovalAction = 'approve' | 'deny'
+export type ReservationStatus = 'pending' | 'confirmed' | 'denied' | 'cancelled'
 
 //TODO delete? duplicate of Reservation
 export type ReservationListItem = {
@@ -75,7 +73,7 @@ export interface Reservation {
 
 	status?: ReservationStatus
 
-	approvedByUserId?: string | null
+	confirmedByUserId?: string | null
 	assignedWorkerId?: string | null
 
 	notes?: string | null
@@ -110,4 +108,18 @@ export type ReservationWithUser = Reservation & {
 		id: string
 		name: string
 	}
+}
+
+export type ResourceFormValues = {
+	name: string
+	type: ResourceType
+	defaultDurationMinutes: string
+	maxConcurrent: string
+	capacity: string
+	isActive: boolean
+	description: string
+	requiredItems: string
+	prep: string
+	notes: string
+	link: string
 }

@@ -20,6 +20,8 @@
 	"delete": "Delete",
 	"deleteSub": "This will permanently delete this item. This action cannot be undone.",
 	"cancel": "Cancel",
+	"required": "Required",
+	"working": "Working",
 	"update": "Update",
 	"sub": "Lorem ipsum",
 	"name": "Name",
@@ -117,7 +119,7 @@
 		"requestSuccessSub": "Your request has been received and will be reviewed shortly.",
 		"statuses": {
 			"pending": "Pending",
-			"approved": "Approved",
+			"confirmed": "Confirmed",
 			"denied": "Denied",
 			"cancelled": "Cancelled"
 		}
@@ -138,7 +140,7 @@
 	"selectTimeBlock": "Select Time Block",
 	"selectResourceFirst": "Select Resource First",
 	"loading": "Loading",
-	"noAvailability": "No Availability",
+	"noAvailability": "No availability for date selected",
 	"attendees": "Attendees",
 	"assistance": "Assistance Level",
 	"none": "None",

@@ -6,7 +6,7 @@ import type { Resource } from '@/types/resource'
 import { getTranslations } from 'next-intl/server'
 import { readAllResources } from '@/lib/actions/resource/resource'
 import { getAppSettings } from '@/lib/actions/app-settings'
-import { PatronReservationForm } from '@/components/resource/PatronReservationForm'
+import { ReservationForm } from '@/components/resource/ReservationForm'
 
 type Props = {
 	params: Promise<{ locale: string }>
@@ -17,10 +17,11 @@ export default async function Page({ params }: Props) {
 	const t = await getTranslations({ locale, namespace: 'common' })
 
 	const session = await getServerSession(authOptions)
-	if (!session) redirect(`/${locale}/login?redirect=/${locale}/reservation`)
+	if (!session) {
+		redirect(`/${locale}/login?redirect=/${locale}/reservation`)
+	}
 
 	const { items } = await readAllResources()
-
 	const resources = items.map((r) => ({
 		...r,
 		type: r.type as Resource['type'],
@@ -37,10 +38,13 @@ export default async function Page({ params }: Props) {
 				</p>
 			</div>
 
-			<PatronReservationForm
+			<ReservationForm
 				locale={locale}
+				mode="create"
 				resources={resources}
 				timeFormat={settings.timeFormat}
+				canSetStatus={false}
+				successRedirect={`/${locale}/reservation/success`}
 			/>
 		</div>
 	)

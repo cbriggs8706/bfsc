@@ -1,16 +1,12 @@
 'use client'
 
-import * as React from 'react'
-import { useTransition } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-
-import {
-	createResource,
-	updateResource,
-	deleteResource,
-} from '@/lib/actions/resource/resource'
+import { z } from 'zod'
+import { useTranslations } from 'next-intl'
+import { useRouter } from 'next/navigation'
+import { deleteResource, saveResource } from '@/lib/actions/resource/resource'
+import type { ResourceFormValues } from '@/types/resource'
 
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import {
@@ -31,81 +27,61 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Required } from '@/components/Required'
-
-import { useTranslations } from 'next-intl'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { Mode } from '@/types/crud'
 
 /* ------------------------------------------------------------------ */
-/* ZOD — single source of truth (FORM SHAPE) */
+/* Schema (UI validation only — strings) */
 /* ------------------------------------------------------------------ */
 
-function resourceSchema(t: (key: string) => string) {
+function schema(t: (k: string) => string) {
 	return z.object({
 		name: z.string().min(1, t('nameRequired')),
 		type: z.enum(['equipment', 'room', 'booth', 'activity']),
-
-		defaultDurationMinutes: z.preprocess((v) => Number(v), z.number().min(1)),
-
-		maxConcurrent: z.preprocess((v) => Number(v), z.number().min(1)),
-
-		// ⚠️ undefined only — NEVER null in forms
-		capacity: z.preprocess(
-			(v) => (v === '' ? undefined : Number(v)),
-			z.number().min(1).optional()
-		),
-
+		defaultDurationMinutes: z.string().min(1, t('required')),
+		maxConcurrent: z.string().catch(''),
+		capacity: z.string().catch(''),
 		isActive: z.boolean(),
-
-		description: z.string().optional(),
-		requiredItems: z.string().optional(),
-		prep: z.string().optional(),
-		notes: z.string().optional(),
-		link: z.string().url().optional().or(z.literal('')),
+		description: z.string().catch(''),
+		requiredItems: z.string().catch(''),
+		prep: z.string().catch(''),
+		notes: z.string().catch(''),
+		link: z.union([z.literal(''), z.string().url(t('invalidUrl'))]).catch(''),
 	})
 }
 
-type BaseFormValues = z.infer<ReturnType<typeof resourceSchema>>
+/* ------------------------------------------------------------------ */
+/* Props */
+/* ------------------------------------------------------------------ */
+
+type Props = {
+	locale: string
+	mode: Mode
+	resourceId?: string
+	initialValues?: Partial<ResourceFormValues>
+}
 
 /* ------------------------------------------------------------------ */
-/* COMPONENT */
+/* Component */
 /* ------------------------------------------------------------------ */
 
 export function ResourceForm({
 	locale,
 	mode,
-	initialValues,
 	resourceId,
-}: {
-	locale: string
-	mode?: Mode
-	initialValues?: Partial<BaseFormValues>
-	resourceId?: string
-}) {
-	const [pending, startTransition] = useTransition()
-	const router = useRouter()
+	initialValues,
+}: Props) {
 	const t = useTranslations('common')
-	const disabled = mode === 'read' || mode === 'delete'
+	const router = useRouter()
+	const fieldsDisabled = mode === 'read' || mode === 'delete'
 
-	const baseSchema = React.useMemo(() => resourceSchema(t), [t])
-
-	const formSchema = React.useMemo(() => {
-		return mode === 'read' || mode === 'delete'
-			? baseSchema.partial()
-			: baseSchema
-	}, [baseSchema, mode])
-
-	type FormValues = z.output<typeof baseSchema>
-
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
+	const form = useForm<ResourceFormValues>({
+		resolver: zodResolver(schema(t)),
 		defaultValues: {
 			name: '',
 			type: 'equipment',
-			defaultDurationMinutes: 120,
-			maxConcurrent: 1,
-			capacity: undefined,
+			defaultDurationMinutes: '',
+			maxConcurrent: '',
+			capacity: '',
 			isActive: true,
 			description: '',
 			requiredItems: '',
@@ -119,52 +95,50 @@ export function ResourceForm({
 	const {
 		control,
 		handleSubmit,
-		reset,
-		formState: { isSubmitting },
+		setError,
+		formState: { errors, isSubmitting },
 	} = form
 
 	const type = useWatch({ control, name: 'type' })
 
-	async function onSubmit(values: FormValues) {
-		startTransition(async () => {
-			if (mode === 'delete') {
-				await deleteResource(resourceId!)
-				router.push(`/${locale}/admin/center/resources`)
+	async function onSubmit(values: ResourceFormValues) {
+		if (mode === 'delete') {
+			const res = await deleteResource(resourceId!)
+
+			if (!res.ok) {
+				setError('root', { message: res.message })
 				return
 			}
 
-			// 🔁 FORM → ACTION normalization (Library pattern)
-			const payload = {
-				name: values.name!,
-				type: values.type!,
-				defaultDurationMinutes: values.defaultDurationMinutes!,
-				maxConcurrent: values.type === 'activity' ? 1 : values.maxConcurrent!,
-				capacity: values.type === 'activity' ? values.capacity ?? null : null,
-				isActive: values.isActive ?? true,
-
-				description: values.description || undefined,
-				requiredItems: values.requiredItems || undefined,
-				prep: values.prep || undefined,
-				notes: values.notes || undefined,
-				link: values.link || undefined,
-			}
-
-			if (mode === 'update') {
-				await updateResource(resourceId!, payload)
-			} else {
-				await createResource(payload)
-			}
-
-			reset()
 			router.push(`/${locale}/admin/center/resources`)
-		})
-	}
+			return
+		}
 
+		// create / update
+		const res = await saveResource(
+			mode === 'update' ? 'update' : 'create',
+			resourceId ?? null,
+			values
+		)
+
+		if (!res.ok) {
+			setError('root', { message: res.message })
+			return
+		}
+
+		router.push(`/${locale}/admin/center/resources`)
+	}
+	const submitDisabled = isSubmitting || mode === 'read'
 	return (
 		<Card className="w-full">
 			<CardContent>
 				<form id="resource-form" onSubmit={handleSubmit(onSubmit)}>
 					<FieldGroup>
+						{/* Root error */}
+						{errors.root && (
+							<p className="text-sm text-destructive">{errors.root.message}</p>
+						)}
+
 						{/* Name */}
 						<Controller
 							name="name"
@@ -174,8 +148,8 @@ export function ResourceForm({
 									<FieldLabel>
 										<Required>{t('name')}</Required>
 									</FieldLabel>
-									<Input {...field} disabled={disabled} />
-									{fieldState.invalid && (
+									<Input {...field} disabled={fieldsDisabled} />
+									{fieldState.error && (
 										<FieldError errors={[fieldState.error]} />
 									)}
 								</Field>
@@ -192,7 +166,7 @@ export function ResourceForm({
 									<Select
 										value={field.value}
 										onValueChange={field.onChange}
-										disabled={disabled}
+										disabled={fieldsDisabled}
 									>
 										<SelectTrigger>
 											<SelectValue />
@@ -220,12 +194,15 @@ export function ResourceForm({
 						<Controller
 							name="defaultDurationMinutes"
 							control={control}
-							render={({ field }) => (
-								<Field>
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid}>
 									<FieldLabel>
 										{t('resource.defaultDuration')} ({t('minutes')})
 									</FieldLabel>
-									<Input type="number" {...field} disabled={disabled} />
+									<Input type="number" {...field} disabled={fieldsDisabled} />
+									{fieldState.error && (
+										<FieldError errors={[fieldState.error]} />
+									)}
 								</Field>
 							)}
 						/>
@@ -241,12 +218,7 @@ export function ResourceForm({
 											? t('resource.capacity')
 											: t('resource.maxConcurrent')}
 									</FieldLabel>
-									<Input
-										type="number"
-										{...field}
-										value={field.value ?? ''}
-										disabled={disabled}
-									/>
+									<Input type="number" {...field} disabled={fieldsDisabled} />
 								</Field>
 							)}
 						/>
@@ -262,7 +234,7 @@ export function ResourceForm({
 										<Switch
 											checked={field.value}
 											onCheckedChange={field.onChange}
-											disabled={disabled}
+											disabled={fieldsDisabled}
 										/>
 										<span className="text-sm">
 											{field.value ? t('active') : t('inactive')}
@@ -272,7 +244,7 @@ export function ResourceForm({
 							)}
 						/>
 
-						{/* Text Areas */}
+						{/* Text areas */}
 						{(['description', 'requiredItems', 'prep', 'notes'] as const).map(
 							(name) => (
 								<Controller
@@ -285,7 +257,7 @@ export function ResourceForm({
 											<InputGroupTextarea
 												{...field}
 												rows={3}
-												disabled={disabled}
+												disabled={fieldsDisabled}
 											/>
 										</Field>
 									)}
@@ -300,8 +272,8 @@ export function ResourceForm({
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
 									<FieldLabel>{t('link')}</FieldLabel>
-									<Input {...field} disabled={disabled} />
-									{fieldState.invalid && (
+									<Input {...field} disabled={fieldsDisabled} />
+									{fieldState.error && (
 										<FieldError errors={[fieldState.error]} />
 									)}
 								</Field>
@@ -312,30 +284,15 @@ export function ResourceForm({
 			</CardContent>
 
 			<CardFooter>
-				{mode === 'read' && resourceId && (
-					<div className="flex gap-2">
-						<Link
-							href={`/${locale}/admin/center/resources/update/${resourceId}`}
-						>
-							<Button>{t('edit')}</Button>
-						</Link>
-						<Link
-							href={`/${locale}/admin/center/resources/delete/${resourceId}`}
-						>
-							<Button variant="destructive">{t('delete')}</Button>
-						</Link>
-					</div>
-				)}
-
 				{mode !== 'read' && (
 					<Button
 						type="submit"
 						form="resource-form"
+						disabled={submitDisabled}
 						variant={mode === 'delete' ? 'destructive' : 'default'}
-						disabled={pending || isSubmitting}
 					>
-						{pending
-							? 'Working…'
+						{isSubmitting
+							? t('working')
 							: mode === 'delete'
 							? `${t('delete')} ${t('resource.title')}`
 							: mode === 'update'

@@ -1,4 +1,4 @@
-// components/resources/ApprovedReservationsList.tsx
+// components/resources/ConfirmedReservationsList.tsx
 'use client'
 
 import { ReservationListItem } from '@/types/resource'
@@ -17,16 +17,18 @@ const ASSISTANCE_LABELS: Record<
 	full: 'Assistance entire time',
 }
 
-export function ApprovedReservationsList({ items }: Props) {
+export function ConfirmedReservationsList({ items }: Props) {
 	if (items.length === 0) {
 		return (
-			<p className="text-sm text-muted-foreground">No approved reservations.</p>
+			<p className="text-sm text-muted-foreground">
+				No confirmed reservations.
+			</p>
 		)
 	}
 
 	return (
 		<div className="space-y-4">
-			<h2 className="text-xl font-semibold">Approved Reservations</h2>
+			<h2 className="text-xl font-semibold">Confirmed Reservations</h2>
 
 			{items.map((r) => (
 				<Card key={r.id}>
