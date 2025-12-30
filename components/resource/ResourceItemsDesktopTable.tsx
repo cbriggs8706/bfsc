@@ -20,50 +20,72 @@ interface Props {
 
 export function ResourceItemsDesktopTable({ items, locale }: Props) {
 	return (
-		<Table>
-			<TableHeader>
-				<TableRow>
-					<TableHead>Name</TableHead>
-					<TableHead>Duration</TableHead>
-					<TableHead>Capacity</TableHead>
-					<TableHead>Status</TableHead>
-					<TableHead className="text-right">Actions</TableHead>
-				</TableRow>
-			</TableHeader>
+		<div className="w-full overflow-x-auto">
+			<Table className="w-full table-fixed">
+				<TableHeader>
+					<TableRow>
+						{/* Name grows */}
+						<TableHead className="w-auto">Name</TableHead>
 
-			<TableBody>
-				{items.map((r) => (
-					<TableRow
-						key={r.id}
-						className="cursor-pointer hover:bg-muted/50"
-						onClick={() => {
-							window.location.href = `/${locale}/admin/center/resources/${r.id}`
-						}}
-					>
-						<TableCell className="font-medium">{r.name}</TableCell>
-						<TableCell>{r.defaultDurationMinutes} min</TableCell>
-						<TableCell>{r.capacity ?? r.maxConcurrent}</TableCell>
-						<TableCell>{r.isActive ? 'Active' : 'Inactive'}</TableCell>
-						<TableCell className="text-right space-x-2">
-							<Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
-								<Link href={`/${locale}/admin/center/resources/update/${r.id}`}>
-									Edit
-								</Link>
-							</Button>
-							<Button
-								size="sm"
-								variant="destructive"
-								asChild
-								onClick={(e) => e.stopPropagation()}
-							>
-								<Link href={`/${locale}/admin/center/resources/delete/${r.id}`}>
-									Delete
-								</Link>
-							</Button>
-						</TableCell>
+						{/* Fixed small columns */}
+						<TableHead className="w-20">Duration</TableHead>
+						<TableHead className="w-14 text-center">Capacity</TableHead>
+						<TableHead className="w-24">Status</TableHead>
+						<TableHead className="w-26 text-right">Actions</TableHead>
 					</TableRow>
-				))}
-			</TableBody>
-		</Table>
+				</TableHeader>
+
+				<TableBody>
+					{items.map((r) => (
+						<TableRow
+							key={r.id}
+							className="cursor-pointer hover:bg-muted/50"
+							onClick={() =>
+								(window.location.href = `/${locale}/admin/center/resources/${r.id}`)
+							}
+						>
+							{/* Name column */}
+							<TableCell className="font-medium truncate">{r.name}</TableCell>
+
+							<TableCell>{r.defaultDurationMinutes} min</TableCell>
+
+							<TableCell className="text-center">
+								{r.capacity ?? r.maxConcurrent}
+							</TableCell>
+
+							<TableCell>{r.isActive ? 'Active' : 'Inactive'}</TableCell>
+
+							<TableCell>
+								<div className="flex justify-end gap-2">
+									<Button
+										size="sm"
+										asChild
+										onClick={(e) => e.stopPropagation()}
+									>
+										<Link
+											href={`/${locale}/admin/center/resources/update/${r.id}`}
+										>
+											Edit
+										</Link>
+									</Button>
+									<Button
+										size="sm"
+										variant="destructive"
+										asChild
+										onClick={(e) => e.stopPropagation()}
+									>
+										<Link
+											href={`/${locale}/admin/center/resources/delete/${r.id}`}
+										>
+											Delete
+										</Link>
+									</Button>
+								</div>
+							</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
+		</div>
 	)
 }

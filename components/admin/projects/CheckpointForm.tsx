@@ -21,6 +21,14 @@ import {
 	deleteCheckpoint,
 	saveCheckpoint,
 } from '@/lib/actions/projects/checkpoints'
+import { InputGroupTextarea } from '@/components/ui/input-group'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select'
 
 /* ------------------------------------------------------------------
    Form values (strings only)
@@ -30,6 +38,8 @@ export type CheckpointFormValues = {
 	url: string
 	notes: string
 	sortOrder: string
+	estimatedDuration: string
+	difficulty: string
 	projectId: string
 }
 
@@ -40,9 +50,11 @@ export type CheckpointFormValues = {
 function schema(t: (k: string) => string) {
 	return z.object({
 		name: z.string().min(1, t('nameRequired')),
-		url: z.string().url().catch(''),
+		url: z.union([z.literal(''), z.string().url()]).catch(''),
 		notes: z.string().catch(''),
+		difficulty: z.string().catch(''),
 		sortOrder: z.string().catch('0'),
+		estimatedDuration: z.string().catch('1'),
 		projectId: z.string().uuid(''),
 	})
 }
@@ -72,7 +84,9 @@ export function CheckpointForm({
 			name: '',
 			url: '',
 			notes: '',
+			difficulty: '',
 			sortOrder: '0',
+			estimatedDuration: '1',
 			projectId: '',
 			...initialValues,
 		},
@@ -101,7 +115,8 @@ export function CheckpointForm({
 			}
 
 			router.push(
-				successRedirect ?? `/${locale}/admin/projects/${values.projectId}`
+				successRedirect ??
+					`/${locale}/admin/projects/${values.projectId}/checkpoints`
 			)
 			return
 		}
@@ -119,7 +134,8 @@ export function CheckpointForm({
 		}
 
 		router.push(
-			successRedirect ?? `/${locale}/admin/projects/${values.projectId}`
+			successRedirect ??
+				`/${locale}/admin/projects/${values.projectId}/checkpoints`
 		)
 	}
 
@@ -128,7 +144,7 @@ export function CheckpointForm({
 	return (
 		<Card>
 			<CardContent>
-				<form id="project-form" onSubmit={handleSubmit(onSubmit)}>
+				<form id="checkpoint-form" onSubmit={handleSubmit(onSubmit)}>
 					<FieldGroup>
 						{/* Root error */}
 						{errors.root && (
@@ -150,6 +166,38 @@ export function CheckpointForm({
 								</Field>
 							)}
 						/>
+
+						{/* Type */}
+						<Controller
+							name="difficulty"
+							control={control}
+							render={({ field }) => (
+								<Field>
+									<FieldLabel>{t('projects.difficulty.title')}</FieldLabel>
+									<Select
+										value={field.value}
+										onValueChange={field.onChange}
+										disabled={fieldsDisabled}
+									>
+										<SelectTrigger>
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="easy">
+												{t('projects.difficulty.easy')}
+											</SelectItem>
+											<SelectItem value="medium">
+												{t('projects.difficulty.medium')}
+											</SelectItem>
+											<SelectItem value="difficult">
+												{t('projects.difficulty.difficult')}
+											</SelectItem>
+										</SelectContent>
+									</Select>
+								</Field>
+							)}
+						/>
+
 						{/* URL */}
 						<Controller
 							name="url"
@@ -171,7 +219,41 @@ export function CheckpointForm({
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
 									<FieldLabel>{t('notes')}</FieldLabel>
-									<Input {...field} disabled={fieldsDisabled} />
+									<InputGroupTextarea
+										{...field}
+										rows={5}
+										disabled={fieldsDisabled}
+									/>
+									{fieldState.error && (
+										<FieldError errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+
+						{/* Estimated Duration */}
+						<Controller
+							name="estimatedDuration"
+							control={control}
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid}>
+									<FieldLabel>{t('projects.estimatedDuration')}</FieldLabel>
+									<Input type="number" {...field} disabled={fieldsDisabled} />
+									{fieldState.error && (
+										<FieldError errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+
+						{/* Sort Order */}
+						<Controller
+							name="sortOrder"
+							control={control}
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid}>
+									<FieldLabel>{t('sortOrder')}</FieldLabel>
+									<Input type="number" {...field} disabled={fieldsDisabled} />
 									{fieldState.error && (
 										<FieldError errors={[fieldState.error]} />
 									)}
@@ -186,17 +268,17 @@ export function CheckpointForm({
 				{mode !== 'read' && (
 					<Button
 						type="submit"
-						form="project-form"
+						form="checkpoint-form"
 						disabled={submitDisabled}
 						variant={mode === 'delete' ? 'destructive' : 'default'}
 					>
 						{isSubmitting
 							? t('working')
 							: mode === 'delete'
-							? `${t('delete')} ${t('resource.title')}`
+							? `${t('delete')} ${t('projects.checkpoint')}`
 							: mode === 'update'
-							? `${t('update')} ${t('resource.title')}`
-							: `${t('create')} ${t('resource.title')}`}
+							? `${t('update')} ${t('projects.checkpoint')}`
+							: `${t('create')} ${t('projects.checkpoint')}`}
 					</Button>
 				)}
 			</CardFooter>

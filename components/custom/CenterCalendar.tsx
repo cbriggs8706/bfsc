@@ -123,6 +123,16 @@ const END_HOUR = 21
 const MINUTES_PER_PIXEL = 2 // 2 min per px => 60 min = 30px
 const EVENT_DEFAULT_MINUTES = 60
 
+const EVENT_COLORS = [
+	'bg-blue-100 text-blue-900 border-blue-200',
+	'bg-emerald-100 text-emerald-900 border-emerald-200',
+	'bg-amber-100 text-amber-900 border-amber-200',
+	'bg-violet-100 text-violet-900 border-violet-200',
+	// 'bg-rose-100 text-rose-900 border-rose-200',
+	'bg-sky-100 text-sky-900 border-sky-200',
+	'bg-stone-100 text-stone-900 border-stone-200',
+]
+
 /* ============================
    COMPONENT
 ============================ */
@@ -173,6 +183,21 @@ export default function CenterCalendar({
 		return m
 	}, [classes])
 
+	const classColorMap = useMemo(() => {
+		const map = new Map<string, string>()
+
+		// 1. Collect unique series (use title for now)
+		const uniqueSeries = Array.from(new Set(classes.map((c) => c.title)))
+
+		// 2. Assign colors in order, cycling only after exhaustion
+		uniqueSeries.forEach((title, index) => {
+			const color = EVENT_COLORS[index % EVENT_COLORS.length]
+			map.set(title, color)
+		})
+
+		return map
+	}, [classes])
+
 	/* ============================
 	   DAY INFO
 	============================ */
@@ -219,7 +244,43 @@ export default function CenterCalendar({
 
 	const goToday = () => {
 		const t = new Date()
-		setViewDate(startOfMonth(t))
+
+		if (view === 'month') {
+			setViewDate(startOfMonth(t))
+			setSelectedDate(t)
+			return
+		}
+
+		if (view === 'week') {
+			setViewDate(startOfWeek(t, { weekStartsOn: 0 }))
+			setSelectedDate(t)
+			return
+		}
+
+		// day view
+		setViewDate(startOfDay(t))
+		setSelectedDate(t)
+	}
+
+	const setViewToToday = (nextView: CalendarView) => {
+		const t = new Date()
+
+		setView(nextView)
+
+		if (nextView === 'month') {
+			setViewDate(startOfMonth(t))
+			setSelectedDate(t)
+			return
+		}
+
+		if (nextView === 'week') {
+			setViewDate(startOfWeek(t, { weekStartsOn: 0 }))
+			setSelectedDate(t)
+			return
+		}
+
+		// day
+		setViewDate(startOfDay(t))
 		setSelectedDate(t)
 	}
 
@@ -405,7 +466,7 @@ export default function CenterCalendar({
 												key={c.id}
 												className={cn(
 													'border rounded px-1 text-[11px] truncate',
-													classColorClass(c.title),
+													classColorMap.get(c.title) ?? EVENT_COLORS[0],
 													c.isCanceled && 'line-through opacity-70'
 												)}
 												title={`${time} — ${c.title}`}
@@ -606,7 +667,7 @@ export default function CenterCalendar({
 													}}
 													className={cn(
 														'absolute left-1 right-1 rounded border px-2 py-1 text-left text-[11px] overflow-hidden',
-														classColorClass(c.title),
+														classColorMap.get(c.title) ?? EVENT_COLORS[0],
 														c.isCanceled && 'line-through opacity-70'
 													)}
 													style={{ top, height }}
@@ -702,7 +763,7 @@ export default function CenterCalendar({
 									}}
 									className={cn(
 										'absolute left-2 right-2 rounded border px-3 py-2 text-left text-[12px] overflow-hidden',
-										classColorClass(c.title),
+										classColorMap.get(c.title) ?? EVENT_COLORS[0],
 										c.isCanceled && 'line-through opacity-70'
 									)}
 									style={{ top, height }}
@@ -730,7 +791,7 @@ export default function CenterCalendar({
 			<Button
 				variant={view === 'day' ? 'default' : 'outline'}
 				size="sm"
-				onClick={() => setView('day')}
+				onClick={() => setViewToToday('day')}
 				className="gap-2"
 			>
 				<CalendarIcon className="h-4 w-4" />
@@ -740,7 +801,7 @@ export default function CenterCalendar({
 			<Button
 				variant={view === 'week' ? 'default' : 'outline'}
 				size="sm"
-				onClick={() => setView('week')}
+				onClick={() => setViewToToday('week')}
 				className="gap-2"
 			>
 				<CalendarRange className="h-4 w-4" />
@@ -750,7 +811,7 @@ export default function CenterCalendar({
 			<Button
 				variant={view === 'month' ? 'default' : 'outline'}
 				size="sm"
-				onClick={() => setView('month')}
+				onClick={() => setViewToToday('month')}
 				className="gap-2"
 			>
 				<CalendarDays className="h-4 w-4" />

@@ -1,4 +1,5 @@
-import { CheckpointCompletionForm } from '@/components/projects/CheckpointCompletionForm'
+// app/[locale]/(patron)/projects/[id]/checkpoints/[checkpointId]/contribute/page.tsx
+import { CheckpointContributionForm } from '@/components/projects/CheckpointContributionForm'
 
 type Props = {
 	params: Promise<{
@@ -8,7 +9,7 @@ type Props = {
 	}>
 }
 
-export default async function EditCheckpointPage({ params }: Props) {
+export default async function ContributeCheckpointPage({ params }: Props) {
 	const { locale, id, checkpointId } = await params
 
 	return (
@@ -16,11 +17,11 @@ export default async function EditCheckpointPage({ params }: Props) {
 			<div>
 				<h1 className="text-3xl font-bold">Checkpoint Progress</h1>
 				<p className="text-sm text-muted-foreground">
-					Mark this checkpoint complete. Minutes helps us keep track of how much
-					time was spent on the entire project.{' '}
+					Log time spent working on this checkpoint. Multiple people can
+					contribute time. An admin will mark it complete when finished.
 				</p>
 			</div>
-			<CheckpointCompletionForm
+			<CheckpointContributionForm
 				mode="create"
 				projectId={id}
 				checkpointId={checkpointId}

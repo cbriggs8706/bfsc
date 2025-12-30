@@ -7,8 +7,15 @@ import {
 	index,
 	primaryKey,
 	boolean,
+	pgEnum,
 } from 'drizzle-orm/pg-core'
 import { user } from './auth'
+
+export const difficultyEnum = pgEnum('difficulty', [
+	'easy',
+	'medium',
+	'difficult',
+])
 
 /* ------------------------------------------------------------------
    PROJECTS
@@ -20,7 +27,7 @@ export const projects = pgTable(
 
 		name: text('name').notNull(),
 		instructions: text('instructions'),
-
+		difficulty: difficultyEnum('difficulty').notNull().default('easy'),
 		// ---- S.M.A.R.T. goal fields ----
 		specific: text('specific'), // S
 		measurable: text('measurable'), // M
@@ -34,7 +41,7 @@ export const projects = pgTable(
 		actualCompletionDate: timestamp('actual_completion_date', {
 			withTimezone: true,
 		}),
-
+		sortOrder: integer('sort_order').notNull().default(0),
 		createdByUserId: uuid('created_by_user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'restrict' }),
@@ -67,7 +74,7 @@ export const projectCheckpoints = pgTable(
 		projectId: uuid('project_id')
 			.notNull()
 			.references(() => projects.id, { onDelete: 'cascade' }),
-
+		difficulty: difficultyEnum('difficulty').notNull().default('easy'),
 		name: text('name').notNull(),
 
 		// Optional supporting info
@@ -75,7 +82,12 @@ export const projectCheckpoints = pgTable(
 		notes: text('notes'),
 
 		sortOrder: integer('sort_order').notNull().default(0),
-
+		estimatedDuration: integer('estimated_duration').notNull().default(1),
+		isCompleted: boolean('is_completed').notNull().default(false),
+		completedAt: timestamp('completed_at', { withTimezone: true }),
+		completedByUserId: uuid('completed_by_user_id').references(() => user.id, {
+			onDelete: 'set null',
+		}),
 		createdAt: timestamp('created_at', { withTimezone: true })
 			.notNull()
 			.defaultNow(),
@@ -83,15 +95,18 @@ export const projectCheckpoints = pgTable(
 	(t) => [
 		index('project_checkpoints_project_idx').on(t.projectId),
 		index('project_checkpoints_sort_idx').on(t.projectId, t.sortOrder),
+		index('project_checkpoints_completed_idx').on(t.isCompleted),
 	]
 )
 
 /* ------------------------------------------------------------------
    CHECKPOINT COMPLETIONS (USER CONTRIBUTIONS)
 ------------------------------------------------------------------ */
-export const projectCheckpointCompletions = pgTable(
-	'project_checkpoint_completions',
+export const projectCheckpointContributions = pgTable(
+	'project_checkpoint_contributions',
 	{
+		id: uuid('id').defaultRandom().primaryKey(),
+
 		checkpointId: uuid('checkpoint_id')
 			.notNull()
 			.references(() => projectCheckpoints.id, { onDelete: 'cascade' }),
@@ -100,19 +115,14 @@ export const projectCheckpointCompletions = pgTable(
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
 
-		// Minutes this user spent on this checkpoint
 		minutesSpent: integer('minutes_spent').notNull(),
 
-		completedAt: timestamp('completed_at', { withTimezone: true })
+		createdAt: timestamp('created_at', { withTimezone: true })
 			.notNull()
 			.defaultNow(),
 	},
 	(t) => [
-		primaryKey({
-			columns: [t.checkpointId, t.userId, t.completedAt],
-			name: 'project_checkpoint_completions_pk',
-		}),
-		index('checkpoint_completions_checkpoint_idx').on(t.checkpointId),
-		index('checkpoint_completions_user_idx').on(t.userId),
+		index('checkpoint_contrib_checkpoint_idx').on(t.checkpointId),
+		index('checkpoint_contrib_user_idx').on(t.userId),
 	]
 )

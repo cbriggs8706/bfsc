@@ -5,6 +5,7 @@ import { Separator } from '../ui/separator'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { useTranslations } from 'next-intl'
 
 type Props = {
 	projectId: string
@@ -12,6 +13,7 @@ type Props = {
 	checkpoint: {
 		id: string
 		name: string
+		estimatedDuration: string
 		notes: string
 		url: string
 		isCompleted: boolean
@@ -21,7 +23,7 @@ type Props = {
 
 export function CheckpointReadView({ projectId, locale, checkpoint }: Props) {
 	const router = useRouter()
-
+	const t = useTranslations('common')
 	return (
 		<Card>
 			<CardHeader>
@@ -38,37 +40,40 @@ export function CheckpointReadView({ projectId, locale, checkpoint }: Props) {
 				) : (
 					<p className="text-sm text-muted-foreground">No notes provided.</p>
 				)}
+				{checkpoint.estimatedDuration && (
+					<div className="text-sm">
+						{t('projects.estimatedDuration')}: {checkpoint.estimatedDuration}{' '}
+						min
+					</div>
+				)}
+				<div className="text-sm text-muted-foreground">
+					Status:{' '}
+					{checkpoint.isCompleted ? `${t('completed')}` : `${t('inProgress')}`}
+				</div>
 
 				{/* Related link */}
 				{checkpoint.url && (
 					<div className="pt-2">
 						<Button asChild variant="outline">
-							<Link
-								href={checkpoint.url}
-								target="_blank"
-								onClick={(e) => e.stopPropagation()}
-							>
+							<Link href={checkpoint.url} target="_blank">
 								Open Related Link
 							</Link>
 						</Button>
 					</div>
 				)}
 
-				{checkpoint.canEdit && (
+				{!checkpoint.isCompleted && (
 					<>
 						<Separator />
-
-						<div className="flex gap-2">
-							<Button
-								onClick={() =>
-									router.push(
-										`/${locale}/projects/${projectId}/checkpoints/${checkpoint.id}/edit`
-									)
-								}
-							>
-								Complete this Checkpoint
-							</Button>
-						</div>
+						<Button
+							onClick={() =>
+								router.push(
+									`/${locale}/projects/${projectId}/checkpoints/${checkpoint.id}/contribute`
+								)
+							}
+						>
+							Log time / update
+						</Button>
 					</>
 				)}
 			</CardContent>

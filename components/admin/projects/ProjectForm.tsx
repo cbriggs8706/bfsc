@@ -21,14 +21,22 @@ import {
 } from '@/components/ui/field'
 import { Required } from '@/components/Required'
 import { InputGroupTextarea } from '@/components/ui/input-group'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select'
 
 /* ------------------------------------------------------------------
    Form values (strings only)
 ------------------------------------------------------------------ */
 export type ProjectFormValues = {
 	name: string
+	sortOrder: string
 	instructions: string
-
+	difficulty: string
 	specific: string
 	measurable: string
 	achievable: string
@@ -47,6 +55,8 @@ export type ProjectFormValues = {
 function schema(t: (k: string) => string) {
 	return z.object({
 		name: z.string().min(1, t('nameRequired')),
+		sortOrder: z.string().min(1, t('required')),
+		difficulty: z.string().catch(''),
 		instructions: z.string().catch(''),
 		specific: z.string().catch(''),
 		measurable: z.string().catch(''),
@@ -83,6 +93,8 @@ export function ProjectForm({
 		resolver: zodResolver(schema(t)),
 		defaultValues: {
 			name: '',
+			sortOrder: '0',
+			difficulty: '',
 			instructions: '',
 			specific: '',
 			measurable: '',
@@ -192,8 +204,45 @@ export function ProjectForm({
 							)}
 						/>
 
+						{/* Type */}
+						<Controller
+							name="difficulty"
+							control={control}
+							render={({ field }) => (
+								<Field>
+									<FieldLabel>{t('projects.difficulty.title')}</FieldLabel>
+									<Select
+										value={field.value}
+										onValueChange={field.onChange}
+										disabled={fieldsDisabled}
+									>
+										<SelectTrigger>
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="easy">
+												{t('projects.difficulty.easy')}
+											</SelectItem>
+											<SelectItem value="medium">
+												{t('projects.difficulty.medium')}
+											</SelectItem>
+											<SelectItem value="difficult">
+												{t('projects.difficulty.difficult')}
+											</SelectItem>
+										</SelectContent>
+									</Select>
+								</Field>
+							)}
+						/>
+
 						{(
-							['specific', 'measurable', 'achievable', 'relevant'] as const
+							[
+								'instructions',
+								'specific',
+								'measurable',
+								'achievable',
+								'relevant',
+							] as const
 						).map((name) => (
 							<Controller
 								key={name}
@@ -201,11 +250,12 @@ export function ProjectForm({
 								control={control}
 								render={({ field }) => (
 									<Field>
-										<FieldLabel>{t(name)}</FieldLabel>
+										<FieldLabel>{t(`projects.${name}`)}</FieldLabel>
 										<InputGroupTextarea
 											{...field}
-											rows={3}
+											rows={5}
 											disabled={fieldsDisabled}
+											placeholder={`${t(`projects.${name}Placeholder`)}`}
 										/>
 									</Field>
 								)}
@@ -219,7 +269,7 @@ export function ProjectForm({
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
 									<FieldLabel>
-										<Required>{t('date')}</Required>
+										<Required>{t('projects.targetDate')}</Required>
 									</FieldLabel>
 									<Input type="date" {...field} disabled={fieldsDisabled} />
 									{fieldState.error && (
@@ -235,10 +285,22 @@ export function ProjectForm({
 							control={control}
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
-									<FieldLabel>
-										<Required>{t('date')}</Required>
-									</FieldLabel>
+									<FieldLabel>{t('projects.completionDate')}</FieldLabel>
 									<Input type="date" {...field} disabled={fieldsDisabled} />
+									{fieldState.error && (
+										<FieldError errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+						{/* SortOrder */}
+						<Controller
+							name="sortOrder"
+							control={control}
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid}>
+									<FieldLabel>{t('sortOrder')}</FieldLabel>
+									<Input type="number" {...field} disabled={fieldsDisabled} />
 									{fieldState.error && (
 										<FieldError errors={[fieldState.error]} />
 									)}
@@ -260,7 +322,7 @@ export function ProjectForm({
 											disabled={fieldsDisabled}
 										/>
 										<span className="text-sm">
-											{field.value ? t('active') : t('inactive')}
+											{field.value ? t('archived') : t('inProgress')}
 										</span>
 									</div>
 								</Field>

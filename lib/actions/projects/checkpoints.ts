@@ -1,12 +1,14 @@
 'use server'
 
 import { unstable_noStore as noStore, revalidatePath } from 'next/cache'
-import { eq, asc } from 'drizzle-orm'
-import { db } from '@/db'
+import { eq, asc, desc } from 'drizzle-orm'
+import { db, projectCheckpointContributions, user } from '@/db'
 import { projectCheckpoints } from '@/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { requireRole } from '@/utils/require-role'
+import { Difficulty } from '@/types/projects'
 
 /* ------------------------------------------------------------------ */
 /* Types */
@@ -15,9 +17,11 @@ import { z } from 'zod'
 export type ProjectCheckpointFormValues = {
 	projectId: string
 	name: string
+	difficulty: Difficulty
 	url: string
 	notes: string
 	sortOrder: string
+	estimatedDuration: string
 }
 
 export type ProjectCheckpointActionResult =
@@ -31,9 +35,11 @@ export type ProjectCheckpointActionResult =
 const ProjectCheckpointInputSchema = z.object({
 	projectId: z.string().uuid(),
 	name: z.string().min(1),
+	difficulty: z.enum(['easy', 'medium', 'difficult']).default('easy'),
 	url: z.string().url().optional().nullable(),
 	notes: z.string().catch(''),
 	sortOrder: z.coerce.number().int().min(0),
+	estimatedDuration: z.coerce.number().int().min(1),
 })
 
 /* ------------------------------------------------------------------ */
@@ -74,8 +80,10 @@ export async function readCheckpointForForm(
 			id: true,
 			projectId: true,
 			name: true,
+			difficulty: true,
 			url: true,
 			notes: true,
+			estimatedDuration: true,
 			sortOrder: true,
 		},
 	})
@@ -86,12 +94,37 @@ export async function readCheckpointForForm(
 		id: row.id,
 		projectId: row.projectId,
 		name: row.name,
+		difficulty: row.difficulty as 'easy' | 'medium' | 'difficult',
 		url: row.url ?? '',
 		notes: row.notes ?? '',
+		estimatedDuration: String(row.estimatedDuration ?? 0),
 		sortOrder: String(row.sortOrder ?? 0),
 	}
 }
 
+export async function readCheckpointContributions(
+	locale: string,
+	checkpointId: string
+) {
+	await requireRole(
+		locale,
+		['Admin', 'Director', 'Assistant Director'],
+		`/${locale}/admin/users`
+	)
+
+	return db
+		.select({
+			id: projectCheckpointContributions.id,
+			userId: projectCheckpointContributions.userId,
+			userName: user.name,
+			minutesSpent: projectCheckpointContributions.minutesSpent,
+			createdAt: projectCheckpointContributions.createdAt,
+		})
+		.from(projectCheckpointContributions)
+		.leftJoin(user, eq(user.id, projectCheckpointContributions.userId))
+		.where(eq(projectCheckpointContributions.checkpointId, checkpointId))
+		.orderBy(desc(projectCheckpointContributions.createdAt))
+}
 /* ------------------------------------------------------------------ */
 /* Writes (Resource-style) */
 /* ------------------------------------------------------------------ */
@@ -121,9 +154,11 @@ export async function saveCheckpoint(
 				.values({
 					projectId: data.projectId,
 					name: data.name,
+					difficulty: data.difficulty,
 					url: data.url ?? null,
 					notes: data.notes || null,
 					sortOrder: data.sortOrder,
+					estimatedDuration: data.estimatedDuration,
 				})
 				.returning({ id: projectCheckpoints.id })
 
@@ -133,7 +168,6 @@ export async function saveCheckpoint(
 			return { ok: true, id: row?.id }
 		}
 
-		// update
 		if (!checkpointId) {
 			return { ok: false, message: 'Missing checkpoint id' }
 		}
@@ -142,9 +176,11 @@ export async function saveCheckpoint(
 			.update(projectCheckpoints)
 			.set({
 				name: data.name,
+				difficulty: data.difficulty,
 				url: data.url ?? null,
 				notes: data.notes || null,
 				sortOrder: data.sortOrder,
+				estimatedDuration: data.estimatedDuration,
 			})
 			.where(eq(projectCheckpoints.id, checkpointId))
 
@@ -184,4 +220,34 @@ export async function deleteCheckpoint(
 	} catch {
 		return { ok: false, message: 'Delete failed' }
 	}
+}
+
+const UpdateSchema = z.object({
+	contributionId: z.string().uuid(),
+	minutesSpent: z.coerce.number().int().min(1),
+})
+
+export async function updateCheckpointContribution(
+	locale: string,
+	raw: unknown
+) {
+	await requireRole(
+		locale,
+		['Admin', 'Director', 'Assistant Director'],
+		`/${locale}/admin/users`
+	)
+
+	const parsed = UpdateSchema.safeParse(raw)
+	if (!parsed.success) {
+		return { ok: false, message: 'Invalid data' }
+	}
+
+	const { contributionId, minutesSpent } = parsed.data
+
+	await db
+		.update(projectCheckpointContributions)
+		.set({ minutesSpent })
+		.where(eq(projectCheckpointContributions.id, contributionId))
+
+	return { ok: true }
 }

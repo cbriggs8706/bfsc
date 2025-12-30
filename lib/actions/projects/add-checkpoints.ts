@@ -15,6 +15,7 @@ const BulkCheckpointSchema = z.object({
 			name: z.string().min(1),
 			notes: z.string().optional(),
 			url: z.union([z.literal(''), z.string().url()]).optional(),
+			estimatedDuration: z.coerce.number().int().min(1).optional(),
 		})
 	),
 	mode: z.enum(['append', 'replace']),
@@ -25,7 +26,7 @@ export async function saveProjectCheckpointsBulk(
 	projectId: string,
 	raw: unknown
 ): Promise<{ ok: true } | { ok: false; message: string }> {
-	// 🔒 Admin-only (exact rule you gave)
+	// 🔒 Admin-only
 	await requireRole(
 		locale,
 		['Admin', 'Director', 'Assistant Director'],
@@ -57,6 +58,7 @@ export async function saveProjectCheckpointsBulk(
 						name: r.name,
 						notes: r.notes ?? null,
 						url: r.url ?? null,
+						estimatedDuration: r.estimatedDuration ?? 1,
 						sortOrder: i,
 					}))
 				)

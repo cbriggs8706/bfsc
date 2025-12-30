@@ -2,6 +2,7 @@ import { ProjectCheckpointTable } from '@/components/projects/ProjectCheckpointT
 import { ProjectReadView } from '@/components/projects/ProjectReadView'
 import { readProjectCheckpoints } from '@/lib/actions/projects/front-checkpoints'
 import { readPublicProject } from '@/lib/actions/projects/projects'
+import { getTranslations } from 'next-intl/server'
 
 type Props = {
 	params: Promise<{ locale: string; id: string }>
@@ -9,6 +10,7 @@ type Props = {
 
 export default async function ProjectPage({ params }: Props) {
 	const { locale, id } = await params
+	const t = await getTranslations({ locale, namespace: 'common' })
 
 	const project = await readPublicProject(id)
 	if (!project) return null
@@ -19,7 +21,9 @@ export default async function ProjectPage({ params }: Props) {
 		<div className="p-4 space-y-4">
 			<div>
 				<h1 className="text-3xl font-bold">{project.name}</h1>
-				<p className="text-sm text-muted-foreground">{project.targetDate}</p>
+				<p className="text-sm text-muted-foreground">
+					{t('projects.targetDate')} {project.targetDate}
+				</p>
 			</div>
 			<ProjectReadView project={project} />
 			<ProjectCheckpointTable

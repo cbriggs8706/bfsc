@@ -1,5 +1,5 @@
 // app/[locale]/(workers)/classes/delete/[id]/page.tsx
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,7 @@ export default async function DeleteClassPage({ params }: Props) {
 		'use server'
 		await deleteSeries(currentUser.id, id)
 		revalidatePath(`/${locale}/classes`)
+		redirect(`/${locale}/classes`)
 	}
 
 	return (

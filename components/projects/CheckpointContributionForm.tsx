@@ -1,14 +1,14 @@
 'use client'
 
-import { useEffect, useTransition } from 'react'
+import { useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 import {
-	readCheckpointCompletionForForm,
-	saveCheckpointCompletion,
+	readCheckpointContributionForForm,
+	saveCheckpointContribution,
 } from '@/lib/actions/projects/front-checkpoints'
 import type { CheckpointFormMode, CheckpointFormValues } from '@/types/projects'
 
@@ -25,7 +25,7 @@ const EMPTY: CheckpointFormValues = {
 }
 
 const CheckpointFormSchema = z.object({
-	minutesSpent: z.string().min(1),
+	minutesSpent: z.string().regex(/^\d+$/, 'Must be a number').min(1),
 	notes: z.string().catch(''),
 	url: z.union([z.literal(''), z.string().url()]).catch(''),
 })
@@ -37,7 +37,7 @@ type Props = {
 	locale: string
 }
 
-export function CheckpointCompletionForm({
+export function CheckpointContributionForm({
 	mode,
 	checkpointId,
 	projectId,
@@ -45,35 +45,34 @@ export function CheckpointCompletionForm({
 }: Props) {
 	const router = useRouter()
 	const [isPending, startTransition] = useTransition()
+	const disabled = isPending || mode === 'read'
 
 	const form = useForm<CheckpointFormValues>({
 		resolver: zodResolver(CheckpointFormSchema),
 		defaultValues: EMPTY,
 	})
 
-	useEffect(() => {
+	const onSubmit = (
+		values: CheckpointFormValues,
+		event?: React.BaseSyntheticEvent
+	) => {
 		if (mode === 'read') return
 
-		startTransition(async () => {
-			const data = await readCheckpointCompletionForForm(checkpointId)
-			if (data) form.reset(data)
-		})
-	}, [checkpointId, mode, form])
+		const submitter = (event?.nativeEvent as SubmitEvent)
+			?.submitter as HTMLButtonElement | null
 
-	const onSubmit = (values: CheckpointFormValues) => {
-		if (mode === 'read') return
+		const markComplete = submitter?.dataset.intent === 'logAndComplete'
 
 		startTransition(async () => {
-			const res = await saveCheckpointCompletion(
-				mode === 'create' ? 'create' : 'update',
+			const res = await saveCheckpointContribution(
 				checkpointId,
 				values,
-				locale
+				locale,
+				{ markComplete }
 			)
 
 			if (res.ok) {
 				router.push(`/${locale}/projects/${projectId}`)
-				// router.refresh()
 			}
 		})
 	}
@@ -86,7 +85,7 @@ export function CheckpointCompletionForm({
 						<Label>Minutes Spent</Label>
 						<Input
 							type="number"
-							disabled={isPending}
+							disabled={disabled}
 							{...form.register('minutesSpent')}
 						/>
 					</div>
@@ -94,7 +93,7 @@ export function CheckpointCompletionForm({
 					<div>
 						<Label>Notes</Label>
 						<Textarea
-							disabled={isPending}
+							disabled={disabled}
 							{...form.register('notes')}
 							placeholder="optional"
 						/>
@@ -103,13 +102,26 @@ export function CheckpointCompletionForm({
 					<div>
 						<Label>Related URL</Label>
 						<Input
-							disabled={isPending}
+							disabled={disabled}
 							{...form.register('url')}
 							placeholder="optional"
 						/>
 					</div>
 
-					<Button disabled={isPending}>Mark Checkpoint as Completed</Button>
+					<div className="flex gap-2 justify-between">
+						<Button type="submit" disabled={isPending} data-intent="log">
+							Log Time Only
+						</Button>
+
+						<Button
+							type="submit"
+							disabled={isPending}
+							variant="default"
+							data-intent="logAndComplete"
+						>
+							Log Time & Mark Complete
+						</Button>
+					</div>
 				</form>
 			</CardContent>
 		</Card>

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ProjectSummary } from '@/types/projects'
+import { ProjectSummaryExpanded } from '@/types/projects'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -11,18 +11,28 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { MoreVertical } from 'lucide-react'
+import Link from 'next/link'
+import { toPascal } from 'postgres'
 
 type Props = {
-	projects: ProjectSummary[]
+	projects: ProjectSummaryExpanded[]
 	locale: string
 	isAdmin?: boolean
 }
 
-export function ProjectCardGrid({ projects, locale, isAdmin }: Props) {
+export function ProjectCardExpanded({ projects, locale, isAdmin }: Props) {
 	const router = useRouter()
 
+	function truncateWords(text: string | null | undefined, maxWords: number) {
+		if (!text) return ''
+		const words = text.trim().split(/\s+/)
+		return words.length > maxWords
+			? words.slice(0, maxWords).join(' ') + '…'
+			: text
+	}
+
 	return (
-		<div className="grid gap-3 sm:grid-cols-2">
+		<div className="grid gap-3">
 			{projects.map((p) => {
 				const href = isAdmin
 					? `/${locale}/admin/projects/${p.id}`
@@ -87,20 +97,69 @@ export function ProjectCardGrid({ projects, locale, isAdmin }: Props) {
 
 						{/* ─────────────────────────────────────────── */}
 
-						<div className="flex flex-col md:flex-row items-center gap-3">
+						<div className="flex flex-col sm:flex-row items-center gap-3">
 							<ProgressCircle percent={p.progressPercent} />
 
-							<div className="min-w-0 flex-1">
-								<div className="truncate text-base lg:text-lg font-medium text-wrap">
+							<div className="w-full flex-1 min-w-0">
+								<div className="truncate text-lg md:text-xl font-bold text-wrap">
 									{p.name}
 								</div>
 
-								<div className="flex items-center justify-between gap-2">
-									<div className="flex flex-col text-base lg:text-lg text-muted-foreground capitalize">
-										<span>Goal: {p.targetDate || 'No date'}</span>
-										<span>Difficulty: {p.difficulty}</span>
-									</div>
+								<div className="flex items-center gap-2">
+									<span className="text-base lg:text-lg text-muted-foreground">
+										Goal: {p.targetDate || 'No date'} &bull;
+									</span>
+									<span className="text-base lg:text-lg text-muted-foreground capitalize">
+										Difficulty: {p.difficulty}
+									</span>
 								</div>
+								<span>{truncateWords(p.instructions, 36)}</span>
+								<p className="text-sm text-muted-foreground">Read more...</p>
+							</div>
+						</div>
+						<div>
+							<h3 className="font-semibold">Get Involved:</h3>
+							<div
+								className="mt-2 min-w-0 w-full flex flex-wrap gap-2"
+								onClick={(e) => e.stopPropagation()}
+							>
+								{p.topCheckpoints.length === 0 && (
+									<span className="text-sm text-muted-foreground">
+										No checkpoints yet
+									</span>
+								)}
+
+								{p.topCheckpoints.map((cp) => {
+									const checkpointHref = `/${locale}/projects/${p.id}/checkpoints/${cp.id}`
+
+									// if (cp.completed) {
+									// 	return (
+									// 		<Button
+									// 			key={cp.id}
+									// 			variant="outline"
+									// 			size="sm"
+									// 			disabled
+									// 			className="max-w-full truncate justify-start cursor-default opacity-70 whitespace-normal"
+									// 			title={`${cp.name} (completed)`}
+									// 		>
+									// 			{cp.name}
+									// 		</Button>
+									// 	)
+									// }
+
+									return (
+										<Button
+											key={cp.id}
+											variant="default"
+											size="sm"
+											className="max-w-full truncate justify-start whitespace-normal"
+											onClick={() => router.push(checkpointHref)}
+											title={cp.name}
+										>
+											{cp.name}
+										</Button>
+									)
+								})}
 							</div>
 						</div>
 					</Card>

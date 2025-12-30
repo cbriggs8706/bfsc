@@ -13,6 +13,7 @@ type ParsedRow = {
 	name: string
 	notes: string
 	url: string
+	estimatedDuration: string
 }
 
 type Props = {
@@ -37,11 +38,13 @@ export function AdminCheckpointBulkForm({ projectId, locale }: Props) {
 			.map((line) => line.trim())
 			.filter(Boolean)
 			.map((line) => {
-				const [name, url = '', notes = ''] = line.split('\t')
+				const parts = line.split('\t')
+
 				return {
-					name: name?.trim() ?? '',
-					url: url?.trim() ?? '',
-					notes: notes?.trim() ?? '',
+					name: parts[0]?.trim() ?? '',
+					url: parts[1]?.trim() ?? '',
+					notes: parts[2]?.trim() ?? '',
+					estimatedDuration: parts[3]?.trim() ?? '1',
 				}
 			})
 			.filter((r) => r.name)
@@ -72,7 +75,7 @@ export function AdminCheckpointBulkForm({ projectId, locale }: Props) {
 					<Label>Paste from Google Sheets / Excel</Label>
 					<Textarea
 						rows={8}
-						placeholder="Name[TAB]URL[TAB]Notes"
+						placeholder="Name[TAB]URL[TAB]Notes[TAB]Estimated Duration"
 						value={raw}
 						onChange={(e) => setRaw(e.target.value)}
 						disabled={isPending}
@@ -93,7 +96,7 @@ export function AdminCheckpointBulkForm({ projectId, locale }: Props) {
 					</div>
 					<div className="flex items-center gap-2">
 						<RadioGroupItem value="replace" id="replace" />
-						<Label htmlFor="replace">Replace all</Label>
+						<Label htmlFor="replace">Replace all existing</Label>
 					</div>
 				</RadioGroup>
 
@@ -110,6 +113,9 @@ export function AdminCheckpointBulkForm({ projectId, locale }: Props) {
 										<td className="p-2">{r.name}</td>
 										<td className="p-2 text-muted-foreground">{r.url}</td>
 										<td className="p-2 text-muted-foreground">{r.notes}</td>
+										<td className="p-2 text-muted-foreground">
+											{r.estimatedDuration}
+										</td>
 									</tr>
 								))}
 							</tbody>

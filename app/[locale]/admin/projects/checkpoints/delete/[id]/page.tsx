@@ -24,10 +24,10 @@ export default async function AdminCheckpointDeletePage({ params }: Props) {
 		<div className="p-4 space-y-6">
 			<div>
 				<h1 className="text-3xl font-bold text-destructive">
-					{t('delete')} {t('projects.title')}
+					{t('delete')} {checkpoint.name}
 				</h1>
 				<p className="text-base text-muted-foreground max-w-3xl">
-					{t('projects.sub')}
+					{t('projects.checkpointsSub')}
 				</p>
 			</div>
 			<CheckpointForm

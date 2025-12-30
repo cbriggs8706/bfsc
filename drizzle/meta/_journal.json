@@ -239,6 +239,20 @@
       "when": 1766868604075,
       "tag": "0033_deep_fabian_cortez",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1767115683992,
+      "tag": "0034_sticky_doctor_spectrum",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1767121352715,
+      "tag": "0035_fat_darkstar",
+      "breakpoints": true
     }
   ]
 }

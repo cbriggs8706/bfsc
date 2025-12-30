@@ -28,7 +28,7 @@ export function ResourceItemsDesktopCards({ grouped, locale }: Props) {
 								</h2>
 							</CardHeader>
 
-							<CardContent>
+							<CardContent className="w-full overflow-x-auto">
 								<ResourceItemsDesktopTable items={items} locale={locale} />
 							</CardContent>
 						</Card>

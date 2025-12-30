@@ -34,6 +34,7 @@ export function ProjectCheckpointTable({
 	projectId,
 	locale,
 	checkpoints,
+	canEdit,
 }: Props) {
 	const router = useRouter()
 
@@ -47,9 +48,8 @@ export function ProjectCheckpointTable({
 					<TableHeader>
 						<TableRow>
 							<TableHead className="w-[30%]">Name</TableHead>
-							<TableHead className="w-[15%] hidden md:table-cell">
-								URL
-							</TableHead>
+							<TableHead className="w-[15%]">URL</TableHead>
+							<TableHead className="w-[8%]">Tot Min.</TableHead>
 							<TableHead className="w-[15%] hidden lg:table-cell">
 								Notes
 							</TableHead>
@@ -74,7 +74,7 @@ export function ProjectCheckpointTable({
 								<TableCell className="truncate font-medium">{c.name}</TableCell>
 
 								{/* URL */}
-								<TableCell className="truncate hidden md:table-cell">
+								<TableCell className="truncate">
 									{c.url ? (
 										<Link
 											href={c.url}
@@ -87,6 +87,10 @@ export function ProjectCheckpointTable({
 									) : (
 										'—'
 									)}
+								</TableCell>
+
+								<TableCell className="text-xs text-muted-foreground">
+									{(c.totalMinutes / 60).toFixed(1)}h
 								</TableCell>
 
 								{/* Notes */}
@@ -104,13 +108,25 @@ export function ProjectCheckpointTable({
 									className="text-right"
 									onClick={(e) => e.stopPropagation()}
 								>
-									<Button size="sm" asChild>
-										<Link
-											href={`/${locale}/projects/${projectId}/checkpoints/${c.id}/edit`}
-										>
-											Mark Complete
-										</Link>
-									</Button>
+									{!c.isCompleted && (
+										<Button size="sm" asChild>
+											<Link
+												href={`/${locale}/projects/${projectId}/checkpoints/${c.id}/contribute`}
+											>
+												Add Time
+											</Link>
+										</Button>
+									)}
+
+									{c.isCompleted && canEdit && (
+										<Button size="sm" variant="outline" asChild>
+											<Link
+												href={`/${locale}/projects/${projectId}/checkpoints/${c.id}/contribute`}
+											>
+												Adjust
+											</Link>
+										</Button>
+									)}
 								</TableCell>
 							</TableRow>
 						))}

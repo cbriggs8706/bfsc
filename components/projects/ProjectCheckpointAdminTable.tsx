@@ -4,18 +4,13 @@ import { useRouter } from 'next/navigation'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
 import Link from 'next/link'
-
-type CheckpointRow = {
-	id: string
-	name: string
-	isCompleted: boolean
-	totalMinutes: number
-}
+import { ProjectCheckpointRow } from '@/types/projects'
+import { useTranslations } from 'next-intl'
 
 type Props = {
 	projectId: string
 	locale: string
-	checkpoints: CheckpointRow[]
+	checkpoints: ProjectCheckpointRow[]
 	canEdit?: boolean
 }
 
@@ -26,7 +21,7 @@ export function ProjectCheckpointAdminTable({
 	canEdit,
 }: Props) {
 	const router = useRouter()
-
+	const t = useTranslations('common')
 	return (
 		<div>
 			<h2 className="text-lg font-semibold mb-2">Checkpoints</h2>
@@ -38,7 +33,8 @@ export function ProjectCheckpointAdminTable({
 							<th className="text-left p-2">Name</th>
 
 							<th className="p-2">Status</th>
-							{/* <th className="p-2">Minutes</th> */}
+							<th className="p-2">Est. Min</th>
+							<th className="p-2">Spent Min</th>
 							{canEdit && <th className="p-2">Actions</th>}
 						</tr>
 					</thead>
@@ -53,13 +49,15 @@ export function ProjectCheckpointAdminTable({
 							>
 								<td className="p-2 truncate">{c.name}</td>
 								<td className="p-2 text-center">
-									{c.isCompleted ? 'Complete' : 'Open'}
+									{c.isCompleted ? `${t('completed')}` : `${t('inProgress')}`}
 								</td>
-								{/* <td className="p-2 text-center">
-									{Math.round(c.totalMinutes)}
-								</td> */}
-								{canEdit && (
-									<td className="p-2 text-right space-x-2">
+								<td className="p-2 truncate">{c.estimatedDuration}</td>
+								<td className="p-2 text-center">{c.totalMinutes}</td>
+								{canEdit && (!c.isCompleted || canEdit) && (
+									<td
+										className="p-2 text-right space-x-2"
+										onClick={(e) => e.stopPropagation()}
+									>
 										<Button
 											size="sm"
 											asChild
