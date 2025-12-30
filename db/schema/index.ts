@@ -14,6 +14,7 @@ export * from './tables/substitutes'
 export * from './tables/notifications'
 export * from './tables/resources'
 export * from './tables/permissions'
+export * from './tables/projects'
 
 export * from './relations/auth.relations'
 export * from './relations/kiosk.relations'

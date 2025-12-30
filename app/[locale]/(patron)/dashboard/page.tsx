@@ -14,6 +14,8 @@ import { getUpcomingShiftInstances } from '@/db/queries/shift-instances'
 import { OpenRequestsSection } from '@/components/shifts/OpenRequestsSection'
 import { getOpenSubstituteRequests } from '@/db/queries/shifts'
 import { CurrentShiftPanel } from '@/components/shifts/CurrentShiftPanel'
+import { ProjectCardGrid } from '@/components/admin/projects/ProjectCardGrid'
+import { readProjectSummaries } from '@/lib/actions/projects/projects'
 
 interface DashboardPageProps {
 	params: Promise<{ locale: string }>
@@ -43,6 +45,7 @@ export default async function Page({ params }: DashboardPageProps) {
 	const shiftInstances = await getUpcomingShiftInstances(session.user.id)
 	const requests = user ? await getOpenSubstituteRequests(user) : []
 	const openRequests = requests.filter((r) => !r.hasVolunteeredByMe)
+	const projects = await readProjectSummaries()
 
 	return (
 		<div className="p-4 space-y-4">
@@ -56,6 +59,8 @@ export default async function Page({ params }: DashboardPageProps) {
 					</div>
 				)}
 				<CurrentShiftPanel />
+				<h2 className="text-2xl font-semibold">Current Projects</h2>
+				<ProjectCardGrid projects={projects} locale={locale} />
 				<CertificatesGrid certificates={certificates} locale={locale} />
 				<OpenRequestsSection
 					openRequests={openRequests}
