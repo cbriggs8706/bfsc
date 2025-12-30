@@ -51,7 +51,7 @@ export default async function Layout({
 
 				{/* Actual dashboard content */}
 				<div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
-				<footer className="flex h-16 shrink-0 items-center gap-2 border-t bg-muted/40">
+				<footer className="flex h-16 shrink-0 items-center gap-2 border-t bg-muted/40 md:hidden">
 					<div className="flex items-center gap-2 px-4">
 						<SidebarTrigger className="-ml-1" />
 

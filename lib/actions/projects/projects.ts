@@ -1,5 +1,6 @@
 'use server'
 
+import { unstable_noStore as noStore } from 'next/cache'
 import { db } from '@/db'
 import { eq, sql } from 'drizzle-orm'
 import {
@@ -10,7 +11,11 @@ import {
 import { z } from 'zod'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { ProjectSummary, PublicProject } from '@/types/projects'
+import {
+	ProjectFormValues,
+	ProjectSummary,
+	PublicProject,
+} from '@/types/projects'
 
 /* ------------------------------------------------------------------
    Server input schema (authoritative)
@@ -39,9 +44,12 @@ export type ProjectActionResult = { ok: true } | { ok: false; message: string }
 /* ------------------------------------------------------------------
    FORM-SHAPED READ
 ------------------------------------------------------------------ */
-export async function readProjectForForm(projectId: string) {
+export async function readProjectForForm(id: string) {
+	noStore()
+	if (!id) throw new Error('Missing project id')
+
 	const row = await db.query.projects.findFirst({
-		where: eq(projects.id, projectId),
+		where: eq(projects.id, id),
 	})
 
 	if (!row) return null
@@ -49,20 +57,17 @@ export async function readProjectForForm(projectId: string) {
 	const fmt = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : '')
 
 	return {
+		id: row.id,
 		name: row.name,
-
 		instructions: row.instructions ?? '',
-
 		specific: row.specific ?? '',
 		measurable: row.measurable ?? '',
 		achievable: row.achievable ?? '',
 		relevant: row.relevant ?? '',
-
 		targetDate: fmt(row.targetDate),
 		actualCompletionDate: fmt(row.actualCompletionDate),
-
-		isArchived: row.isArchived,
-	}
+		isArchived: row.isArchived ?? false,
+	} satisfies ProjectFormValues & { id: string }
 }
 
 export async function readPublicProject(

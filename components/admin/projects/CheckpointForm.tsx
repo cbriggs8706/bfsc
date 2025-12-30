@@ -5,11 +5,8 @@ import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 
-import { saveProject, deleteProject } from '@/lib/actions/projects/projects'
-
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { useTranslations } from 'next-intl'
 import { Mode } from '@/types/crud'
@@ -20,24 +17,20 @@ import {
 	FieldLabel,
 } from '@/components/ui/field'
 import { Required } from '@/components/Required'
-import { InputGroupTextarea } from '@/components/ui/input-group'
+import {
+	deleteCheckpoint,
+	saveCheckpoint,
+} from '@/lib/actions/projects/checkpoints'
 
 /* ------------------------------------------------------------------
    Form values (strings only)
 ------------------------------------------------------------------ */
-export type ProjectFormValues = {
+export type CheckpointFormValues = {
 	name: string
-	instructions: string
-
-	specific: string
-	measurable: string
-	achievable: string
-	relevant: string
-
-	targetDate: string
-	actualCompletionDate: string
-
-	isArchived: boolean
+	url: string
+	notes: string
+	sortOrder: string
+	projectId: string
 }
 
 /* ------------------------------------------------------------------ */
@@ -47,29 +40,25 @@ export type ProjectFormValues = {
 function schema(t: (k: string) => string) {
 	return z.object({
 		name: z.string().min(1, t('nameRequired')),
-		instructions: z.string().catch(''),
-		specific: z.string().catch(''),
-		measurable: z.string().catch(''),
-		achievable: z.string().catch(''),
-		relevant: z.string().catch(''),
-		targetDate: z.string().catch(''),
-		actualCompletionDate: z.string().catch(''),
-		isArchived: z.boolean(),
+		url: z.string().url().catch(''),
+		notes: z.string().catch(''),
+		sortOrder: z.string().catch('0'),
+		projectId: z.string().uuid(''),
 	})
 }
 
 type Props = {
 	locale: string
 	mode: Mode
-	projectId?: string
-	initialValues?: ProjectFormValues
+	checkpointId?: string
+	initialValues?: CheckpointFormValues
 	successRedirect?: string
 }
 
-export function ProjectForm({
+export function CheckpointForm({
 	locale,
 	mode,
-	projectId,
+	checkpointId,
 	initialValues,
 	successRedirect,
 }: Props) {
@@ -77,20 +66,14 @@ export function ProjectForm({
 	const router = useRouter()
 	const fieldsDisabled = mode === 'read' || mode === 'delete'
 
-	// const [isPending, startTransition] = useTransition()
-
-	const form = useForm<ProjectFormValues>({
+	const form = useForm<CheckpointFormValues>({
 		resolver: zodResolver(schema(t)),
 		defaultValues: {
 			name: '',
-			instructions: '',
-			specific: '',
-			measurable: '',
-			achievable: '',
-			relevant: '',
-			targetDate: '',
-			actualCompletionDate: '',
-			isArchived: false,
+			url: '',
+			notes: '',
+			sortOrder: '0',
+			projectId: '',
 			...initialValues,
 		},
 	})
@@ -102,48 +85,31 @@ export function ProjectForm({
 		formState: { errors, isSubmitting },
 	} = form
 
-	// const type = useWatch({ control, name: 'type' })
-
-	// const isArchived = useWatch({
-	// 	control: form.control,
-	// 	name: 'isArchived',
-	// })
-
-	/* ------------------------------------------------------------------
-	   Load (form owns server call)
-	------------------------------------------------------------------ */
-	// useEffect(() => {
-	// 	if (!id || initialValues) return
-
-	// 	if (mode === 'update' || mode === 'read' || mode === 'delete') {
-	// 		startTransition(async () => {
-	// 			const data = await readProjectForForm(id)
-	// 			if (data) {
-	// 				form.reset(data)
-	// 			}
-	// 		})
-	// 	}
-	// }, [id, mode, initialValues, form])
+	// const projectId = useWatch({ control, name: 'projectId' })
 
 	/* ------------------------------------------------------------------
 	   Submit
 	------------------------------------------------------------------ */
-	async function onSubmit(values: ProjectFormValues) {
+	async function onSubmit(values: CheckpointFormValues) {
+		// DELETE
 		if (mode === 'delete') {
-			const res = await deleteProject(projectId!)
+			const res = await deleteCheckpoint(checkpointId!, values.projectId)
 
 			if (!res.ok) {
 				setError('root', { message: res.message })
 				return
 			}
 
-			router.push(successRedirect ?? `/${locale}/admin/projects`)
+			router.push(
+				successRedirect ?? `/${locale}/admin/projects/${values.projectId}`
+			)
 			return
 		}
 
-		const res = await saveProject(
+		// CREATE / UPDATE
+		const res = await saveCheckpoint(
 			mode === 'update' ? 'update' : 'create',
-			projectId ?? null,
+			checkpointId ?? null,
 			values
 		)
 
@@ -152,22 +118,15 @@ export function ProjectForm({
 			return
 		}
 
-		router.push(successRedirect ?? `/${locale}/admin/projects`)
+		router.push(
+			successRedirect ?? `/${locale}/admin/projects/${values.projectId}`
+		)
 	}
 
 	const submitDisabled = isSubmitting || mode === 'read'
 
 	return (
 		<Card>
-			{/* <CardHeader>
-				<CardTitle>
-					{mode === 'create' && 'Create Project'}
-					{mode === 'update' && 'Edit Project'}
-					{mode === 'read' && 'Project'}
-					{mode === 'delete' && 'Delete Project'}
-				</CardTitle>
-			</CardHeader> */}
-
 			<CardContent>
 				<form id="project-form" onSubmit={handleSubmit(onSubmit)}>
 					<FieldGroup>
@@ -191,78 +150,31 @@ export function ProjectForm({
 								</Field>
 							)}
 						/>
-
-						{(
-							['specific', 'measurable', 'achievable', 'relevant'] as const
-						).map((name) => (
-							<Controller
-								key={name}
-								name={name}
-								control={control}
-								render={({ field }) => (
-									<Field>
-										<FieldLabel>{t(name)}</FieldLabel>
-										<InputGroupTextarea
-											{...field}
-											rows={3}
-											disabled={fieldsDisabled}
-										/>
-									</Field>
-								)}
-							/>
-						))}
-
-						{/* Date */}
+						{/* URL */}
 						<Controller
-							name="targetDate"
+							name="url"
 							control={control}
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
-									<FieldLabel>
-										<Required>{t('date')}</Required>
-									</FieldLabel>
-									<Input type="date" {...field} disabled={fieldsDisabled} />
+									<FieldLabel>{t('url')}</FieldLabel>
+									<Input {...field} disabled={fieldsDisabled} />
 									{fieldState.error && (
 										<FieldError errors={[fieldState.error]} />
 									)}
 								</Field>
 							)}
 						/>
-
-						{/* Date */}
+						{/* Notes */}
 						<Controller
-							name="actualCompletionDate"
+							name="notes"
 							control={control}
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
-									<FieldLabel>
-										<Required>{t('date')}</Required>
-									</FieldLabel>
-									<Input type="date" {...field} disabled={fieldsDisabled} />
+									<FieldLabel>{t('notes')}</FieldLabel>
+									<Input {...field} disabled={fieldsDisabled} />
 									{fieldState.error && (
 										<FieldError errors={[fieldState.error]} />
 									)}
-								</Field>
-							)}
-						/>
-
-						{/* Active */}
-						<Controller
-							name="isArchived"
-							control={control}
-							render={({ field }) => (
-								<Field>
-									<FieldLabel>{t('status')}</FieldLabel>
-									<div className="flex items-center gap-2 h-10">
-										<Switch
-											checked={field.value}
-											onCheckedChange={field.onChange}
-											disabled={fieldsDisabled}
-										/>
-										<span className="text-sm">
-											{field.value ? t('active') : t('inactive')}
-										</span>
-									</div>
 								</Field>
 							)}
 						/>

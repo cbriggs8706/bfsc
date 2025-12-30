@@ -133,6 +133,12 @@
 		"announcementEditSub": "To make edits, go back and click the edit button.",
 		"announcementUpdateSub": "Changes are not saved until you click Save below."
 	},
+	"projects": {
+		"title": "Projects",
+		"sub": "Community projects where a few volunteers make all the difference.",
+		"manageCheckpoints": "Manage Checkpoints",
+		"checkpointsSub": "Make edits to the checkpoints of this project."
+	},
 	"startTime": "Start Time",
 	"endTime": "End Time",
 	"date": "Date",

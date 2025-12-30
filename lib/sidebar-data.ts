@@ -17,6 +17,9 @@ import {
 	PlusCircle,
 	CalendarCheck,
 	CalendarPlus,
+	Files,
+	HandHeart,
+	HandHelping,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
 import { CASE_VIEWS } from '@/lib/cases/views'
@@ -228,6 +231,11 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				title: t('sidebar.admin.reservations'),
 				url: `/${locale}/admin/reservation`,
 				icon: CalendarCheck,
+			},
+			{
+				title: t('sidebar.admin.projects'),
+				url: `/${locale}/admin/projects`,
+				icon: HandHelping,
 			},
 			{
 				title: t('sidebar.admin.training'),

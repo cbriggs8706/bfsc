@@ -14,8 +14,6 @@ type Props = {
 export function ProjectReadView({ project }: Props) {
 	return (
 		<div className="space-y-4">
-			<h1 className="text-2xl font-bold">{project.name}</h1>
-
 			{project.instructions && (
 				<p className="text-sm text-muted-foreground">{project.instructions}</p>
 			)}
@@ -28,7 +26,7 @@ export function ProjectReadView({ project }: Props) {
 			</div>
 
 			<div className="flex gap-6 text-sm">
-				<div>Target: {project.targetDate || '—'}</div>
+				{/* <div>Target: {project.targetDate || '—'}</div> */}
 				<div>Completed: {project.actualCompletionDate || '—'}</div>
 			</div>
 		</div>

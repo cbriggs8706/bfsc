@@ -94,7 +94,8 @@
 		"defineCaseTypes": "Define Case Types",
 		"defineFaiths": "Define Faiths",
 		"defineCallings": "Define Callings",
-		"training": "Training"
+		"training": "Training",
+		"projects": "Projects"
 	},
 	"worker": {
 		"title": "Worker",

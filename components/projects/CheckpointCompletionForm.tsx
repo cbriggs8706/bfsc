@@ -9,17 +9,17 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import {
 	readCheckpointCompletionForForm,
 	saveCheckpointCompletion,
-} from '@/lib/actions/projects/checkpoints'
+} from '@/lib/actions/projects/front-checkpoints'
 import type { CheckpointFormMode, CheckpointFormValues } from '@/types/projects'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 
 const EMPTY: CheckpointFormValues = {
-	minutesSpent: '',
+	minutesSpent: '1',
 	notes: '',
 	url: '',
 }
@@ -72,20 +72,14 @@ export function CheckpointCompletionForm({
 			)
 
 			if (res.ok) {
-				router.push(
-					`/${locale}/projects/${projectId}/checkpoints/${checkpointId}`
-				)
-				router.refresh()
+				router.push(`/${locale}/projects/${projectId}`)
+				// router.refresh()
 			}
 		})
 	}
 
 	return (
 		<Card>
-			<CardHeader>
-				<CardTitle>Complete Checkpoint</CardTitle>
-			</CardHeader>
-
 			<CardContent>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 					<div>
@@ -99,15 +93,23 @@ export function CheckpointCompletionForm({
 
 					<div>
 						<Label>Notes</Label>
-						<Textarea disabled={isPending} {...form.register('notes')} />
+						<Textarea
+							disabled={isPending}
+							{...form.register('notes')}
+							placeholder="optional"
+						/>
 					</div>
 
 					<div>
 						<Label>Related URL</Label>
-						<Input disabled={isPending} {...form.register('url')} />
+						<Input
+							disabled={isPending}
+							{...form.register('url')}
+							placeholder="optional"
+						/>
 					</div>
 
-					<Button disabled={isPending}>Save Completion</Button>
+					<Button disabled={isPending}>Mark Checkpoint as Completed</Button>
 				</form>
 			</CardContent>
 		</Card>

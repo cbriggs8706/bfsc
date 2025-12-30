@@ -1,6 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { Separator } from '../ui/separator'
+import { Button } from '../ui/button'
+import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 
 type Props = {
 	projectId: string
@@ -19,31 +23,55 @@ export function CheckpointReadView({ projectId, locale, checkpoint }: Props) {
 	const router = useRouter()
 
 	return (
-		<div className="space-y-4">
-			<h1 className="text-xl font-semibold">{checkpoint.name}</h1>
+		<Card>
+			<CardHeader>
+				<CardTitle className="text-xl">Checkpoint Details</CardTitle>
+			</CardHeader>
 
-			{checkpoint.notes && <p className="text-sm">{checkpoint.notes}</p>}
-
-			{checkpoint.url && (
-				<a href={checkpoint.url} className="text-sm underline" target="_blank">
-					Related link
-				</a>
-			)}
-
-			<div className="flex gap-2">
-				{checkpoint.canEdit && (
-					<button
-						className="btn"
-						onClick={() =>
-							router.push(
-								`/${locale}/projects/${projectId}/checkpoints/${checkpoint.id}/edit`
-							)
-						}
-					>
-						Edit / Complete
-					</button>
+			<CardContent className="space-y-4">
+				{/* Notes */}
+				{checkpoint.notes ? (
+					<div className="space-y-1">
+						<p className="text-sm font-medium text-muted-foreground">Notes</p>
+						<p className="leading-relaxed">{checkpoint.notes}</p>
+					</div>
+				) : (
+					<p className="text-sm text-muted-foreground">No notes provided.</p>
 				)}
-			</div>
-		</div>
+
+				{/* Related link */}
+				{checkpoint.url && (
+					<div className="pt-2">
+						<Button asChild variant="outline">
+							<Link
+								href={checkpoint.url}
+								target="_blank"
+								onClick={(e) => e.stopPropagation()}
+							>
+								Open Related Link
+							</Link>
+						</Button>
+					</div>
+				)}
+
+				{checkpoint.canEdit && (
+					<>
+						<Separator />
+
+						<div className="flex gap-2">
+							<Button
+								onClick={() =>
+									router.push(
+										`/${locale}/projects/${projectId}/checkpoints/${checkpoint.id}/edit`
+									)
+								}
+							>
+								Complete this Checkpoint
+							</Button>
+						</div>
+					</>
+				)}
+			</CardContent>
+		</Card>
 	)
 }

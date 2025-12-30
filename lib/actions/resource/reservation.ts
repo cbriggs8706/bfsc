@@ -184,7 +184,7 @@ export async function saveReservation(
 					status: isAdmin ? data.status ?? 'pending' : 'pending',
 				})
 				.returning({ id: reservations.id })
-
+			//TODO add locale?
 			revalidatePath('/admin/reservation')
 			return { ok: true, isAdmin, id: row?.id }
 		}
@@ -208,7 +208,7 @@ export async function saveReservation(
 				...(isAdmin && data.status ? { status: data.status } : {}),
 			})
 			.where(eq(reservations.id, reservationId))
-
+		//TODO add locale?
 		revalidatePath('/admin/reservation')
 		revalidatePath(`/admin/reservation/${reservationId}`)
 		return { ok: true, isAdmin }

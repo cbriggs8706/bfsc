@@ -1,141 +1,110 @@
 'use server'
 
+import { unstable_noStore as noStore, revalidatePath } from 'next/cache'
+import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
-import { eq, and, sql } from 'drizzle-orm'
-import { z } from 'zod'
+import { projectCheckpoints } from '@/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import {
-	projectCheckpoints,
-	projectCheckpointCompletions,
-} from '@/db/schema/tables/projects'
-import { requireRole } from '@/utils/require-role'
-import type {
-	CheckpointDetail,
-	CheckpointFormResult,
-	ProjectCheckpointRow,
-} from '@/types/projects'
+import { z } from 'zod'
 
-/* ------------------------------------------------------------------
-   Server schema (authoritative)
------------------------------------------------------------------- */
-const CheckpointInputSchema = z.object({
-	minutesSpent: z.coerce.number().min(1),
+/* ------------------------------------------------------------------ */
+/* Types */
+/* ------------------------------------------------------------------ */
+
+export type ProjectCheckpointFormValues = {
+	projectId: string
+	name: string
+	url: string
+	notes: string
+	sortOrder: string
+}
+
+export type ProjectCheckpointActionResult =
+	| { ok: true; id?: string }
+	| { ok: false; message: string }
+
+/* ------------------------------------------------------------------ */
+/* Zod schema (server authority) */
+/* ------------------------------------------------------------------ */
+
+const ProjectCheckpointInputSchema = z.object({
+	projectId: z.string().uuid(),
+	name: z.string().min(1),
+	url: z.string().url().optional().nullable(),
+	notes: z.string().catch(''),
+	sortOrder: z.coerce.number().int().min(0),
 })
 
-export async function readCheckpointDetail(
-	locale: string,
-	checkpointId: string
-): Promise<CheckpointDetail | null> {
-	// Read checkpoint definition
-	const checkpoint = await db.query.projectCheckpoints.findFirst({
-		where: eq(projectCheckpoints.id, checkpointId),
+/* ------------------------------------------------------------------ */
+/* Reads */
+/* ------------------------------------------------------------------ */
+
+export async function readCheckpoint(id: string) {
+	noStore()
+	if (!id) throw new Error('Missing checkpoint id')
+
+	return db.query.projectCheckpoints.findFirst({
+		where: eq(projectCheckpoints.id, id),
+	})
+}
+
+export async function readProjectCheckpoints(projectId: string) {
+	noStore()
+	if (!projectId) throw new Error('Missing project id')
+
+	return db.query.projectCheckpoints.findMany({
+		where: eq(projectCheckpoints.projectId, projectId),
+		orderBy: asc(projectCheckpoints.sortOrder),
+	})
+}
+
+/**
+ * Form-shaped read (for update/delete pages)
+ */
+export async function readCheckpointForForm(
+	id: string
+): Promise<(ProjectCheckpointFormValues & { id: string }) | null> {
+	noStore()
+	if (!id) throw new Error('Missing checkpoint id')
+
+	const row = await db.query.projectCheckpoints.findFirst({
+		where: eq(projectCheckpoints.id, id),
+		columns: {
+			id: true,
+			projectId: true,
+			name: true,
+			url: true,
+			notes: true,
+			sortOrder: true,
+		},
 	})
 
-	if (!checkpoint) return null
-
-	// Completion = any completion row exists
-	const [{ count }] = await db
-		.select({ count: sql<number>`count(*)` })
-		.from(projectCheckpointCompletions)
-		.where(eq(projectCheckpointCompletions.checkpointId, checkpointId))
-
-	const isCompleted = count > 0
-
-	// Admin check (exactly as you specified)
-	const isAdmin = await requireRole(
-		locale,
-		['Admin', 'Director', 'Assistant Director'],
-		`/${locale}/admin/users`
-	)
-		.then(() => true)
-		.catch(() => false)
+	if (!row) return null
 
 	return {
-		id: checkpoint.id,
-		name: checkpoint.name,
-		notes: checkpoint.notes ?? '',
-		url: checkpoint.url ?? '',
-		isCompleted,
-		canEdit: !isCompleted || isAdmin,
+		id: row.id,
+		projectId: row.projectId,
+		name: row.name,
+		url: row.url ?? '',
+		notes: row.notes ?? '',
+		sortOrder: String(row.sortOrder ?? 0),
 	}
 }
 
-export async function readProjectCheckpoints(
-	projectId: string
-): Promise<ProjectCheckpointRow[]> {
-	const rows = await db
-		.select({
-			id: projectCheckpoints.id,
-			name: projectCheckpoints.name,
+/* ------------------------------------------------------------------ */
+/* Writes (Resource-style) */
+/* ------------------------------------------------------------------ */
 
-			totalMinutes: sql<number>`
-				COALESCE(SUM(${projectCheckpointCompletions.minutesSpent}), 0)
-			`,
-
-			completionCount: sql<number>`
-				COUNT(${projectCheckpointCompletions.checkpointId})
-			`,
-		})
-		.from(projectCheckpoints)
-		.leftJoin(
-			projectCheckpointCompletions,
-			eq(projectCheckpointCompletions.checkpointId, projectCheckpoints.id)
-		)
-		.where(eq(projectCheckpoints.projectId, projectId))
-		.groupBy(projectCheckpoints.id)
-		.orderBy(projectCheckpoints.sortOrder)
-
-	return rows.map((r) => ({
-		id: r.id,
-		name: r.name,
-		totalMinutes: r.totalMinutes,
-		isCompleted: r.completionCount > 0,
-	}))
-}
-
-/* ------------------------------------------------------------------
-   FORM-SHAPED READ (completion only)
------------------------------------------------------------------- */
-export async function readCheckpointCompletionForForm(checkpointId: string) {
-	const session = await getServerSession(authOptions)
-	if (!session?.user?.id) return null
-
-	const row = await db
-		.select({
-			minutesSpent: projectCheckpointCompletions.minutesSpent,
-		})
-		.from(projectCheckpointCompletions)
-		.where(
-			and(
-				eq(projectCheckpointCompletions.checkpointId, checkpointId),
-				eq(projectCheckpointCompletions.userId, session.user.id)
-			)
-		)
-		.limit(1)
-
-	if (!row[0]) return null
-
-	return {
-		minutesSpent: String(row[0].minutesSpent),
-	}
-}
-
-/* ------------------------------------------------------------------
-   SAVE (create or update completion)
------------------------------------------------------------------- */
-export async function saveCheckpointCompletion(
+export async function saveCheckpoint(
 	mode: 'create' | 'update',
-	checkpointId: string,
-	raw: unknown,
-	locale: string
-): Promise<CheckpointFormResult> {
+	checkpointId: string | null,
+	raw: unknown
+): Promise<ProjectCheckpointActionResult> {
 	const session = await getServerSession(authOptions)
-	if (!session?.user?.id) {
-		return { ok: false, message: 'Unauthorized' }
-	}
+	if (!session) return { ok: false, message: 'Unauthorized' }
 
-	const parsed = CheckpointInputSchema.safeParse(raw)
+	const parsed = ProjectCheckpointInputSchema.safeParse(raw)
 	if (!parsed.success) {
 		return {
 			ok: false,
@@ -143,61 +112,76 @@ export async function saveCheckpointCompletion(
 		}
 	}
 
-	const { minutesSpent } = parsed.data
-
-	// Is checkpoint defined?
-	const checkpoint = await db.query.projectCheckpoints.findFirst({
-		where: eq(projectCheckpoints.id, checkpointId),
-	})
-
-	if (!checkpoint) {
-		return { ok: false, message: 'Checkpoint not found' }
-	}
-
-	// Check if already completed by anyone
-	const existingCompletion = await db
-		.select({ id: projectCheckpointCompletions.checkpointId })
-		.from(projectCheckpointCompletions)
-		.where(eq(projectCheckpointCompletions.checkpointId, checkpointId))
-		.limit(1)
-
-	const isCompleted = existingCompletion.length > 0
-
-	// Admin check
-	const isAdmin = await requireRole(
-		locale,
-		['Admin', 'Director', 'Assistant Director'],
-		`/${locale}/admin/users`
-	)
-		.then(() => true)
-		.catch(() => false)
-
-	// Non-admins cannot edit completed checkpoints
-	if (isCompleted && !isAdmin) {
-		return { ok: false, message: 'Checkpoint is locked' }
-	}
+	const data = parsed.data
 
 	try {
 		if (mode === 'create') {
-			await db.insert(projectCheckpointCompletions).values({
-				checkpointId,
-				userId: session.user.id,
-				minutesSpent,
-			})
-		} else {
-			await db
-				.update(projectCheckpointCompletions)
-				.set({ minutesSpent })
-				.where(
-					and(
-						eq(projectCheckpointCompletions.checkpointId, checkpointId),
-						eq(projectCheckpointCompletions.userId, session.user.id)
-					)
-				)
+			const [row] = await db
+				.insert(projectCheckpoints)
+				.values({
+					projectId: data.projectId,
+					name: data.name,
+					url: data.url ?? null,
+					notes: data.notes || null,
+					sortOrder: data.sortOrder,
+				})
+				.returning({ id: projectCheckpoints.id })
+
+			revalidatePath('/admin/projects')
+			revalidatePath(`/admin/projects/${data.projectId}`)
+
+			return { ok: true, id: row?.id }
 		}
+
+		// update
+		if (!checkpointId) {
+			return { ok: false, message: 'Missing checkpoint id' }
+		}
+
+		await db
+			.update(projectCheckpoints)
+			.set({
+				name: data.name,
+				url: data.url ?? null,
+				notes: data.notes || null,
+				sortOrder: data.sortOrder,
+			})
+			.where(eq(projectCheckpoints.id, checkpointId))
+
+		revalidatePath('/admin/projects')
+		revalidatePath(`/admin/projects/${data.projectId}`)
 
 		return { ok: true }
 	} catch {
-		return { ok: false, message: 'Save failed' }
+		return { ok: false, message: 'Database error' }
+	}
+}
+
+/* ------------------------------------------------------------------ */
+/* Delete */
+/* ------------------------------------------------------------------ */
+
+export async function deleteCheckpoint(
+	checkpointId: string,
+	projectId: string
+): Promise<{ ok: true } | { ok: false; message: string }> {
+	const session = await getServerSession(authOptions)
+	if (!session) return { ok: false, message: 'Unauthorized' }
+
+	if (!checkpointId) {
+		return { ok: false, message: 'Missing checkpoint id' }
+	}
+
+	try {
+		await db
+			.delete(projectCheckpoints)
+			.where(eq(projectCheckpoints.id, checkpointId))
+
+		revalidatePath('/admin/projects')
+		revalidatePath(`/admin/projects/${projectId}`)
+
+		return { ok: true }
+	} catch {
+		return { ok: false, message: 'Delete failed' }
 	}
 }

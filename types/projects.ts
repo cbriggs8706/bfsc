@@ -13,9 +13,13 @@ export type ProjectFormValues = {
 	// ISO date strings (yyyy-mm-dd) or ''
 	targetDate: string
 	actualCompletionDate: string
-
-	// "true" | "false" (string in UI)
-	isArchived: 'true' | 'false'
+	isArchived: boolean
+}
+export type CheckpointAdminFormValues = {
+	name: string
+	url: string
+	notes: string
+	projectId: number
 }
 
 export type ProjectFormResult = { ok: true } | { ok: false; message: string }
@@ -26,6 +30,13 @@ export type ProjectSummary = {
 	targetDate: string
 	progressPercent: number
 	totalMinutes: number
+}
+export type CheckpointSummary = {
+	id: string
+	name: string
+	url: string
+	notes: string
+	projectId: number
 }
 
 export type ProjectSummaryRow = {

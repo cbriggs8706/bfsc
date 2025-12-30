@@ -1,10 +1,17 @@
 // app/[locale]/(public)/community-projects/page.tsx
+import { ProjectCardGrid } from '@/components/admin/projects/ProjectCardGrid'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { COMMUNITY_PROJECTS } from '@/lib/community-projects.data'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { readProjectSummaries } from '@/lib/actions/projects/projects'
 import Link from 'next/link'
 
-export default function CommunityProjectsPage() {
+interface Props {
+	params: Promise<{ locale: string }>
+}
+
+export default async function CommunityProjectsPage({ params }: Props) {
+	const { locale } = await params
+	const projects = await readProjectSummaries()
 	return (
 		<div className="p-4 space-y-6">
 			<div>
@@ -64,6 +71,8 @@ export default function CommunityProjectsPage() {
 					</p>
 				</CardContent>
 			</Card>
+			<h2 className="text-2xl font-semibold">Current Projects</h2>
+			<ProjectCardGrid projects={projects} locale={locale} />
 			<Card>
 				<CardHeader className="text-xl font-bold">
 					Cassia Museum General Photos{' '}
