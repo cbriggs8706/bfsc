@@ -1,4 +1,4 @@
-// app/[locale]/(public)/dashboard/layout.tsx
+// app/[locale]/(auth)/layout.tsx
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 

@@ -201,6 +201,21 @@ export function LoginForm({ redirectTo }: Props) {
 								)}
 							/>
 						</FieldGroup>
+						<div className="mt-2 flex justify-between">
+							<Link
+								href={`/${locale}/forgot-password`}
+								className="text-sm text-muted-foreground underline hover:text-foreground"
+							>
+								{t('forgotPassword')}
+							</Link>
+
+							<Link
+								href={`/${locale}/reset-with-code`}
+								className="text-sm text-muted-foreground underline hover:text-foreground"
+							>
+								{t('haveResetCode')}
+							</Link>
+						</div>
 					</form>
 				</CardContent>
 
@@ -219,7 +234,7 @@ export function LoginForm({ redirectTo }: Props) {
 					<p className="text-sm text-center text-muted-foreground">
 						{t('noAccount')}{' '}
 						<Link
-							href={`/${locale}/auth/register`}
+							href={`/${locale}/register`}
 							className="underline hover:text-foreground"
 						>
 							{t('signupLink')}

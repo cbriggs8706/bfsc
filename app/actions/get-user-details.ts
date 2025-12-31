@@ -42,6 +42,7 @@ export async function getUserDetails(): Promise<UserDetailsData | null> {
 		languagesSpoken: kiosk?.languagesSpoken,
 		pid: kiosk?.pid,
 		providers: providerRows.map((p) => p.provider),
+		hasPassword: !!dbUser.passwordHash,
 
 		kioskPersonId: kiosk?.id,
 		profileImageUrl: kiosk?.profileImageUrl ?? null,

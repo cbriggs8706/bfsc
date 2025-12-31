@@ -253,6 +253,13 @@
       "when": 1767121352715,
       "tag": "0035_fat_darkstar",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1767150839166,
+      "tag": "0036_vengeful_firedrake",
+      "breakpoints": true
     }
   ]
 }

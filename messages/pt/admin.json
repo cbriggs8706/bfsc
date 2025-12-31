@@ -1,0 +1,7 @@
+{
+	"resetCode": {
+		"button": "Redefinir senha",
+		"title": "Código temporário de redefinição",
+		"expires": "Expira em 1 hora. Entregue este código ao usuário."
+	}
+}

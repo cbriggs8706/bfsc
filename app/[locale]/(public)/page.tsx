@@ -205,6 +205,47 @@ export default async function HomePage({ params, searchParams }: Props) {
 			</section>
 
 			{/* =============================
+			   ABOUT
+			============================= */}
+			<section className="max-w-5xl mx-auto px-4 space-y-4">
+				<h2 className="text-2xl font-semibold">About This Center</h2>
+				<p className="text-muted-foreground w-full">
+					The Burley FamilySearch Center is dedicated to assisting people in
+					researching their family and preserving their memories for future
+					generations. Staff are available for one-on-one assistance. We offer
+					classes for all ages and skills. Additionally, we have the capability
+					of digitizing most media types. VHS and VHS-C tapes, mini DV, 8 mm
+					cassette movies, audio cassettes, audio reels, 8 mm reel movies,
+					slides, negatives, pictures, documents, newspaper clippings, etc. Come
+					see what we can do for you!
+				</p>
+			</section>
+
+			{/* =============================
+			  SECTION #2
+			============================= */}
+			<section className="bg-muted/40 py-4">
+				<div className="max-w-6xl mx-auto px-4 grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+					{homeCards.map(({ title, url, icon: Icon, description }) => (
+						<Link key={title} href={url} className="group">
+							<Card className="h-full transition hover:shadow-md hover:border-primary">
+								<CardContent className="p-6 space-y-3">
+									<div className="flex items-center gap-3">
+										<Icon className="h-6 w-6 text-primary" />
+										<h3 className="font-semibold group-hover:underline">
+											{title}
+										</h3>
+									</div>
+
+									<p className="text-sm text-muted-foreground">{description}</p>
+								</CardContent>
+							</Card>
+						</Link>
+					))}
+				</div>
+			</section>
+
+			{/* =============================
 			   HERO — Latest Newsletter
 			============================= */}
 			{latest && (
@@ -296,47 +337,6 @@ export default async function HomePage({ params, searchParams }: Props) {
 			</section>
 
 			<Separator />
-
-			{/* =============================
-			   ABOUT
-			============================= */}
-			<section className="max-w-5xl mx-auto px-4 space-y-4">
-				<h2 className="text-2xl font-semibold">About This Center</h2>
-				<p className="text-muted-foreground w-full">
-					The Burley FamilySearch Center is dedicated to assisting people in
-					researching their family and preserving their memories for future
-					generations. There are several workers on staff to assist one to one.
-					We offer classes for all ages and skills. Additionally, we have the
-					capability of digitizing most media types. VHS and VHS-C tapes, mini
-					DV, 8 mm cassette movies, audio cassettes, audio reels, 8 mm reel
-					movies, slides, negatives, pictures, documents, newspaper clippings,
-					etc. Come see what we can do for you!
-				</p>
-			</section>
-
-			{/* =============================
-			  SECTION #2
-			============================= */}
-			<section className="bg-muted/40 py-4">
-				<div className="max-w-6xl mx-auto px-4 grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-					{homeCards.map(({ title, url, icon: Icon, description }) => (
-						<Link key={title} href={url} className="group">
-							<Card className="h-full transition hover:shadow-md hover:border-primary">
-								<CardContent className="p-6 space-y-3">
-									<div className="flex items-center gap-3">
-										<Icon className="h-6 w-6 text-primary" />
-										<h3 className="font-semibold group-hover:underline">
-											{title}
-										</h3>
-									</div>
-
-									<p className="text-sm text-muted-foreground">{description}</p>
-								</CardContent>
-							</Card>
-						</Link>
-					))}
-				</div>
-			</section>
 
 			{/* =============================
 			   CTA

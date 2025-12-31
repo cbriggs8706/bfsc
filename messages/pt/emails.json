@@ -1,0 +1,9 @@
+{
+	"passwordReset": {
+		"subject": "Redefinir sua senha",
+		"title": "Redefinir sua senha",
+		"intro": "Recebemos uma solicitação para redefinir sua senha. Clique no botão abaixo para continuar.",
+		"button": "Redefinir senha",
+		"footer": "Este link expira em 1 hora. Se você não solicitou isso, pode ignorar este e-mail."
+	}
+}

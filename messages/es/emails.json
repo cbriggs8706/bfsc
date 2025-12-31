@@ -1,0 +1,9 @@
+{
+	"passwordReset": {
+		"subject": "Restablecer su contraseña",
+		"title": "Restablecer su contraseña",
+		"intro": "Recibimos una solicitud para restablecer su contraseña. Haga clic en el botón a continuación.",
+		"button": "Restablecer contraseña",
+		"footer": "Este enlace expira en 1 hora. Si no solicitó esto, puede ignorar este mensaje."
+	}
+}

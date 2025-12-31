@@ -1,4 +1,5 @@
 //TODO do i delete this now that i've created update-kiosk-profile action?
+//Answer: no but should eventually rename updateUserProfile → updatePublicUserProfile
 'use server'
 
 import { getServerSession } from 'next-auth'

@@ -1,3 +1,4 @@
+// lib/email/send-newsletter-confirmation-email.ts
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)

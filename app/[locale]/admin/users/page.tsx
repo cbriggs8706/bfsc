@@ -16,6 +16,7 @@ import { sql } from 'drizzle-orm'
 import { requireRole } from '@/utils/require-role'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { GenerateResetCodeButton } from '@/components/auth/GenerateResetCodeButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -126,11 +127,15 @@ export default async function AdminUsersPage({
 										<TableCell className="capitalize">{u.role}</TableCell>
 										<TableCell className="text-right">
 											{canEditUser(userRole, u.role) ? (
-												<Link href={`/${locale}/admin/users/${u.id}/update`}>
-													<Button size="sm" variant="outline">
-														Edit
-													</Button>
-												</Link>
+												<div className="flex gap-2 justify-end">
+													<Link href={`/${locale}/admin/users/${u.id}/update`}>
+														<Button size="sm" variant="outline">
+															Edit
+														</Button>
+													</Link>
+
+													<GenerateResetCodeButton userId={u.id} />
+												</div>
 											) : (
 												<Button size="sm" variant="outline" disabled>
 													Edit

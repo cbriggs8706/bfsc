@@ -1,0 +1,9 @@
+{
+	"passwordReset": {
+		"subject": "Reset your password",
+		"title": "Reset your password",
+		"intro": "We received a request to reset your password. Click the button below to continue.",
+		"button": "Reset password",
+		"footer": "This link expires in 1 hour. If you didn’t request this, you can safely ignore this email."
+	}
+}

@@ -1,0 +1,7 @@
+{
+	"resetCode": {
+		"button": "Restablecer contraseña",
+		"title": "Código temporal de restablecimiento",
+		"expires": "Expira en 1 hora. Entregue este código al usuario."
+	}
+}

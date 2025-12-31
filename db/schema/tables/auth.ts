@@ -90,3 +90,12 @@ export const verificationToken = pgTable(
 		}),
 	]
 )
+
+export const passwordResetThrottle = pgTable('public.password_reset_throttle', {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	kind: text().notNull(), // 'request' | 'code_attempt'
+	key: text().notNull(), // e.g. 'ip:1.2.3.4' or 'ident:userId:...' or 'code:userId:ip:...'
+	count: integer().notNull().default(0),
+	windowStart: timestamp({ withTimezone: true }).notNull(),
+	windowEnds: timestamp({ withTimezone: true }).notNull(),
+})

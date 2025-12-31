@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getUserDetails } from '@/app/actions/get-user-details'
 import { uploadProfileImage } from '@/utils/upload-profile-image'
 import { updateKioskProfile } from '@/app/actions/update-kiosk-profile'
+import { createPassword } from '@/app/actions/create-password'
 
 export interface UserDetailsData {
 	// kiosk_people (optional)
@@ -32,7 +33,7 @@ export interface UserDetailsData {
 	username: string | null
 	email: string
 	role: string
-
+	hasPassword: boolean
 	// auth / meta
 	providers?: string[]
 	createdAt?: string | Date
@@ -131,6 +132,8 @@ export default function UserDetails() {
 	const [pid, setPid] = useState('')
 
 	const isCredentialsUser = session?.user?.authProvider === 'credentials'
+	const hasPassword = details?.hasPassword
+	const isOAuthOnly = !hasPassword
 
 	// Load full DB user details
 	useEffect(() => {
@@ -246,6 +249,33 @@ export default function UserDetails() {
 			} catch (err) {
 				console.error(err)
 				toast.error('Failed to change password')
+			}
+		})
+	}
+
+	const onCreatePassword = () => {
+		if (newPassword !== confirmPassword) {
+			toast.error('Passwords do not match')
+			return
+		}
+
+		startTransition(async () => {
+			try {
+				const res = await createPassword(newPassword)
+				if (!res?.success) throw new Error(res?.message)
+
+				await refreshSession()
+
+				const refreshed = await getUserDetails()
+				setDetails(refreshed)
+
+				setNewPassword('')
+				setConfirmPassword('')
+
+				toast.success('Password created!')
+			} catch (err) {
+				console.error(err)
+				toast.error('Failed to create password')
 			}
 		})
 	}
@@ -447,7 +477,41 @@ export default function UserDetails() {
 							</Button> */}
 
 							{/* ---- CREDENTIALS ONLY: CHANGE PASSWORD ---- */}
-							{isCredentialsUser && (
+							{!hasPassword && (
+								<div className="pt-6 border-t">
+									<h2 className="font-semibold mb-2">Create a Password</h2>
+
+									<p className="text-sm text-muted-foreground mb-3">
+										You signed in with Google. Creating a password lets you sign
+										in without Google.
+									</p>
+
+									<div className="space-y-3">
+										<Input
+											type="password"
+											placeholder="New password"
+											value={newPassword}
+											onChange={(e) => setNewPassword(e.target.value)}
+										/>
+										<Input
+											type="password"
+											placeholder="Confirm new password"
+											value={confirmPassword}
+											onChange={(e) => setConfirmPassword(e.target.value)}
+										/>
+
+										<Button
+											onClick={onCreatePassword}
+											disabled={isPending}
+											className="w-full"
+										>
+											{isPending ? 'Saving…' : 'Create Password'}
+										</Button>
+									</div>
+								</div>
+							)}
+
+							{hasPassword && (
 								<div className="pt-6 border-t">
 									<h2 className="font-semibold mb-2">Change Password</h2>
 

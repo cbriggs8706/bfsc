@@ -1,0 +1,7 @@
+{
+	"resetCode": {
+		"button": "Reset Password",
+		"title": "Temporary Reset Code",
+		"expires": "Expires in 1 hour. Give this code to the patron."
+	}
+}
