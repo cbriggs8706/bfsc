@@ -1,6 +1,6 @@
 // db/queries/shifts-print.ts
 import { db } from '@/db'
-import { eq, inArray } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import {
 	operatingHours,
 	weeklyShifts,
@@ -41,6 +41,7 @@ type ShiftWithRecurrences = {
 	weekday: number
 	startTime: string
 	endTime: string
+	type: string
 	recurrences: ShiftRecurrence[]
 }
 
@@ -114,7 +115,7 @@ export async function getShiftPrintData(): Promise<{
 			weekday: weeklyShifts.weekday,
 			startTime: weeklyShifts.startTime,
 			endTime: weeklyShifts.endTime,
-
+			type: weeklyShifts.type,
 			recurrenceId: shiftRecurrences.id,
 			label: shiftRecurrences.label,
 			weekOfMonth: shiftRecurrences.weekOfMonth,
@@ -123,7 +124,6 @@ export async function getShiftPrintData(): Promise<{
 		})
 		.from(weeklyShifts)
 		.leftJoin(shiftRecurrences, eq(shiftRecurrences.shiftId, weeklyShifts.id))
-		.where(inArray(weeklyShifts.weekday, activeWeekdays))
 
 	/* --------------------------------------------------
 	 * 4) Normalize shifts
@@ -137,6 +137,7 @@ export async function getShiftPrintData(): Promise<{
 				weekday: r.weekday,
 				startTime: r.startTime,
 				endTime: r.endTime,
+				type: r.type,
 				recurrences: [],
 			})
 		}

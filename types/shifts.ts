@@ -12,6 +12,7 @@ export type Shift = {
 	id: string
 	weekday: number
 	startTime: string
+	type: ShiftType
 	endTime: string
 	isActive: boolean
 	notes: string | null
@@ -29,6 +30,7 @@ export type Day = {
 	label: string
 	opensAt: string
 	closesAt: string
+	isClosed: boolean
 }
 
 export type DaySimple = {
@@ -36,11 +38,13 @@ export type DaySimple = {
 	label: string
 }
 
+export type ShiftType = 'regular' | 'appointment'
+
 export type ShiftInstance = {
 	shiftId: string
 	shiftRecurrenceId: string
 	date: string // YYYY-MM-DD
-
+	type: ShiftType
 	startTime: string
 	endTime: string
 

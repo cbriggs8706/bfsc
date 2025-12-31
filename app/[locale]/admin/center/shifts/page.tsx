@@ -8,7 +8,7 @@ import {
 	weeklyShifts,
 } from '@/db/schema/tables/shifts'
 import { ShiftDefinitionsManager } from '@/components/admin/shift/ShiftDefinitions'
-import { Shift } from '@/types/shifts'
+import { Day, Shift } from '@/types/shifts'
 
 type Props = {
 	params: Promise<{ locale: string }>
@@ -41,24 +41,41 @@ export default async function ManageShiftsPage({ params }: Props) {
 		.from(operatingHours)
 		.where(eq(operatingHours.isClosed, false))
 
-	const activeDays = operating
-		.map((d) => ({
-			weekday: d.weekday,
-			label: WEEKDAY_LABELS[d.weekday],
-			opensAt: d.opensAt,
-			closesAt: d.closesAt,
-		}))
-		.sort((a, b) => a.weekday - b.weekday)
+	// const activeDays = operating
+	// 	.map((d) => ({
+	// 		weekday: d.weekday,
+	// 		label: WEEKDAY_LABELS[d.weekday],
+	// 		opensAt: d.opensAt,
+	// 		closesAt: d.closesAt,
+	// 	}))
+	// 	.sort((a, b) => a.weekday - b.weekday)
 
-	const activeWeekdayNumbers = activeDays.map((d) => d.weekday)
+	// const activeWeekdayNumbers = activeDays.map((d) => d.weekday)
+	const shiftWeekdays = await db
+		.selectDistinct({ weekday: weeklyShifts.weekday })
+		.from(weeklyShifts)
 
-	if (activeWeekdayNumbers.length === 0) {
+	const weekdayNumbers = shiftWeekdays.map((d) => d.weekday)
+
+	const days: Day[] = WEEKDAY_LABELS.map((label, weekday) => {
+		const op = operating.find((o) => o.weekday === weekday)
+
+		return {
+			weekday,
+			label,
+			opensAt: op?.opensAt ?? '—',
+			closesAt: op?.closesAt ?? '—',
+			isClosed: !op,
+		}
+	})
+
+	if (days.length === 0) {
 		return (
 			<div className="p-6 space-y-2">
 				<h1 className="text-2xl font-semibold">Shift Definitions</h1>
 				<p className="text-muted-foreground">
-					No active operating days are configured. Set up operating hours first
-					before defining shifts.
+					No days are available for shift definitions yet. Configure operating
+					hours or create appointment-only shifts first.
 				</p>
 			</div>
 		)
@@ -85,7 +102,7 @@ export default async function ManageShiftsPage({ params }: Props) {
 			endTime: weeklyShifts.endTime,
 			isActive: weeklyShifts.isActive,
 			notes: weeklyShifts.notes,
-
+			type: weeklyShifts.type,
 			recurrenceId: shiftRecurrences.id,
 			label: shiftRecurrences.label,
 			weekOfMonth: shiftRecurrences.weekOfMonth,
@@ -94,7 +111,7 @@ export default async function ManageShiftsPage({ params }: Props) {
 		})
 		.from(weeklyShifts)
 		.leftJoin(shiftRecurrences, eq(shiftRecurrences.shiftId, weeklyShifts.id))
-		.where(inArray(weeklyShifts.weekday, activeWeekdayNumbers))
+		.where(inArray(weeklyShifts.weekday, weekdayNumbers))
 
 	const shiftMap = new Map<string, Shift>()
 
@@ -105,6 +122,7 @@ export default async function ManageShiftsPage({ params }: Props) {
 				weekday: r.weekday,
 				startTime: r.startTime,
 				endTime: r.endTime,
+				type: r.type,
 				isActive: r.isActive,
 				notes: r.notes,
 				recurrences: [],
@@ -134,7 +152,7 @@ export default async function ManageShiftsPage({ params }: Props) {
 				</p>
 			</div>
 
-			<ShiftDefinitionsManager days={activeDays} shifts={shifts} />
+			<ShiftDefinitionsManager days={days} shifts={shifts} />
 		</div>
 	)
 }

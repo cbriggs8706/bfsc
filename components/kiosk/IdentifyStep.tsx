@@ -11,7 +11,7 @@ type Props = {
 	suggestions: PersonSummary[]
 	searching: boolean
 	onInputChange: (value: string) => void
-	onContinue: () => void
+	// onContinue: () => void
 	onSelectSuggestion: (p: PersonSummary) => void
 }
 
@@ -20,39 +20,47 @@ export function IdentifyStep({
 	suggestions,
 	searching,
 	onInputChange,
-	onContinue,
+	// onContinue,
 	onSelectSuggestion,
 }: Props) {
 	return (
 		<div className="space-y-4">
-			<Label className="text-lg">
+			{/* <Label className="text-lg">
 				Enter your <strong>name</strong> or <strong>6-digit code</strong>
-			</Label>
+			</Label> */}
 
 			<KioskInput
 				value={input}
 				onChange={(e) => onInputChange(e.target.value)}
-				autoFocus
 			/>
 
-			{suggestions.length > 0 && (
-				<div className="space-y-2 max-h-56 overflow-y-auto">
+			{/* 🔒 Reserved suggestion well */}
+			<div className="h-56 rounded-xl border bg-background overflow-hidden">
+				<div className="h-full overflow-y-auto p-2 space-y-2">
+					{searching && (
+						<p className="text-2xl px-2 text-center mt-12">Searching…</p>
+					)}
+
+					{!searching && suggestions.length === 0 && (
+						<p className="text-2xl px-2 text-center mt-12">
+							Start typing your name or 6-digit code
+						</p>
+					)}
+
 					{suggestions.map((s) => (
 						<KioskButton
 							key={s.id}
 							variant="secondary"
-							className="justify-start"
+							className="justify-start w-full"
 							onClick={() => onSelectSuggestion(s)}
 						>
 							{s.fullName}
 						</KioskButton>
 					))}
 				</div>
-			)}
+			</div>
 
-			{searching && <p className="text-sm text-muted-foreground">Searching…</p>}
-
-			<KioskButton onClick={onContinue}>Continue</KioskButton>
+			{/* <KioskButton onClick={onContinue}>Continue</KioskButton> */}
 		</div>
 	)
 }

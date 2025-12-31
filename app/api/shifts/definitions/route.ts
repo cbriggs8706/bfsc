@@ -6,7 +6,8 @@ import { eq } from 'drizzle-orm'
 
 export async function POST(req: NextRequest) {
 	try {
-		const { weekday, startTime, endTime, isActive, notes } = await req.json()
+		const { weekday, startTime, endTime, isActive, notes, type } =
+			await req.json()
 
 		if (
 			weekday === undefined ||
@@ -27,18 +28,25 @@ export async function POST(req: NextRequest) {
 				endTime,
 				isActive: isActive ?? true,
 				notes: notes ?? null,
+				// ✅ ADD THIS
+				type: type === 'appointment' ? 'appointment' : 'regular',
 			})
 			.returning({ id: weeklyShifts.id })
 
-		// 🔑 Auto-create default recurrence
-		await db.insert(shiftRecurrences).values({
-			shiftId: shift.id,
-			label: 'Every week',
-			weekOfMonth: null,
-			sortOrder: 0,
-		})
+		const [recurrence] = await db
+			.insert(shiftRecurrences)
+			.values({
+				shiftId: shift.id,
+				label: 'Every week',
+				weekOfMonth: null,
+				sortOrder: 0,
+			})
+			.returning()
 
-		return NextResponse.json({ id: shift.id })
+		return NextResponse.json({
+			id: shift.id,
+			recurrence,
+		})
 	} catch (e) {
 		console.error(e)
 		return NextResponse.json(
@@ -51,7 +59,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
 	try {
 		const body = await req.json()
-		const { id, weekday, startTime, endTime, isActive, notes } = body
+		const { id, weekday, startTime, endTime, isActive, notes, type } = body
 
 		if (!id) {
 			return NextResponse.json({ error: 'id is required' }, { status: 400 })
@@ -64,6 +72,11 @@ export async function PATCH(req: NextRequest) {
 		if (typeof endTime === 'string') updates.endTime = endTime
 		if (typeof isActive === 'boolean') updates.isActive = isActive
 		if (notes !== undefined) updates.notes = notes === '' ? null : notes
+
+		// ✅ ADD THIS
+		if (type === 'regular' || type === 'appointment') {
+			updates.type = type
+		}
 
 		if (Object.keys(updates).length === 0) {
 			return NextResponse.json(

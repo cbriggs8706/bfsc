@@ -58,8 +58,9 @@ export default async function Page({ params }: DashboardPageProps) {
 						))}
 					</div>
 				)}
-				<CurrentShiftPanel />
+				<CurrentShiftPanel locale={locale} />
 				<h2 className="text-2xl font-semibold">Current Projects</h2>
+				{/* TODO add a prop to determine how many ProjectCards to display */}
 				<ProjectCardGrid projects={projects} locale={locale} />
 				<CertificatesGrid certificates={certificates} locale={locale} />
 				<OpenRequestsSection

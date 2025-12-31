@@ -10,9 +10,12 @@ import {
 	index,
 	uniqueIndex,
 	check,
+	pgEnum,
 } from 'drizzle-orm/pg-core'
 import { user } from './auth' // your existing user table
 import { sql } from 'drizzle-orm'
+
+export const shiftTypeEnum = pgEnum('shift_type', ['regular', 'appointment'])
 
 export const operatingHours = pgTable('operating_hours', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -49,7 +52,7 @@ export const weeklyShifts = pgTable(
 		endTime: varchar('end_time', { length: 5 }).notNull(), // "14:00"
 
 		isActive: boolean('is_active').notNull().default(true),
-
+		type: shiftTypeEnum('type').notNull().default('regular'),
 		notes: varchar('notes', { length: 255 }),
 
 		createdAt: timestamp('created_at', { withTimezone: true })
@@ -64,6 +67,15 @@ export const weeklyShifts = pgTable(
 	},
 	(t) => ({
 		weekdayIdx: index('weekly_shifts_weekday_idx').on(t.weekday),
+		timeOrder: check(
+			'weekly_shifts_time_order_ck',
+			sql`${t.endTime} > ${t.startTime}`
+		),
+		weekdayTypeIdx: index('weekly_shifts_weekday_type_idx').on(
+			t.weekday,
+			t.type,
+			t.isActive
+		),
 	})
 )
 

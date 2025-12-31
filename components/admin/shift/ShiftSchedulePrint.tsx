@@ -1,3 +1,4 @@
+import { ShiftType } from '@/types/shifts'
 import { toAmPm } from '@/utils/time'
 
 const ROLE_ORDER: Array<Assignment['assignmentRole']> = [
@@ -33,6 +34,7 @@ type ShiftWithRecurrences = {
 	weekday: number
 	startTime: string
 	endTime: string
+	type: string
 	recurrences: ShiftRecurrence[]
 }
 
@@ -41,6 +43,8 @@ type PrintProps = {
 	days: Day[]
 	shifts: ShiftWithRecurrences[]
 	assignments: Assignment[]
+	titleSuffix?: string
+	shiftType: ShiftType
 }
 
 export function ShiftSchedulePrint({
@@ -48,6 +52,8 @@ export function ShiftSchedulePrint({
 	days,
 	shifts,
 	assignments,
+	titleSuffix,
+	shiftType,
 }: PrintProps) {
 	/* ---------------------------------------------
 	 * Group assignments by recurrence
@@ -71,69 +77,84 @@ export function ShiftSchedulePrint({
 		shiftsByDay.set(shift.weekday, list)
 	}
 
+	const daysWithShifts = days.filter((day) =>
+		shifts.some(
+			(s) =>
+				s.weekday === day.weekday && s.recurrences && s.recurrences.length > 0
+		)
+	)
+
 	/* ---------------------------------------------
 	 * Render
 	 * ------------------------------------------- */
 	return (
 		<div className="flex flex-col justify-center gap-4">
-			<h1 className="text-2xl font-bold text-center">{header}</h1>
+			<h1 className="text-2xl font-bold text-center">
+				{header}
+				{titleSuffix && (
+					<div className="text-sm font-normal mt-1">{titleSuffix}</div>
+				)}
+			</h1>
 			<section className="print-card flex text-xs">
-				{days.map((day) => (
+				{daysWithShifts.map((day) => (
 					<div
 						key={day.weekday}
 						className="print-day border p-2 space-y-2 flex-1 min-w-0"
 					>
 						{' '}
 						<h2 className="font-bold text-center border-b pb-1">{day.label}</h2>
-						{(shiftsByDay.get(day.weekday) ?? []).map((shift) => (
-							<div key={shift.id} className="space-y-1">
-								<div className="font-semibold">
-									{toAmPm(shift.startTime)} – {toAmPm(shift.endTime)}
+						{(shiftsByDay.get(day.weekday) ?? [])
+							.filter((shift) => shift.type === shiftType)
+							.map((shift) => (
+								<div key={shift.id} className="space-y-1">
+									<div className="font-semibold">
+										{toAmPm(shift.startTime)} – {toAmPm(shift.endTime)}
+									</div>
+
+									{shift.recurrences.map((r) => {
+										const recAssignments =
+											assignmentsByRecurrence.get(r.id) ?? []
+
+										const assignmentsByRole = recAssignments.reduce<
+											Record<Assignment['assignmentRole'], Assignment[]>
+										>(
+											(acc, a) => {
+												acc[a.assignmentRole].push(a)
+												return acc
+											},
+											{
+												shift_lead: [],
+												trainer: [],
+												worker: [],
+											}
+										)
+										return (
+											<div key={r.id} className="pl-2">
+												<div className="italic">{r.label}</div>
+
+												{recAssignments.length === 0 ? (
+													<ul className="pl-3 list-disc">
+														<li>—</li>
+													</ul>
+												) : (
+													<ul className="pl-3 list-disc">
+														{ROLE_ORDER.flatMap((role) =>
+															assignmentsByRole[role].map((a) => (
+																<li key={a.id}>
+																	{a.userName ?? '—'}
+																	{role === 'shift_lead' ? ' (lead)' : ''}
+																	{role === 'trainer' ? ' (train)' : ''}
+																	{a.notes ? ` (${a.notes})` : ''}
+																</li>
+															))
+														)}
+													</ul>
+												)}
+											</div>
+										)
+									})}
 								</div>
-
-								{shift.recurrences.map((r) => {
-									const recAssignments = assignmentsByRecurrence.get(r.id) ?? []
-
-									const assignmentsByRole = recAssignments.reduce<
-										Record<Assignment['assignmentRole'], Assignment[]>
-									>(
-										(acc, a) => {
-											acc[a.assignmentRole].push(a)
-											return acc
-										},
-										{
-											shift_lead: [],
-											trainer: [],
-											worker: [],
-										}
-									)
-									return (
-										<div key={r.id} className="pl-2">
-											<div className="italic">{r.label}</div>
-
-											{recAssignments.length === 0 ? (
-												<ul className="pl-3 list-disc">
-													<li>—</li>
-												</ul>
-											) : (
-												<ul className="pl-3 list-disc">
-													{ROLE_ORDER.flatMap((role) =>
-														assignmentsByRole[role].map((a) => (
-															<li key={a.id}>
-																{a.userName ?? '—'}
-																{role === 'shift_lead' ? ' (lead)' : ''}
-																{role === 'trainer' ? ' (train)' : ''}
-																{a.notes ? ` (${a.notes})` : ''}
-															</li>
-														))
-													)}
-												</ul>
-											)}
-										</div>
-									)
-								})}
-							</div>
-						))}
+							))}
 					</div>
 				))}
 			</section>

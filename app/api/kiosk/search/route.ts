@@ -29,9 +29,39 @@ type SearchPerson = {
 export async function GET(request: Request) {
 	const url = new URL(request.url)
 	const q = url.searchParams.get('q')?.trim() ?? ''
+	const isNumeric = /^[0-9]+$/.test(q)
 
 	if (q.length < 2) {
 		return NextResponse.json({ people: [] as SearchPerson[] })
+	}
+
+	// ─────────────────────────────
+	// PASSCODE SEARCH (partial match)
+	// ─────────────────────────────
+	if (isNumeric) {
+		const rows = await db
+			.select({
+				id: kioskPeople.id,
+				fullName: kioskPeople.fullName,
+				userId: kioskPeople.userId,
+				passcode: kioskPeople.passcode,
+				role: user.role,
+			})
+			.from(kioskPeople)
+			.leftJoin(user, eq(kioskPeople.userId, user.id))
+			.where(ilike(kioskPeople.passcode, `${q}%`))
+			.limit(10)
+
+		const people: SearchPerson[] = rows.map((row) => ({
+			id: row.id,
+			fullName: row.fullName,
+			userId: row.userId,
+			isWorker: isWorkerRole(row.role),
+			hasPasscode: true,
+			source: 'kiosk',
+		}))
+
+		return NextResponse.json({ people })
 	}
 
 	// 1) Search kiosk_people first
@@ -57,6 +87,10 @@ export async function GET(request: Request) {
 		source: 'kiosk',
 	}))
 
+	const kioskNames = new Set(
+		kioskPeopleSummaries.map((p) => p.fullName.toLowerCase().trim())
+	)
+
 	const kioskUserIds = kioskPeopleSummaries
 		.map((p) => p.userId)
 		.filter((id): id is string => id !== null)
@@ -75,6 +109,12 @@ export async function GET(request: Request) {
 
 	const userOnlyRows = userRows.filter((u) => {
 		if (!u.fullName) return false
+
+		// If a kiosk person already has this name, hide the user row
+		if (kioskNames.has(u.fullName.toLowerCase().trim())) {
+			return false
+		}
+
 		return !kioskUserIds.includes(u.id)
 	})
 

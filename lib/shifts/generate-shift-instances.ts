@@ -99,6 +99,7 @@ export async function generateShiftInstances({
 				shiftId: shift.id,
 				shiftRecurrenceId: rec.id,
 				date: dateStr,
+				type: shift.type,
 				startTime: shift.startTime,
 				endTime: shift.endTime,
 				assignedUserIds,

@@ -69,7 +69,8 @@ export function CertificatesGrid({ certificates, locale }: Props) {
 										CERT
 									</div>
 								)}
-
+								{/* TODO update font size after character limit */}
+								<span className="text-[9px]">{cert.title}</span>
 								<CertificateBadge status={cert.status} />
 							</div>
 						</button>

@@ -8,6 +8,15 @@ type Props = ComponentPropsWithoutRef<typeof Input>
 
 export function KioskInput({ className, ...props }: Props) {
 	return (
-		<Input {...props} className={cn('h-14 text-lg rounded-xl', className)} />
+		<Input
+			{...props}
+			readOnly
+			inputMode="none"
+			autoComplete="off"
+			autoCorrect="off"
+			spellCheck={false}
+			onFocus={(e) => e.target.blur()} // prevents iOS soft keyboard
+			className={cn('h-14 text-lg rounded-xl caret-transparent', className)}
+		/>
 	)
 }

@@ -128,7 +128,7 @@ export default async function ShiftsPage({ params }: Props) {
 			endTime: weeklyShifts.endTime,
 			isActive: weeklyShifts.isActive,
 			notes: weeklyShifts.notes,
-
+			type: weeklyShifts.type,
 			recurrenceId: shiftRecurrences.id,
 			label: shiftRecurrences.label,
 			weekOfMonth: shiftRecurrences.weekOfMonth,
@@ -137,7 +137,6 @@ export default async function ShiftsPage({ params }: Props) {
 		})
 		.from(weeklyShifts)
 		.leftJoin(shiftRecurrences, eq(shiftRecurrences.shiftId, weeklyShifts.id))
-		.where(inArray(weeklyShifts.weekday, activeWeekdays))
 
 	/* -----------------------------------------------------
 	 * 5) Normalize into Shift[]
@@ -152,6 +151,7 @@ export default async function ShiftsPage({ params }: Props) {
 				startTime: r.startTime,
 				endTime: r.endTime,
 				isActive: r.isActive,
+				type: r.type,
 				notes: r.notes,
 				recurrences: [],
 			})

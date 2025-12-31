@@ -82,16 +82,22 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 	// --------------------------
 	const handleAddShift = async (day: Day) => {
 		const tempId = `temp-${day.weekday}-${Date.now()}`
+		const defaultStart = day.isClosed ? '17:00' : day.opensAt
+
+		const defaultEnd = day.isClosed ? '19:00' : day.closesAt
+		const tempRecurrenceId = `temp-rec-${Date.now()}-${Math.random()}`
+
 		const newShift: Shift = {
 			id: tempId,
 			weekday: day.weekday,
-			startTime: day.opensAt,
-			endTime: day.closesAt,
+			type: day.isClosed ? 'appointment' : 'regular',
+			startTime: defaultStart,
+			endTime: defaultEnd,
 			isActive: true,
 			notes: '',
 			recurrences: [
 				{
-					id: 'temp',
+					id: tempRecurrenceId,
 					label: 'Every week',
 					weekOfMonth: null,
 					isActive: true,
@@ -109,8 +115,9 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					weekday: day.weekday,
-					startTime: day.opensAt,
-					endTime: day.closesAt,
+					startTime: defaultStart,
+					endTime: defaultEnd,
+					type: day.isClosed ? 'appointment' : 'regular',
 					isActive: true,
 					notes: '',
 				}),
@@ -118,10 +125,18 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 
 			if (!res.ok) throw new Error('Failed to create shift')
 
-			const data: { id: string } = await res.json()
+			const data: { id: string; recurrence: Recurrence } = await res.json()
 
 			setLocalShifts((prev) =>
-				prev.map((s) => (s.id === tempId ? { ...s, id: data.id } : s))
+				prev.map((s) =>
+					s.id === tempId
+						? {
+								...s,
+								id: data.id,
+								recurrences: [data.recurrence], // 🔥 REPLACE TEMP
+						  }
+						: s
+				)
 			)
 		} catch (err) {
 			console.error(err)
@@ -210,6 +225,9 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 		recurrenceId: string,
 		updates: Partial<Recurrence>
 	) => {
+		// ⛔️ Ignore temp recurrences
+		if (recurrenceId.startsWith('temp')) return
+
 		setLocalShifts((prev) =>
 			prev.map((s) => ({
 				...s,
@@ -238,7 +256,7 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 			toast.info('Recreated "Every week" recurrence')
 
 			// Optimistic local recreate
-			const tempId = `temp-every-${Date.now()}`
+			const tempRecurrenceId = `temp-rec-${Date.now()}-${Math.random()}`
 
 			setLocalShifts((prev) =>
 				prev.map((s) =>
@@ -247,7 +265,7 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 								...s,
 								recurrences: [
 									{
-										id: tempId,
+										id: tempRecurrenceId,
 										label: 'Every week',
 										weekOfMonth: null,
 										isActive: true,
@@ -258,6 +276,23 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 						: s
 				)
 			)
+
+			if (recurrenceId.startsWith('temp')) {
+				// Just remove locally
+				setLocalShifts((prev) =>
+					prev.map((s) =>
+						s.id === shiftId
+							? {
+									...s,
+									recurrences: s.recurrences.filter(
+										(r) => r.id !== recurrenceId
+									),
+							  }
+							: s
+					)
+				)
+				return
+			}
 
 			// Delete old recurrence
 			await fetch('/api/shifts/recurrences', {
@@ -287,7 +322,7 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 						? {
 								...s,
 								recurrences: s.recurrences.map((r) =>
-									r.id === tempId ? created : r
+									r.id === tempRecurrenceId ? created : r
 								),
 						  }
 						: s
@@ -326,7 +361,11 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 							<div className="flex flex-col">
 								<span className="font-semibold text-xl">{day.label}</span>
 								<span className="text-[13px] text-muted-foreground">
-									Center open {toAmPm(day.opensAt)}–{toAmPm(day.closesAt)}
+									{!day.isClosed
+										? `Center open ${toAmPm(day.opensAt)}–${toAmPm(
+												day.closesAt
+										  )}`
+										: `Center open by appointment only`}
 								</span>
 							</div>
 
@@ -431,6 +470,19 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 											</Label>
 										</div>
 
+										<div className="flex items-center gap-2">
+											<Switch
+												checked={shift.type === 'appointment'}
+												disabled={busy}
+												onCheckedChange={(checked) =>
+													handleUpdateShift(shift.id, {
+														type: checked ? 'appointment' : 'regular',
+													})
+												}
+											/>
+											<Label className="text-xs">By appointment</Label>
+										</div>
+
 										{/* Notes */}
 										<div>
 											<Label className="text-[10px]">Notes</Label>
@@ -489,11 +541,47 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 																}))
 															)
 														}
-														onBlur={(e) =>
-															updateRecurrence(r.id, {
-																label: e.target.value,
-															})
-														}
+														onBlur={async (e) => {
+															const value = e.target.value
+
+															if (r.id.startsWith('temp')) {
+																// Create it in DB first
+																const res = await fetch(
+																	'/api/shifts/recurrences',
+																	{
+																		method: 'POST',
+																		headers: {
+																			'Content-Type': 'application/json',
+																		},
+																		body: JSON.stringify({
+																			shiftId: shift.id,
+																			label: value,
+																			weekOfMonth: r.weekOfMonth,
+																			sortOrder: r.sortOrder,
+																		}),
+																	}
+																)
+
+																const created = await res.json()
+
+																// Swap temp → real ID
+																setLocalShifts((prev) =>
+																	prev.map((s) =>
+																		s.id === shift.id
+																			? {
+																					...s,
+																					recurrences: s.recurrences.map(
+																						(rec) =>
+																							rec.id === r.id ? created : rec
+																					),
+																			  }
+																			: s
+																	)
+																)
+															} else {
+																updateRecurrence(r.id, { label: value })
+															}
+														}}
 													/>
 
 													<Input
@@ -520,13 +608,15 @@ export function ShiftDefinitionsManager({ days, shifts }: Props) {
 																}))
 															)
 														}
-														onBlur={(e) =>
+														onBlur={(e) => {
+															if (r.id.startsWith('temp')) return
+
 															updateRecurrence(r.id, {
 																weekOfMonth: e.target.value
 																	? Number(e.target.value)
 																	: null,
 															})
-														}
+														}}
 													/>
 
 													<Button

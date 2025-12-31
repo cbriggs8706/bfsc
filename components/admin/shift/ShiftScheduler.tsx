@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { Plus } from 'lucide-react'
 import { toAmPm } from '@/utils/time'
+import { ShiftType } from '@/types/shifts'
 
 type Day = {
 	weekday: number
@@ -43,6 +44,7 @@ type Shift = {
 	startTime: string
 	endTime: string
 	isActive: boolean
+	type: ShiftType
 	notes: string | null
 	recurrences: Recurrence[]
 }
@@ -152,7 +154,6 @@ export function ShiftScheduler({
 		useState<Assignment[]>(assignments)
 	const [printHeader, setPrintHeader] = useState('BFSC Shift Assignments')
 
-	// Build a flat list of recurrence “cards” to render
 	const cards = useMemo<SchedulerCard[]>(() => {
 		return shifts
 			.slice()
@@ -161,17 +162,24 @@ export function ShiftScheduler({
 					a.weekday - b.weekday || a.startTime.localeCompare(b.startTime)
 			)
 			.flatMap((shift) => {
-				const recs = (shift.recurrences ?? [])
+				return (shift.recurrences ?? [])
 					.slice()
-					.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-
-				return recs.map((recurrence) => ({
-					id: recurrence.id,
-					shift,
-					recurrence,
-				}))
+					.sort((a, b) => {
+						const aw = a.weekOfMonth ?? 0
+						const bw = b.weekOfMonth ?? 0
+						return aw - bw || (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+					})
+					.map((recurrence) => ({
+						id: recurrence.id,
+						shift,
+						recurrence,
+					}))
 			})
 	}, [shifts])
+
+	const regularCards = cards.filter((c) => c.shift.type !== 'appointment')
+
+	const appointmentCards = cards.filter((c) => c.shift.type === 'appointment')
 
 	// Group assignments by recurrence id
 	const assignmentsByRecurrence = useMemo(() => {
@@ -293,23 +301,57 @@ export function ShiftScheduler({
 				<div className="space-y-4">
 					<UnassignedBin canEdit={canEdit} />
 
-					<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-						{cards.map((card) => {
-							const cardAssignments = assignmentsByRecurrence.get(card.id) ?? []
+					{regularCards.length > 0 && (
+						<>
+							<h2 className="text-lg font-semibold mt-6">Regular Shifts</h2>
 
-							return (
-								<ShiftCard
-									key={card.id}
-									shift={card.shift}
-									recurrence={card.recurrence}
-									assignments={cardAssignments}
-									workers={workers}
-									setLocalAssignments={setLocalAssignments}
-									canEdit={canEdit}
-								/>
-							)
-						})}
-					</div>
+							<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+								{regularCards.map((card) => {
+									const cardAssignments =
+										assignmentsByRecurrence.get(card.id) ?? []
+
+									return (
+										<ShiftCard
+											key={card.id}
+											shift={card.shift}
+											recurrence={card.recurrence}
+											assignments={cardAssignments}
+											workers={workers}
+											setLocalAssignments={setLocalAssignments}
+											canEdit={canEdit}
+										/>
+									)
+								})}
+							</div>
+						</>
+					)}
+
+					{appointmentCards.length > 0 && (
+						<>
+							<h2 className="text-lg font-semibold mt-10">
+								By Appointment Only
+							</h2>
+
+							<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+								{appointmentCards.map((card) => {
+									const cardAssignments =
+										assignmentsByRecurrence.get(card.id) ?? []
+
+									return (
+										<ShiftCard
+											key={card.id}
+											shift={card.shift}
+											recurrence={card.recurrence}
+											assignments={cardAssignments}
+											workers={workers}
+											setLocalAssignments={setLocalAssignments}
+											canEdit={canEdit}
+										/>
+									)
+								})}
+							</div>
+						</>
+					)}
 				</div>
 			</DndContext>{' '}
 		</>
@@ -357,6 +399,11 @@ function ShiftCard({
 					<div className="text-xs text-muted-foreground truncate">
 						{recurrence.label}
 					</div>
+					{shift.type === 'appointment' && (
+						<div className="text-[10px] text-muted-foreground">
+							Center closed · appointment only
+						</div>
+					)}
 				</div>
 
 				{canEdit && (

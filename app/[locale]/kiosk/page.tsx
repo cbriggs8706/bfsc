@@ -15,6 +15,7 @@ import { CheckoutStep } from '@/components/kiosk/CheckoutStep'
 import { NotFoundStep } from '@/components/kiosk/NotFoundStep'
 import { Announcement } from '@/db'
 import { CertificateSummary } from '@/types/training'
+import { OnScreenKeyboard } from '@/components/kiosk/OnScreenKeyboard'
 
 export default function KioskPage() {
 	const [step, setStep] = useState<
@@ -129,6 +130,12 @@ export default function KioskPage() {
 		setInput(value)
 		setSelectedPerson(null)
 
+		if (/^\d{6}$/.test(value)) {
+			setSuggestions([])
+			handleIdentify()
+			return
+		}
+
 		if (searchTimeout.current) {
 			clearTimeout(searchTimeout.current)
 		}
@@ -159,10 +166,12 @@ export default function KioskPage() {
 	// ──────────────────────────────
 	// IDENTIFY
 	// ──────────────────────────────
-	const handleIdentify = async () => {
+	const handleIdentify = async (person?: PersonSummary) => {
 		setServerMessage(null)
 
-		const payload: { id?: string; input?: string } = selectedPerson
+		const payload = person
+			? { id: person.id }
+			: selectedPerson
 			? { id: selectedPerson.id }
 			: { input }
 
@@ -193,11 +202,17 @@ export default function KioskPage() {
 		}
 
 		// foundSingle
-		const person = data.person
-		setSelectedPerson(person)
+		// const person = data.person
+		// setSelectedPerson(person)
+		// setSuggestions([])
+
+		// foundSingle — ALWAYS use the server result
+		const foundPerson = data.person
+
+		setSelectedPerson(foundPerson)
 		setSuggestions([])
 
-		if (person.isWorker) {
+		if (foundPerson.isWorker) {
 			setStep('roleChoice')
 		} else {
 			await loadPurposes()
@@ -360,7 +375,7 @@ export default function KioskPage() {
 	// ──────────────────────────────
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-muted">
-			<Card className="w-full max-w-md">
+			<Card className="w-full m-4">
 				<CardHeader>
 					<CardTitle className="text-center text-2xl">
 						Family History Center Sign-In
@@ -374,14 +389,25 @@ export default function KioskPage() {
 							suggestions={suggestions}
 							searching={searching}
 							onInputChange={handleInputChange}
-							onContinue={handleIdentify}
+							// onContinue={handleIdentify}
 							onSelectSuggestion={(p) => {
 								setSelectedPerson(p)
 								setInput(p.fullName)
 								setSuggestions([])
+								handleIdentify(p)
 							}}
 						/>
 					)}
+
+					<CardContent>
+						{step === 'identify' && (
+							<OnScreenKeyboard
+								onKey={(char) => handleInputChange(input + char)}
+								onBackspace={() => handleInputChange(input.slice(0, -1))}
+								onClear={() => handleInputChange('')}
+							/>
+						)}
+					</CardContent>
 
 					{/* {step === 'choosePerson' && (
 						<ChoosePersonStep

@@ -1,31 +1,90 @@
 // components/shifts/CurrentShiftPanel.tsx
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase-client'
 import { format, isToday } from 'date-fns'
 import type { TodayShift } from '@/types/shift-report'
-import { toAmPm } from '@/utils/time'
-import { Button } from '../ui/button'
+import { toAmPm, toLocalDateTimeInputValue } from '@/utils/time'
+import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import {
+	Dialog,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '../ui/dialog'
+import { Input } from '../ui/input'
+import Link from 'next/link'
 
 type Props = {
 	title?: string
-	pollMs?: number // optional: if you still want periodic polling in addition to realtime
+	pollMs?: number
 	showPatrons?: boolean
+	locale: string
 }
 
-/**
- * Condensed "today-only" version of ShiftReport.
- * - No date filter
- * - No print button
- * - Compact layout
- */
+type DisplayCard =
+	| {
+			key: string
+			kind: 'regular'
+			label: string
+			startTime: string
+			endTime: string
+			shift: TodayShift
+	  }
+	| {
+			key: 'outside'
+			kind: 'outside'
+			label: 'Outside of Regular Shift'
+			shift: OutsideShift | null
+	  }
+
+type OutsideShift = {
+	workers: TodayShift['workers']
+	patrons: TodayShift['patrons']
+}
+
+type Departing = { kind: 'worker'; id: string } | { kind: 'patron'; id: string }
+
+function parseTodayTime(todayStr: string, hhmm: string) {
+	// hhmm: "HH:mm"
+	const [hh, mm] = hhmm.split(':').map((n) => Number(n))
+	const d = new Date(`${todayStr}T00:00:00`)
+	d.setHours(hh, mm, 0, 0)
+	return d
+}
+
+function isNowInShift(
+	todayStr: string,
+	now: Date,
+	start?: string | null,
+	end?: string | null
+) {
+	if (!start || !end) return false
+	const s = parseTodayTime(todayStr, start)
+	const e = parseTodayTime(todayStr, end)
+	// inclusive start, exclusive end
+	return now >= s && now < e
+}
+
+function combineOffShift(offShift: TodayShift[]): OutsideShift | null {
+	if (!offShift || offShift.length === 0) return null
+
+	return {
+		workers: offShift.flatMap((s) => s.workers ?? []),
+		patrons: offShift.flatMap((s) => s.patrons ?? []),
+	}
+}
+
 export function CurrentShiftPanel({
 	title = 'Today in the Center',
 	pollMs,
 	showPatrons = true,
+	locale,
 }: Props) {
 	const [loading, setLoading] = useState(true)
 	const [shifts, setShifts] = useState<TodayShift[]>([])
@@ -33,27 +92,23 @@ export function CurrentShiftPanel({
 	const refetchTimer = useRef<number | null>(null)
 	const pollTimer = useRef<number | null>(null)
 
+	// selection state
+	const [selectedKey, setSelectedKey] = useState<string | null>(null)
+	const [manualPick, setManualPick] = useState(false)
+
 	const todayStr = format(new Date(), 'yyyy-MM-dd')
 	const todayDate = new Date(`${todayStr}T12:00:00`)
-
-	async function markDeparted(url: string) {
-		await fetch(url, { method: 'POST' })
-		refetch()
-	}
+	const [departing, setDeparting] = useState<Departing | null>(null)
 
 	const refetch = useCallback(async () => {
 		setLoading(true)
 		try {
-			// Prefer /today if it exists and returns { shifts, offShift }
 			let res = await fetch(`/api/reports/shifts/today`, { cache: 'no-store' })
-
-			// Fallback to day endpoint if /today isn’t implemented
 			if (!res.ok) {
 				res = await fetch(`/api/reports/shifts/day?date=${todayStr}`, {
 					cache: 'no-store',
 				})
 			}
-
 			if (!res.ok) return
 
 			const json = await res.json()
@@ -65,9 +120,7 @@ export function CurrentShiftPanel({
 	}, [todayStr])
 
 	const scheduleRefetch = useCallback(() => {
-		// Only do the “fast re-fetch” logic for today
 		if (!isToday(todayDate)) return
-
 		if (refetchTimer.current) window.clearTimeout(refetchTimer.current)
 		refetchTimer.current = window.setTimeout(() => {
 			refetch()
@@ -119,13 +172,68 @@ export function CurrentShiftPanel({
 		}
 	}, [scheduleRefetch])
 
-	if (loading) {
-		return <p className="text-base">Loading…</p>
-	}
+	// Build the cards list (regular shifts + outside)
+	const cards = useMemo<DisplayCard[]>(() => {
+		const regular = shifts.map((s) => ({
+			key: `shift:${s.shiftId}`,
+			kind: 'regular' as const,
+			label: `${toAmPm(s.startTime)} – ${toAmPm(s.endTime)}`,
+			startTime: s.startTime!,
+			endTime: s.endTime!,
+			shift: s,
+		}))
+
+		const outsideShift = combineOffShift(offShift)
+
+		const outside: DisplayCard = {
+			key: 'outside',
+			kind: 'outside',
+			label: 'Outside of Regular Shift',
+			shift: outsideShift,
+		}
+
+		return [...regular, outside]
+	}, [shifts, offShift])
+
+	const currentKey = useMemo(() => {
+		const now = new Date()
+
+		// 1) find a regular shift that matches current time
+		const activeRegular = cards.find(
+			(c) =>
+				c.kind === 'regular' &&
+				isNowInShift(todayStr, now, c.startTime, c.endTime)
+		)
+
+		// 2) if none, outside
+		return activeRegular?.key ?? 'outside'
+	}, [cards, todayStr])
+
+	// Keep selected card synced to "current" unless user manually picked another
+	useEffect(() => {
+		if (!manualPick) setSelectedKey(currentKey)
+	}, [currentKey, manualPick])
+
+	// Tick every 30s so the panel flips when time crosses shift boundaries
+	useEffect(() => {
+		const t = window.setInterval(() => {
+			if (!manualPick) setSelectedKey(currentKey)
+		}, 30_000)
+		return () => window.clearInterval(t)
+	}, [currentKey, manualPick])
+
+	const selected = useMemo(() => {
+		const key = selectedKey ?? currentKey
+		return cards.find((c) => c.key === key) ?? cards[cards.length - 1]
+	}, [cards, selectedKey, currentKey])
+
+	if (loading) return <p className="text-base">Loading…</p>
 
 	const hasAny =
 		shifts.some((s) => s.workers.length > 0 || s.patrons.length > 0) ||
-		offShift.length > 0
+		offShift.some(
+			(s) => (s.workers?.length ?? 0) > 0 || (s.patrons?.length ?? 0) > 0
+		)
 
 	if (!hasAny) {
 		return (
@@ -141,52 +249,100 @@ export function CurrentShiftPanel({
 			</Card>
 		)
 	}
+
+	const selectedShift = selected.shift
+
 	return (
-		<>
-			<h2 className="text-2xl font-semibold">{title}</h2>
-
-			{/* Scheduled shifts */}
-			{shifts.map((shift) => (
-				<Card key={shift.shiftId} className="p-4 space-y-3">
-					<p className="text-base font-semibold">
-						{shift.startTime && shift.endTime
-							? `${toAmPm(shift.startTime)} – ${toAmPm(shift.endTime)}`
-							: 'Outside of Regular Shift'}
+		<div className="space-y-3">
+			<div className="flex flex-col md:flex-row items-start justify-between gap-3">
+				<div>
+					<h2 className="text-2xl font-semibold">{title}</h2>
+					<p className="text-sm text-muted-foreground">
+						Showing: <span className="font-medium">{selected.label}</span>
 					</p>
+				</div>
 
-					{/* Workers */}
-					<div>
-						<p className="text-xs font-medium mb-1">Workers</p>
+				<div className="flex items-center gap-2">
+					<Link href={`/${locale}/reports/shifts`}>
+						<Button variant="outline" size="sm">
+							Shift Reports
+						</Button>
+					</Link>
+					{/* <Button
+						variant="outline"
+						size="sm"
+						onClick={() => {
+							setManualPick(false)
+							setSelectedKey(currentKey)
+						}}
+					>
+						Current
+					</Button> */}
+				</div>
+			</div>
 
+			{/* Shift selector buttons */}
+			<div className="flex flex-wrap gap-2">
+				{cards.map((c) => {
+					const isSelected = c.key === selected.key
+					const isCurrent = c.key === currentKey
+
+					return (
+						<Button
+							key={c.key}
+							size="sm"
+							variant={isSelected ? 'default' : 'outline'}
+							className={cn(isCurrent && !isSelected && 'border-primary')}
+							onClick={() => {
+								setManualPick(true)
+								setSelectedKey(c.key)
+							}}
+						>
+							{c.kind === 'outside' ? 'Outside' : c.label}
+							{isCurrent ? (
+								<span className="ml-2 text-[10px] opacity-80">(now)</span>
+							) : null}
+						</Button>
+					)
+				})}
+			</div>
+
+			{/* ONE visible card */}
+			<Card className="p-4 space-y-3">
+				<p className="text-base font-semibold">{selected.label}</p>
+
+				{/* Workers */}
+				<div>
+					<p className="text-xs font-medium mb-1">Workers</p>
+
+					{!selectedShift || selectedShift.workers.length === 0 ? (
+						<p className="text-base">—</p>
+					) : (
 						<ul className="space-y-2">
-							{shift.workers.map((c) => (
+							{selectedShift.workers.map((c) => (
 								<li
 									key={c.userId}
 									className="
-									grid
-									grid-cols-1
-									sm:grid-cols-2
-									md:grid-cols-4
-									items-center
-									gap-x-3
-									gap-y-1
-									border-b
-									last:border-b-0
-									pb-2
-								"
+										grid
+										grid-cols-1
+										sm:grid-cols-2
+										md:grid-cols-4
+										items-center
+										gap-x-3
+										gap-y-1
+										border-b
+										last:border-b-0
+										pb-2
+									"
 								>
-									{/* Name */}
 									<span className="font-medium">{c.fullName}</span>
 
-									{/* Role */}
 									<span className="text-sm text-muted-foreground">Worker</span>
 
-									{/* Arrival */}
 									<span className="text-sm">
 										Arrived {new Date(c.arrivalAt).toLocaleTimeString()}
 									</span>
 
-									{/* Action */}
 									<div className="md:text-right">
 										{c.actualDepartureAt ? (
 											<span className="text-sm text-muted-foreground">
@@ -198,9 +354,7 @@ export function CurrentShiftPanel({
 												variant="link"
 												size="sm"
 												onClick={() =>
-													markDeparted(
-														`/api/kiosk/shift/${c.shiftLogId}/depart`
-													)
+													setDeparting({ kind: 'worker', id: c.shiftLogId })
 												}
 											>
 												Mark Departure
@@ -211,21 +365,22 @@ export function CurrentShiftPanel({
 								</li>
 							))}
 						</ul>
-					</div>
+					)}
+				</div>
 
-					{/* Patrons */}
-					{showPatrons && (
-						<div>
-							<p className="text-xs font-medium mb-1">Patrons</p>
+				{/* Patrons */}
+				{showPatrons && (
+					<div>
+						<p className="text-xs font-medium mb-1">Patrons</p>
 
-							{shift.patrons.length === 0 ? (
-								<p className="text-base">—</p>
-							) : (
-								<ul className="space-y-2">
-									{shift.patrons.slice(0, 8).map((p) => (
-										<li
-											key={p.visitId}
-											className="
+						{!selectedShift || selectedShift.patrons.length === 0 ? (
+							<p className="text-base">—</p>
+						) : (
+							<ul className="space-y-2">
+								{selectedShift.patrons.slice(0, 8).map((p) => (
+									<li
+										key={p.visitId}
+										className="
 											grid
 											grid-cols-1
 											sm:grid-cols-2
@@ -237,81 +392,115 @@ export function CurrentShiftPanel({
 											last:border-b-0
 											pb-2
 										"
-										>
-											{/* Name */}
-											<span className="font-medium truncate">{p.fullName}</span>
+									>
+										<span className="font-medium truncate">{p.fullName}</span>
 
-											{/* Purpose */}
-											<span className="text-sm text-muted-foreground truncate">
-												{p.purposeName ?? '—'}
-											</span>
+										<span className="text-sm text-muted-foreground truncate">
+											{p.purposeName ?? '—'}
+										</span>
 
-											{/* Arrival */}
-											<span className="text-sm">
-												Arrived {new Date(p.arrivedAt).toLocaleTimeString()}
-											</span>
+										<span className="text-sm">
+											Arrived {new Date(p.arrivedAt).toLocaleTimeString()}
+										</span>
 
-											{/* Action */}
-											<div className="md:text-right">
-												{p.departedAt ? (
-													<span className="text-sm text-muted-foreground">
-														Departed{' '}
-														{new Date(p.departedAt).toLocaleTimeString()}
-													</span>
-												) : (
-													<Button
-														variant="link"
-														size="sm"
-														onClick={() =>
-															markDeparted(
-																`/api/kiosk/visit/${p.visitId}/depart`
-															)
-														}
-													>
-														Mark Departure
-														<ArrowRight className="ml-1 h-4 w-4" />
-													</Button>
-												)}
-											</div>
-										</li>
-									))}
+										<div className="md:text-right">
+											{p.departedAt ? (
+												<span className="text-sm text-muted-foreground">
+													Departed {new Date(p.departedAt).toLocaleTimeString()}
+												</span>
+											) : (
+												<Button
+													variant="link"
+													size="sm"
+													onClick={() =>
+														setDeparting({ kind: 'patron', id: p.visitId })
+													}
+												>
+													Mark Departure
+													<ArrowRight className="ml-1 h-4 w-4" />
+												</Button>
+											)}
+										</div>
+									</li>
+								))}
 
-									{shift.patrons.length > 8 && (
-										<li className="text-xs text-muted-foreground">
-											+{shift.patrons.length - 8} more
-										</li>
-									)}
-								</ul>
-							)}
-						</div>
-					)}
-				</Card>
-			))}
+								{selectedShift.patrons.length > 8 && (
+									<li className="text-xs text-muted-foreground">
+										+{selectedShift.patrons.length - 8} more
+									</li>
+								)}
+							</ul>
+						)}
+					</div>
+				)}
+				{departing && (
+					<MarkDepartureDialog
+						key={departing.id}
+						open
+						onClose={() => setDeparting(null)}
+						onConfirm={async (iso) => {
+							const url =
+								departing.kind === 'worker'
+									? `/api/kiosk/shift/${departing.id}/depart`
+									: `/api/kiosk/visit/${departing.id}/depart`
 
-			{/* Off-shift */}
-			{offShift.length > 0 && (
-				<Card className="p-4">
-					{offShift.map((shift) => (
-						<div key={shift.shiftId} className="space-y-2">
-							<p className="text-base font-semibold">
-								Outside of Regular Shift
-							</p>
+							await fetch(url, {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({ departureAt: iso }),
+							})
 
-							<p className="text-sm">
-								<strong>Workers:</strong>{' '}
-								{shift.workers.map((c) => c.fullName).join(', ') || '—'}
-							</p>
+							setDeparting(null)
+							refetch()
+						}}
+					/>
+				)}
+			</Card>
+		</div>
+	)
+}
 
-							{showPatrons && (
-								<p className="text-sm">
-									<strong>Patrons:</strong>{' '}
-									{shift.patrons.map((p) => p.fullName).join(', ') || '—'}
-								</p>
-							)}
-						</div>
-					))}
-				</Card>
-			)}
-		</>
+function MarkDepartureDialog({
+	open,
+	onClose,
+	onConfirm,
+}: {
+	open: boolean
+	onClose: () => void
+	onConfirm: (iso: string) => void
+}) {
+	const [time, setTime] = useState(() => toLocalDateTimeInputValue())
+
+	return (
+		<Dialog open={open} onOpenChange={onClose}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Mark Departure</DialogTitle>
+				</DialogHeader>
+
+				<div className="space-y-2">
+					<label className="text-sm font-medium">Departure time</label>
+					<Input
+						type="datetime-local"
+						value={time}
+						onChange={(e) => setTime(e.target.value)}
+					/>
+				</div>
+
+				<DialogFooter className="mt-4">
+					<Button variant="outline" onClick={onClose}>
+						Cancel
+					</Button>
+					<Button
+						onClick={() =>
+							// convert local input → ISO UTC for backend
+							onConfirm(new Date(time).toISOString())
+						}
+					>
+						Confirm Departure
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	)
 }
