@@ -58,7 +58,8 @@ export async function notifyReservationChanged(args: {
 		pending: {
 			staffSubject: `Action required: New reservation – ${
 				ctx.resourceName ?? 'Resource'
-			}`,
+			} (${ctx.submitterName ?? 'Unknown'})`,
+
 			submitterSubject: `Reservation received: ${
 				ctx.resourceName ?? 'Resource'
 			}`,
@@ -154,7 +155,8 @@ export async function notifyReservationChanged(args: {
 				margin-right: 10px;
 			"
 		>
-			📞 Call submitter
+			      📞 Call ${escapeHtml(ctx.submitterName ?? 'submitter')}
+
 		</a>
 	`
 		: ''
@@ -191,9 +193,27 @@ ${showActionButtons ? adminButton : ''}
 	<hr style="margin: 20px 0;" />
 
 	<table style="border-collapse: collapse; width: 100%; max-width: 640px;">
-		<tr><td style="color:#6b7280;">Resource</td><td><strong>${
-			ctx.resourceName ?? ''
-		}</strong></td></tr>
+	${
+		ctx.submitterName || ctx.submitterEmail
+			? `
+<tr>
+  <td style="color:#6b7280;">Submitted by</td>
+  <td>
+    <strong>${escapeHtml(ctx.submitterName ?? 'Unknown')}</strong>
+    ${
+			ctx.submitterEmail
+				? `<br /><a href="mailto:${ctx.submitterEmail}">${ctx.submitterEmail}</a>`
+				: ''
+		}
+  </td>
+</tr>
+`
+			: ''
+	}
+	
+	<tr><td style="color:#6b7280;">Resource</td><td><strong>${
+		ctx.resourceName ?? ''
+	}</strong></td></tr>
 		<tr><td style="color:#6b7280;">When</td><td>${when}</td></tr>
 		<tr><td style="color:#6b7280;">Attendees</td><td>${
 			r.attendeeCount ?? ''

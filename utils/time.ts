@@ -65,9 +65,17 @@ export function addMinutes(d: Date, minutes: number) {
 	return new Date(d.getTime() + minutes * 60_000)
 }
 
+// use for showing times to humans, rendering admin lists, emails, read-only summaries
 export function toHHMM(d: Date) {
 	const hh = String(d.getHours()).padStart(2, '0')
 	const mm = String(d.getMinutes()).padStart(2, '0')
+	return `${hh}:${mm}`
+}
+
+// use for generating slot keys, matching availability, hyrdrating forms, doign server-side logic
+export function toHHMMUtc(d: Date) {
+	const hh = String(d.getUTCHours()).padStart(2, '0')
+	const mm = String(d.getUTCMinutes()).padStart(2, '0')
 	return `${hh}:${mm}`
 }
 

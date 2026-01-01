@@ -11,7 +11,7 @@ import {
 } from '@/db/schema/tables/shifts'
 import type { AvailabilityResponse, TimeSlot } from '@/types/resource'
 import { addMinutes } from 'date-fns'
-import { toHHMM, toUtcDateTime, weekdayFromYYYYMMDD } from '@/utils/time'
+import { toHHMMUtc, toUtcDateTime, weekdayFromYYYYMMDD } from '@/utils/time'
 // import { inArray } from 'drizzle-orm'
 
 type Args = {
@@ -221,8 +221,8 @@ export async function getAvailability({
 			}
 
 			slots.push({
-				startTime: toHHMM(cursor),
-				endTime: toHHMM(end),
+				startTime: toHHMMUtc(cursor),
+				endTime: toHHMMUtc(end),
 				isAvailable,
 				reason,
 				shiftType: shift.type,

@@ -10,7 +10,7 @@ import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 
 import { getAvailability } from './availability'
-import { toLocalYMD, toHHMM, toUtcDateTime } from '@/utils/time'
+import { toLocalYMD, toHHMMUtc, toUtcDateTime } from '@/utils/time'
 import { normalizePhone } from '@/utils/phone'
 import { notifyReservationChanged } from '@/lib/notifications/reservation-notify'
 
@@ -128,7 +128,7 @@ export async function readReservationForForm(id: string) {
 		locale: row.locale,
 		phone: row.phone,
 		date: toLocalYMD(start),
-		startTime: toHHMM(start),
+		startTime: toHHMMUtc(start),
 		attendeeCount: String(row.attendeeCount ?? 1),
 		assistanceLevel: row.assistanceLevel as AssistanceLevel,
 		isClosedDayRequest: row.isClosedDayRequest ?? false,

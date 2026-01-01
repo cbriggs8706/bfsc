@@ -18,7 +18,7 @@ export type ReservationNotificationContext = {
 	reservationId: string
 	locale: string
 	submitterEmail?: string | null
-
+	submitterName?: string | null
 	staffRecipients: StaffRecipient[]
 
 	resourceName?: string | null
@@ -39,7 +39,7 @@ export async function getReservationNotificationContext(
 			reservationId: reservations.id,
 			locale: reservations.locale,
 			submitterEmail: user.email,
-
+			submitterName: user.name,
 			resourceName: resources.name,
 
 			wardId: wards.id,
@@ -211,6 +211,7 @@ export async function getReservationNotificationContext(
 		reservationId: r.reservationId,
 		locale: r.locale,
 		submitterEmail: r.submitterEmail ?? null,
+		submitterName: r.submitterName ?? null,
 		staffRecipients,
 		resourceName: r.resourceName ?? null,
 		wardName: r.wardName ?? null,
