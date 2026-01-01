@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { getAvailability } from './availability'
 import { toLocalDateTime, toLocalYMD, toHHMM } from '@/utils/time'
 import { normalizePhone } from '@/utils/phone'
+import { notifyReservationChanged } from '@/lib/notifications/reservation-notify'
 
 /* ------------------------------------------------------------------ */
 /* Types */
@@ -30,6 +31,7 @@ export type ReservationFormValues = {
 	isClosedDayRequest: boolean
 	notes: string
 	status?: ReservationStatus // Admin-only
+	locale: string
 }
 
 type StakeWithWards = {
@@ -46,12 +48,13 @@ const ReservationInputSchema = z.object({
 	resourceId: z.string().uuid(),
 	date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date (YYYY-MM-DD)'),
 	startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time (HH:mm)'),
+	weeklyShiftId: z.string().uuid(),
 	phone: z.string(),
 	attendeeCount: z.coerce.number().int().min(1),
 	assistanceLevel: z.enum(['none', 'startup', 'full']),
 	isClosedDayRequest: z.coerce.boolean(),
 	groupAffiliation: z.enum(['lds', 'other-faith', 'none']).optional(),
-
+	locale: z.string().min(2),
 	wardId: z.string().uuid().nullable().optional(),
 	faithId: z.string().uuid().nullable().optional(),
 
@@ -103,6 +106,7 @@ export async function readReservationForForm(id: string) {
 		where: eq(reservations.id, id),
 		columns: {
 			id: true,
+			locale: true,
 			resourceId: true,
 			startTime: true,
 			endTime: true,
@@ -121,6 +125,7 @@ export async function readReservationForForm(id: string) {
 	return {
 		id: row.id,
 		resourceId: row.resourceId,
+		locale: row.locale,
 		phone: row.phone,
 		date: toLocalYMD(start),
 		startTime: toHHMM(start),
@@ -206,10 +211,11 @@ export async function saveReservation(
 				.values({
 					resourceId: data.resourceId,
 					userId,
+					weeklyShiftId: data.weeklyShiftId,
 					phone: normalizedPhone,
 					startTime: start,
 					endTime: end,
-
+					locale: data.locale,
 					attendeeCount: data.attendeeCount,
 					assistanceLevel: data.assistanceLevel,
 					isClosedDayRequest: data.isClosedDayRequest,
@@ -224,8 +230,18 @@ export async function saveReservation(
 					status: isAdmin ? data.status ?? 'pending' : 'pending',
 				})
 				.returning({ id: reservations.id })
-			//TODO add locale?
-			revalidatePath('/admin/reservation')
+
+			try {
+				await notifyReservationChanged({
+					reservationId: row.id,
+					mode: 'create',
+				})
+			} catch (e) {
+				// don't fail the reservation if email fails
+				console.error('Reservation notification failed', e)
+			}
+
+			revalidatePath(`/${data.locale}/admin/reservation`)
 			return { ok: true, isAdmin, id: row?.id }
 		}
 
@@ -236,8 +252,10 @@ export async function saveReservation(
 			.update(reservations)
 			.set({
 				resourceId: data.resourceId,
+				weeklyShiftId: data.weeklyShiftId,
 				startTime: start,
 				endTime: end,
+				locale: data.locale,
 				phone: normalizedPhone,
 				attendeeCount: data.attendeeCount,
 				assistanceLevel: data.assistanceLevel,
@@ -252,9 +270,15 @@ export async function saveReservation(
 				...(isAdmin && data.status ? { status: data.status } : {}),
 			})
 			.where(eq(reservations.id, reservationId))
-		//TODO add locale?
-		revalidatePath('/admin/reservation')
-		revalidatePath(`/admin/reservation/${reservationId}`)
+
+		try {
+			await notifyReservationChanged({ reservationId, mode: 'update' })
+		} catch (e) {
+			console.error('Reservation notification failed', e)
+		}
+
+		revalidatePath(`/${data.locale}/admin/reservation`)
+		revalidatePath(`/${data.locale}/admin/reservation/${reservationId}`)
 		return { ok: true, isAdmin }
 	} catch {
 		return { ok: false, message: 'Database error' }
@@ -267,13 +291,28 @@ export async function deleteReservation(
 	const session = await getServerSession(authOptions)
 	if (!session) return { ok: false, message: 'Unauthorized' }
 
-	if (!reservationId) return { ok: false, message: 'Missing reservation id' }
+	if (!reservationId) {
+		return { ok: false, message: 'Missing reservation id' }
+	}
 
 	try {
+		// 1️⃣ Read locale BEFORE delete
+		const row = await db.query.reservations.findFirst({
+			where: eq(reservations.id, reservationId),
+			columns: { locale: true },
+		})
+
+		const locale = row?.locale ?? 'en' // safe fallback
+
+		// 2️⃣ Delete
 		await db.delete(reservations).where(eq(reservations.id, reservationId))
-		revalidatePath('/admin/reservation')
+
+		// 3️⃣ Revalidate locale-aware paths
+		revalidatePath(`/${locale}/admin/reservation`)
+
 		return { ok: true }
-	} catch {
+	} catch (e) {
+		console.error('Delete reservation failed', e)
 		return { ok: false, message: 'Delete failed' }
 	}
 }

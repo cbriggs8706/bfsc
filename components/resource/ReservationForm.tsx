@@ -43,12 +43,13 @@ function schema(t: (k: string) => string) {
 		resourceId: z.string().uuid(t('required')),
 		date: z.string().min(1, t('required')),
 		startTime: z.string().min(1, t('required')),
+		weeklyShiftId: z.string().uuid(),
 		phone: z.string().min(7, t('required')),
 		attendeeCount: z.string().min(1, t('required')),
 		assistanceLevel: z.enum(['none', 'startup', 'full']),
 		isClosedDayRequest: z.boolean(),
 		groupAffiliation: z.enum(['lds', 'other-faith', 'none']).optional(),
-
+		locale: z.string().min(2),
 		faithId: z.string().uuid().nullable().optional(),
 		wardId: z.string().uuid().nullable().optional(),
 		notes: z.string().catch(''),
@@ -74,6 +75,7 @@ type Props = {
 }
 
 type ReservationFormUIValues = ReservationFormValues & {
+	weeklyShiftId: string
 	groupAffiliation?: 'lds' | 'other-faith' | 'none'
 	faithId?: string | null
 	wardId?: string | null
@@ -107,6 +109,7 @@ export function ReservationForm({
 			date: '',
 			phone: '',
 			startTime: '',
+			locale,
 			attendeeCount: '1',
 			assistanceLevel: 'none',
 			isClosedDayRequest: false,
@@ -171,6 +174,7 @@ export function ReservationForm({
 			startTime: string
 			endTime: string
 			shiftType: ShiftType
+			weeklyShiftId: string
 		}[]
 	>([])
 
@@ -201,6 +205,7 @@ export function ReservationForm({
 						startTime: s.startTime,
 						endTime: s.endTime,
 						shiftType: s.shiftType,
+						weeklyShiftId: s.weeklyShiftId,
 					}))
 				)
 
@@ -220,6 +225,15 @@ export function ReservationForm({
 			cancelled = true
 		}
 	}, [resourceId, date, reservationId])
+
+	useEffect(() => {
+		const slot = slots.find((s) => s.startTime === startTime)
+		if (slot) {
+			form.setValue('weeklyShiftId', slot.weeklyShiftId)
+		} else {
+			form.resetField('weeklyShiftId')
+		}
+	}, [startTime, slots, form])
 
 	const selectedSlot = slots.find((s) => s.startTime === startTime)
 
@@ -332,7 +346,10 @@ export function ReservationForm({
 							name="date"
 							control={control}
 							render={({ field, fieldState }) => (
-								<Field data-invalid={fieldState.invalid}>
+								<Field
+									data-invalid={fieldState.invalid}
+									className="col-span-2 md:col-span-1"
+								>
 									<FieldLabel>
 										<Required>{t('date')}</Required>
 									</FieldLabel>
@@ -349,7 +366,10 @@ export function ReservationForm({
 							name="startTime"
 							control={control}
 							render={({ field, fieldState }) => (
-								<Field data-invalid={fieldState.invalid}>
+								<Field
+									data-invalid={fieldState.invalid}
+									className="col-span-2 md:col-span-1"
+								>
 									<FieldLabel>
 										<Required>{t('timeBlock')}</Required>
 									</FieldLabel>
@@ -400,8 +420,10 @@ export function ReservationForm({
 							)}
 						/>
 
+						<input type="hidden" {...form.register('weeklyShiftId')} />
+
 						{isAppointmentSlot && (
-							<p className="text-base  p-6 bg-(--green-logo-soft) border border-(--green-logo) rounded-xl">
+							<p className="text-sm md:text-base  p-6 bg-(--green-logo-soft) border border-(--green-logo) rounded-xl col-span-2">
 								{t('reservation.appointmentDisclaimer')}
 							</p>
 						)}
@@ -411,7 +433,7 @@ export function ReservationForm({
 							name="attendeeCount"
 							control={control}
 							render={({ field }) => (
-								<Field>
+								<Field className="col-span-2 md:col-span-1">
 									<FieldLabel>{t('attendees')}</FieldLabel>
 									<Input
 										type="number"

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { getAppSettings } from '@/lib/actions/app-settings'
 import { formatTimeRange, toHHMM } from '@/utils/time'
 import { format } from 'date-fns'
+import { requireRole } from '@/utils/require-role'
 
 type Props = {
 	params: Promise<{ locale: string }>
@@ -20,11 +21,11 @@ export default async function ReservationsPage({ params }: Props) {
 	const t = await getTranslations({ locale, namespace: 'common' })
 
 	// TODO tear this out
-	const currentUser = await requireCurrentUser(locale)
-	console.log('currentUser', currentUser)
-	if (currentUser.role !== 'Admin') {
-		redirect(`/${locale}`)
-	}
+	await requireRole(
+		locale,
+		['Admin', 'Director', 'Assistant Director', 'Shift Lead'],
+		`/${locale}/dashboard`
+	)
 
 	const reservations = await readReservations()
 

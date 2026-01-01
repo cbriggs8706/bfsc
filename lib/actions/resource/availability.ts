@@ -12,7 +12,7 @@ import {
 import type { AvailabilityResponse, TimeSlot } from '@/types/resource'
 import { addMinutes } from 'date-fns'
 import { toHHMM, toLocalDateTime, weekdayFromYYYYMMDD } from '@/utils/time'
-import { inArray } from 'drizzle-orm'
+// import { inArray } from 'drizzle-orm'
 
 type Args = {
 	resourceId: string
@@ -78,7 +78,7 @@ export async function getAvailability({
 	})
 
 	const hasRegularShifts = shifts.some((s) => s.type === 'regular')
-	const hasAppointmentShifts = shifts.some((s) => s.type === 'appointment')
+	// const hasAppointmentShifts = shifts.some((s) => s.type === 'appointment')
 
 	let isClosed = false
 	let opensAt: string | null = null
@@ -226,6 +226,7 @@ export async function getAvailability({
 				isAvailable,
 				reason,
 				shiftType: shift.type,
+				weeklyShiftId: shift.id,
 			})
 
 			cursor = addMinutes(cursor, stepMinutes)
@@ -252,6 +253,7 @@ export async function getAvailability({
 			uniqueSlots.set(key, {
 				...existing,
 				shiftType: 'regular',
+				weeklyShiftId: existing.weeklyShiftId ?? s.weeklyShiftId,
 			})
 		}
 		// else both are appointment → keep appointment

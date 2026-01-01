@@ -274,6 +274,20 @@
       "when": 1767242658774,
       "tag": "0038_dark_warstar",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1767286369118,
+      "tag": "0039_stale_chameleon",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1767289068126,
+      "tag": "0040_demonic_zombie",
+      "breakpoints": true
     }
   ]
 }

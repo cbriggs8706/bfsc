@@ -14,6 +14,7 @@ import {
 import { sql } from 'drizzle-orm'
 import { user } from './auth'
 import { faiths, wards } from './faith'
+import { weeklyShifts } from './shifts'
 
 export const resources = pgTable(
 	'resources',
@@ -56,11 +57,14 @@ export const reservations = pgTable(
 		resourceId: uuid('resource_id')
 			.notNull()
 			.references(() => resources.id, { onDelete: 'restrict' }),
-
+		weeklyShiftId: uuid('weekly_shift_id')
+			.notNull()
+			.references(() => weeklyShifts.id),
 		userId: uuid('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
 		phone: text('phone').notNull(),
+		locale: text('locale').notNull().default('en'),
 		startTime: timestamp('start_time', { withTimezone: true }).notNull(),
 		endTime: timestamp('end_time', { withTimezone: true }).notNull(),
 		attendeeCount: integer('attendee_count').notNull().default(1),

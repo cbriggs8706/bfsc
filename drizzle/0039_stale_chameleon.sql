@@ -1,0 +1,2 @@
+ALTER TABLE "reservations" ADD COLUMN "weekly_shift_id" uuid NOT NULL;--> statement-breakpoint
+ALTER TABLE "reservations" ADD CONSTRAINT "reservations_weekly_shift_id_weekly_shifts_id_fk" FOREIGN KEY ("weekly_shift_id") REFERENCES "public"."weekly_shifts"("id") ON DELETE no action ON UPDATE no action;

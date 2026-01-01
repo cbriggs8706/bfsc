@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getUserDetails } from '@/app/actions/get-user-details'
 import { Faith } from '@/types/faiths'
 import { FaithCard } from './FaithCard'
@@ -39,6 +39,7 @@ export interface UserDetailsData {
 export default function UserDetails() {
 	const [details, setDetails] = useState<UserDetailsData | null>(null)
 	const [faithTree, setFaithTree] = useState<Faith[]>([])
+	const hasAttemptedLinkRef = useRef(false)
 
 	const reloadDetails = async () => {
 		setDetails(await getUserDetails())
@@ -65,6 +66,32 @@ export default function UserDetails() {
 			active = false
 		}
 	}, [])
+
+	useEffect(() => {
+		if (!details) return
+		if (details.kioskPersonId) return
+		if (hasAttemptedLinkRef.current) return
+
+		hasAttemptedLinkRef.current = true
+
+		const linkKioskProfile = async () => {
+			try {
+				await fetch('/api/kiosk/identify', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ id: `user:${details.id}` }),
+				})
+
+				// Reload details AFTER linking
+				const refreshed = await getUserDetails()
+				setDetails(refreshed)
+			} catch (err) {
+				console.error('Failed to auto-link kiosk profile', err)
+			}
+		}
+
+		linkKioskProfile()
+	}, [details])
 
 	return (
 		<>

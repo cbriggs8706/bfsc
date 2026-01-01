@@ -28,6 +28,13 @@ export type TimeSlot = {
 	isAvailable: boolean
 	reason?: string
 	shiftType: ShiftType
+	weeklyShiftId: string
+}
+
+export type StaffRecipient = {
+	name: string | null
+	email: string
+	role: 'Director' | 'Assistant Director' | 'Shift Leader'
 }
 
 export type AvailabilityResponse = {
