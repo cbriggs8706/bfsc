@@ -182,6 +182,11 @@ export function ReservationForm({
 
 	useEffect(() => {
 		if (!resourceId || !date) {
+			console.log('[availability] missing resourceId/date', {
+				resourceId,
+				date,
+			})
+
 			setSlots([])
 			form.setValue('startTime', '')
 			return
@@ -192,6 +197,14 @@ export function ReservationForm({
 		async function load() {
 			setLoadingSlots(true)
 			try {
+				const before = form.getValues('startTime')
+				console.log('[availability] fetching', {
+					resourceId,
+					date,
+					reservationId,
+					before,
+				})
+
 				const res = await getAvailability({
 					resourceId,
 					date,
@@ -199,6 +212,14 @@ export function ReservationForm({
 				})
 
 				if (cancelled) return
+
+				const slotStarts = res.timeSlots.map((s) => s.startTime)
+
+				console.log('[availability] got slots', {
+					count: res.timeSlots.length,
+					slotStarts,
+					before,
+				})
 
 				setSlots(
 					res.timeSlots.map((s) => ({
@@ -209,11 +230,11 @@ export function ReservationForm({
 					}))
 				)
 
-				if (
-					startTime &&
-					!res.timeSlots.some((s) => s.startTime === startTime)
-				) {
-					form.setValue('startTime', '')
+				if (before && !slotStarts.includes(before)) {
+					console.warn(
+						'[availability] saved startTime not in availability — preserving',
+						before
+					)
 				}
 			} finally {
 				if (!cancelled) setLoadingSlots(false)
@@ -224,7 +245,7 @@ export function ReservationForm({
 		return () => {
 			cancelled = true
 		}
-	}, [resourceId, date, reservationId])
+	}, [resourceId, date, reservationId, form])
 
 	useEffect(() => {
 		const slot = slots.find((s) => s.startTime === startTime)

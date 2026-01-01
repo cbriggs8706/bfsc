@@ -102,8 +102,9 @@ export function formatTimeRange(
 	end: string, // "18:00"
 	formatString: TimeFormat
 ) {
-	const startDate = parse(start, 'HH:mm', new Date())
-	const endDate = parse(end, 'HH:mm', new Date())
+	const base = new Date(2000, 0, 1, 12, 0, 0) // noon anchor
+	const startDate = parse(start, 'HH:mm', base)
+	const endDate = parse(end, 'HH:mm', base)
 
 	return `${format(startDate, formatString)} – ${format(endDate, formatString)}`
 }
@@ -118,4 +119,13 @@ export function toLocalDateTimeInputValue(date = new Date()) {
 		`${pad(date.getHours())}:` +
 		`${pad(date.getMinutes())}`
 	)
+}
+
+//TO fix mixread of UTC in getAvailability and reservation.ts
+export function toUtcDateTime(date: string, time: string) {
+	// date: YYYY-MM-DD, time: HH:mm
+	const [y, m, d] = date.split('-').map(Number)
+	const [hh, mm] = time.split(':').map(Number)
+
+	return new Date(Date.UTC(y, m - 1, d, hh, mm, 0, 0))
 }

@@ -1,10 +1,7 @@
 // app/[locale]/admin/reservation/page.tsx
-import { redirect } from 'next/navigation'
-
 import { readReservations } from '@/lib/actions/resource/reservation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
-import { requireCurrentUser } from '@/utils/require-current-user'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { getAppSettings } from '@/lib/actions/app-settings'

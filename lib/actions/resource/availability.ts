@@ -11,7 +11,7 @@ import {
 } from '@/db/schema/tables/shifts'
 import type { AvailabilityResponse, TimeSlot } from '@/types/resource'
 import { addMinutes } from 'date-fns'
-import { toHHMM, toLocalDateTime, weekdayFromYYYYMMDD } from '@/utils/time'
+import { toHHMM, toUtcDateTime, weekdayFromYYYYMMDD } from '@/utils/time'
 // import { inArray } from 'drizzle-orm'
 
 type Args = {
@@ -140,10 +140,10 @@ export async function getAvailability({
 	 * ------------------------------------------- */
 
 	const openDt =
-		hasRegularShifts && opensAt ? toLocalDateTime(date, opensAt) : null
+		hasRegularShifts && opensAt ? toUtcDateTime(date, opensAt) : null
 
 	const closeDt =
-		hasRegularShifts && closesAt ? toLocalDateTime(date, closesAt) : null
+		hasRegularShifts && closesAt ? toUtcDateTime(date, closesAt) : null
 
 	/* ---------------------------------------------
 	 * 4) Fetch overlapping reservations
@@ -183,8 +183,8 @@ export async function getAvailability({
 	const slots: TimeSlot[] = []
 
 	for (const shift of shifts) {
-		const rawStart = toLocalDateTime(date, shift.startTime)
-		const rawEnd = toLocalDateTime(date, shift.endTime)
+		const rawStart = toUtcDateTime(date, shift.startTime)
+		const rawEnd = toUtcDateTime(date, shift.endTime)
 
 		const shiftStart =
 			shift.type === 'appointment'

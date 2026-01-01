@@ -10,7 +10,7 @@ import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 
 import { getAvailability } from './availability'
-import { toLocalDateTime, toLocalYMD, toHHMM } from '@/utils/time'
+import { toLocalYMD, toHHMM, toUtcDateTime } from '@/utils/time'
 import { normalizePhone } from '@/utils/phone'
 import { notifyReservationChanged } from '@/lib/notifications/reservation-notify'
 
@@ -146,6 +146,7 @@ export async function saveReservation(
 	reservationId: string | null,
 	raw: unknown
 ): Promise<ReservationActionResult> {
+	// console.log('raw', raw)
 	const session = await getServerSession(authOptions)
 	if (!session) return { ok: false, message: 'Unauthorized' }
 
@@ -160,6 +161,7 @@ export async function saveReservation(
 		}
 	}
 	const data = parsed.data
+	// console.log('data', data)
 
 	const normalizedPhone = normalizePhone(data.phone)
 
@@ -199,10 +201,11 @@ export async function saveReservation(
 	}
 
 	// Compute actual Date bounds from slot
-	const start = toLocalDateTime(data.date, slot.startTime)
-	const end = toLocalDateTime(data.date, slot.endTime)
+	const start = toUtcDateTime(data.date, slot.startTime)
+	const end = toUtcDateTime(data.date, slot.endTime)
 	start.setSeconds(0, 0)
 	end.setSeconds(0, 0)
+	// console.log('data2', data)
 
 	try {
 		if (mode === 'create') {

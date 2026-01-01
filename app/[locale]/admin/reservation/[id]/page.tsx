@@ -9,6 +9,7 @@ import { getTranslations } from 'next-intl/server'
 import { readAllResources } from '@/lib/actions/resource/resource'
 import { getAppSettings } from '@/lib/actions/app-settings'
 import { getFaithTree } from '@/db/queries/faiths'
+import { requireRole } from '@/utils/require-role'
 
 type Props = {
 	params: Promise<{ locale: string; id: string }>
@@ -18,8 +19,11 @@ export default async function Page({ params }: Props) {
 	const { locale, id } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
 
-	const session = await getServerSession(authOptions)
-	if (!session) redirect(`/${locale}`)
+	await requireRole(
+		locale,
+		['Admin', 'Director', 'Assistant Director', 'Shift Lead'],
+		`/${locale}/dashboard`
+	)
 
 	const reservation = await readReservationForForm(id)
 	if (!reservation) {
