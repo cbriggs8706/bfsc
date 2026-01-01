@@ -36,6 +36,7 @@
 	"link": "Link",
 	"url": "URL",
 	"notes": "Notes",
+	"phone": "Phone number",
 	"description": "Description",
 	"minutes": "minutes",
 	"status": "Status",
@@ -126,12 +127,21 @@
 		"requestSub": "This will request will appear under your name in the system.  If you are a worker, make sure to put the patron's name in the notes.",
 		"requestSuccess": "Reservation request submitted",
 		"requestSuccessSub": "Your request has been received and will be reviewed shortly.",
+		"byAppointmentOnly": "By Appointment Only",
+		"appointmentDisclaimer": "Note: The time block you selected is outside of normal operating hours and is offered by appointment only. Upon submission, a shift leader will contact you shortly to confirm and make arrangements. Submitting this form does not guarantee availability.",
+		"selectFaith": "Select Faith",
+		"selectWard": "Select Ward",
 		"statuses": {
 			"pending": "Pending",
 			"confirmed": "Confirmed",
 			"denied": "Denied",
 			"cancelled": "Cancelled"
-		}
+		},
+		"none": "No assistanced needed",
+		"startup": "I need help getting started",
+		"full": "I might need help the whole time",
+
+		"phoneHelp": "We’ll use this number to confirm your appointment."
 	},
 	"center": {
 		"definitions": "Center Definitions",
@@ -181,9 +191,6 @@
 	"noAvailability": "No availability for date selected",
 	"attendees": "Attendees",
 	"assistance": "Assistance Level",
-	"none": "None",
-	"startup": "Startup Help",
-	"full": "Full Assistance",
 
 	"user": "User",
 	"book": "Book",

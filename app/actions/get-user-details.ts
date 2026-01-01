@@ -39,13 +39,18 @@ export async function getUserDetails(): Promise<UserDetailsData | null> {
 		username: dbUser.username,
 		email: dbUser.email,
 		role: dbUser.role,
-		languagesSpoken: kiosk?.languagesSpoken,
-		pid: kiosk?.pid,
-		providers: providerRows.map((p) => p.provider),
 		hasPassword: !!dbUser.passwordHash,
+
+		providers: providerRows.map((p) => p.provider),
 
 		kioskPersonId: kiosk?.id,
 		profileImageUrl: kiosk?.profileImageUrl ?? null,
+		languagesSpoken: kiosk?.languagesSpoken ?? [],
+		pid: kiosk?.pid ?? null,
+		phone: kiosk?.phone ?? null,
+		passcode: kiosk?.passcode ?? null,
+		faithId: kiosk?.faithId ?? null,
+		wardId: kiosk?.wardId ?? null,
 
 		createdAt: kiosk?.createdAt,
 	}

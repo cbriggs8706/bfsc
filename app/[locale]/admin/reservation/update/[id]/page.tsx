@@ -10,6 +10,7 @@ import { getTranslations } from 'next-intl/server'
 import { readAllResources } from '@/lib/actions/resource/resource'
 import { getAppSettings } from '@/lib/actions/app-settings'
 import type { Resource } from '@/types/resource'
+import { getFaithTree } from '@/db/queries/faiths'
 
 type Props = {
 	params: Promise<{ locale: string; id: string }>
@@ -38,6 +39,7 @@ export default async function Page({ params }: Props) {
 
 	const settings = await getAppSettings()
 	const timeFormat = settings.timeFormat
+	const faithTree = await getFaithTree()
 
 	return (
 		<div className="p-4 space-y-4">
@@ -56,6 +58,7 @@ export default async function Page({ params }: Props) {
 				reservationId={reservation.id}
 				initialValues={reservation}
 				resources={resources}
+				faithTree={faithTree}
 				timeFormat={timeFormat}
 				canSetStatus
 			/>

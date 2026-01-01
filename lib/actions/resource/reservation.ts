@@ -11,6 +11,7 @@ import { z } from 'zod'
 
 import { getAvailability } from './availability'
 import { toLocalDateTime, toLocalYMD, toHHMM } from '@/utils/time'
+import { normalizePhone } from '@/utils/phone'
 
 /* ------------------------------------------------------------------ */
 /* Types */
@@ -24,10 +25,17 @@ export type ReservationFormValues = {
 	date: string // YYYY-MM-DD
 	startTime: string // HH:mm (slot start)
 	attendeeCount: string
+	phone: string
 	assistanceLevel: AssistanceLevel
 	isClosedDayRequest: boolean
 	notes: string
 	status?: ReservationStatus // Admin-only
+}
+
+type StakeWithWards = {
+	id: string
+	name: string
+	wards: { id: string; name: string }[]
 }
 
 /* ------------------------------------------------------------------ */
@@ -38,12 +46,16 @@ const ReservationInputSchema = z.object({
 	resourceId: z.string().uuid(),
 	date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date (YYYY-MM-DD)'),
 	startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time (HH:mm)'),
-
+	phone: z.string(),
 	attendeeCount: z.coerce.number().int().min(1),
 	assistanceLevel: z.enum(['none', 'startup', 'full']),
 	isClosedDayRequest: z.coerce.boolean(),
-	notes: z.string().catch(''),
+	groupAffiliation: z.enum(['lds', 'other-faith', 'none']).optional(),
 
+	wardId: z.string().uuid().nullable().optional(),
+	faithId: z.string().uuid().nullable().optional(),
+
+	notes: z.string().catch(''),
 	status: z.enum(['pending', 'confirmed', 'denied', 'cancelled']).optional(),
 })
 
@@ -94,6 +106,7 @@ export async function readReservationForForm(id: string) {
 			resourceId: true,
 			startTime: true,
 			endTime: true,
+			phone: true,
 			attendeeCount: true,
 			assistanceLevel: true,
 			isClosedDayRequest: true,
@@ -108,6 +121,7 @@ export async function readReservationForForm(id: string) {
 	return {
 		id: row.id,
 		resourceId: row.resourceId,
+		phone: row.phone,
 		date: toLocalYMD(start),
 		startTime: toHHMM(start),
 		attendeeCount: String(row.attendeeCount ?? 1),
@@ -140,8 +154,28 @@ export async function saveReservation(
 			message: parsed.error.issues[0]?.message ?? 'Invalid data',
 		}
 	}
-
 	const data = parsed.data
+
+	const normalizedPhone = normalizePhone(data.phone)
+
+	if (!normalizedPhone) {
+		return { ok: false, message: 'Invalid phone number' }
+	}
+
+	// ---------------------------------------------
+	// Faith / Ward validation (server-authoritative)
+	// ---------------------------------------------
+	if (data.attendeeCount > 2) {
+		if (data.groupAffiliation === 'lds' && !data.wardId) {
+			return { ok: false, message: 'Ward required for LDS groups' }
+		}
+
+		if (data.groupAffiliation === 'other-faith' && !data.faithId) {
+			return { ok: false, message: 'Faith required for faith groups' }
+		}
+
+		// 'none' → explicitly allowed, nothing required
+	}
 
 	// Load availability, excluding this reservation on update
 	const availability = await getAvailability({
@@ -172,15 +206,21 @@ export async function saveReservation(
 				.values({
 					resourceId: data.resourceId,
 					userId,
-
+					phone: normalizedPhone,
 					startTime: start,
 					endTime: end,
 
 					attendeeCount: data.attendeeCount,
 					assistanceLevel: data.assistanceLevel,
 					isClosedDayRequest: data.isClosedDayRequest,
-					notes: data.notes || null,
+					wardId: data.groupAffiliation === 'lds' ? data.wardId ?? null : null,
 
+					faithId:
+						data.groupAffiliation === 'other-faith'
+							? data.faithId ?? null
+							: null,
+
+					notes: data.notes || null,
 					status: isAdmin ? data.status ?? 'pending' : 'pending',
 				})
 				.returning({ id: reservations.id })
@@ -198,11 +238,15 @@ export async function saveReservation(
 				resourceId: data.resourceId,
 				startTime: start,
 				endTime: end,
-
+				phone: normalizedPhone,
 				attendeeCount: data.attendeeCount,
 				assistanceLevel: data.assistanceLevel,
 				isClosedDayRequest: data.isClosedDayRequest,
 				notes: data.notes || null,
+				wardId: data.groupAffiliation === 'lds' ? data.wardId ?? null : null,
+
+				faithId:
+					data.groupAffiliation === 'other-faith' ? data.faithId ?? null : null,
 
 				// Admin may change status; otherwise keep existing status
 				...(isAdmin && data.status ? { status: data.status } : {}),

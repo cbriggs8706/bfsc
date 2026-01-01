@@ -13,6 +13,7 @@ import {
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import { user } from './auth'
+import { faiths, wards } from './faith'
 
 export const resources = pgTable(
 	'resources',
@@ -59,13 +60,20 @@ export const reservations = pgTable(
 		userId: uuid('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
-
+		phone: text('phone').notNull(),
 		startTime: timestamp('start_time', { withTimezone: true }).notNull(),
 		endTime: timestamp('end_time', { withTimezone: true }).notNull(),
 		attendeeCount: integer('attendee_count').notNull().default(1),
 		assistanceLevel: varchar('assistance_level', { length: 20 })
 			.notNull()
 			.default('none'),
+		faithId: uuid('faith_id').references(() => faiths.id, {
+			onDelete: 'set null',
+		}),
+
+		wardId: uuid('ward_id').references(() => wards.id, {
+			onDelete: 'set null',
+		}),
 
 		isClosedDayRequest: boolean('is_closed_day_request')
 			.notNull()
@@ -105,6 +113,18 @@ export const reservations = pgTable(
 		attendeeCountCheck: check(
 			'reservation_attendee_count_ck',
 			sql`${t.attendeeCount} >= 1`
+		),
+		faithWardExclusiveCheck: check(
+			'reservation_faith_xor_ward_ck',
+			sql`
+      (
+        (${t.wardId} is not null and ${t.faithId} is null)
+        or
+        (${t.wardId} is null and ${t.faithId} is not null)
+        or
+        (${t.wardId} is null and ${t.faithId} is null)
+      )
+    `
 		),
 	})
 )

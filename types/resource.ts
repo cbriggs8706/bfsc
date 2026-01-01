@@ -1,3 +1,5 @@
+import { ShiftType } from './shifts'
+
 // types/resources.ts
 export type ResourceOption = {
 	id: string
@@ -25,6 +27,7 @@ export type TimeSlot = {
 	endTime: string // "12:00"
 	isAvailable: boolean
 	reason?: string
+	shiftType: ShiftType
 }
 
 export type AvailabilityResponse = {

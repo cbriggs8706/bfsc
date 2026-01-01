@@ -1,32 +1,48 @@
 'use client'
 
 import { useState } from 'react'
-import { UserCertificateWithStatus } from '@/db/queries/training'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CertificateBadge } from './CertificateBadge'
 
+import { CertificateBadge } from './CertificateBadge'
+import { Button } from '@/components/ui/button'
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog'
-import { Button } from '../ui/button'
+import {
+	DashboardCertificateItem,
+	EarnedCertificate,
+	MissingCertificate,
+} from '@/db/queries/training'
+
+/* ======================================================
+ * Types
+ * ==================================================== */
 
 type Props = {
-	certificates: UserCertificateWithStatus[]
+	certificates: DashboardCertificateItem[]
 	locale: string
 }
 
+/* ======================================================
+ * Component
+ * ==================================================== */
+
 export function CertificatesGrid({ certificates, locale }: Props) {
-	const [activeCert, setActiveCert] =
-		useState<UserCertificateWithStatus | null>(null)
+	const [activeCert, setActiveCert] = useState<EarnedCertificate | null>(null)
 
-	const collapsed = collapseCertificates(certificates)
-	const visible = collapsed.filter((c) => c.status !== 'expired')
+	const earned = certificates.filter(
+		(c): c is EarnedCertificate => c.kind === 'earned'
+	)
 
-	if (visible.length === 0) {
+	const missing = certificates.filter(
+		(c): c is MissingCertificate => c.kind === 'missing'
+	)
+
+	if (certificates.length === 0) {
 		return (
 			<div className="space-y-3">
 				<h2 className="text-2xl font-semibold">My Certificates</h2>
@@ -46,16 +62,18 @@ export function CertificatesGrid({ certificates, locale }: Props) {
 		<div className="space-y-3">
 			<h2 className="text-2xl font-semibold">My Certificates</h2>
 
-			{/* Single large card */}
 			<div className="border bg-card rounded-xl p-4">
-				<div className="flex flex-wrap items-center justify-center gap-4">
-					{visible.map((cert) => (
+				<div className="flex flex-wrap items-start justify-center gap-4">
+					{/* =====================
+					 * Earned Certificates
+					 * =================== */}
+					{earned.map((cert) => (
 						<button
 							key={cert.id}
 							onClick={() => setActiveCert(cert)}
 							className="group focus:outline-none"
 						>
-							<div className="flex flex-col items-center gap-1">
+							<div className="flex flex-col items-center gap-1 w-20">
 								{cert.badgeImageUrl ? (
 									<Image
 										src={cert.badgeImageUrl}
@@ -69,16 +87,42 @@ export function CertificatesGrid({ certificates, locale }: Props) {
 										CERT
 									</div>
 								)}
-								{/* TODO update font size after character limit */}
-								<span className="text-[9px]">{cert.title}</span>
+
+								<span className="text-[9px] text-center">{cert.title}</span>
+
 								<CertificateBadge status={cert.status} />
 							</div>
 						</button>
 					))}
+
+					{/* =====================
+					 * Missing Certificates
+					 * =================== */}
+					{missing.map((course) => (
+						<Link
+							key={course.courseId}
+							href={`/${locale}/training/courses/${course.courseId}`}
+							className="group"
+						>
+							<div className="flex flex-col items-center gap-1 w-20">
+								<div className="w-20 h-20 rounded-md border border-dashed border-muted-foreground bg-background flex items-center justify-center">
+									<span className="text-xs text-muted-foreground text-wrap text-center">
+										{course.title}
+									</span>
+								</div>
+
+								<span className="text-[9px] text-muted-foreground text-center">
+									Not earned yet
+								</span>
+							</div>
+						</Link>
+					))}
 				</div>
 			</div>
 
-			{/* Details dialog */}
+			{/* =====================
+			 * Details Dialog
+			 * =================== */}
 			<Dialog open={!!activeCert} onOpenChange={() => setActiveCert(null)}>
 				{activeCert && (
 					<DialogContent className="sm:max-w-md">
@@ -97,7 +141,7 @@ export function CertificatesGrid({ certificates, locale }: Props) {
 							<p className="text-muted-foreground">
 								{activeCert.source === 'internal'
 									? 'BFSC certificate'
-									: 'Genie Greenie certificate'}
+									: 'External certificate'}
 							</p>
 
 							<p className="text-muted-foreground">
@@ -129,35 +173,4 @@ export function CertificatesGrid({ certificates, locale }: Props) {
 			</Dialog>
 		</div>
 	)
-}
-
-/* ======================================================
- * Helpers
- * ==================================================== */
-
-function collapseCertificates(
-	certs: UserCertificateWithStatus[]
-): UserCertificateWithStatus[] {
-	const byCourse = new Map<string, UserCertificateWithStatus>()
-	const result: UserCertificateWithStatus[] = []
-
-	for (const cert of certs) {
-		if (cert.source === 'external' || !cert.courseId) {
-			result.push(cert)
-			continue
-		}
-
-		const existing = byCourse.get(cert.courseId)
-
-		if (!existing) {
-			byCourse.set(cert.courseId, cert)
-			continue
-		}
-
-		if (existing.status !== 'current' && cert.status === 'current') {
-			byCourse.set(cert.courseId, cert)
-		}
-	}
-
-	return [...result, ...byCourse.values()]
 }

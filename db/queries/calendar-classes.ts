@@ -17,6 +17,8 @@ export type CalendarClass = {
 	startsAtIso: string
 	title: string
 	location: string
+	description: string | null
+	descriptionOverride: string | null
 	isCanceled: boolean
 	presenters: string[]
 }
@@ -32,7 +34,8 @@ export async function listCalendarClasses(
 			status: classSession.status,
 			titleOverride: classSession.titleOverride,
 			locationOverride: classSession.locationOverride,
-
+			description: classSeries.description,
+			descriptionOverride: classSession.descriptionOverride,
 			seriesTitle: classSeries.title,
 			seriesLocation: classSeries.location,
 
@@ -68,6 +71,8 @@ export async function listCalendarClasses(
 				date: ymdLocal,
 				startsAtIso: dt.toISOString(),
 				title: r.titleOverride || r.seriesTitle,
+				description: r.description || null,
+				descriptionOverride: r.descriptionOverride || null,
 				location: r.locationOverride || r.seriesLocation,
 				isCanceled: r.status === 'canceled',
 				presenters: [],

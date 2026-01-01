@@ -18,7 +18,7 @@ import {
 import { useEffect } from 'react'
 import { getAvailability } from '@/lib/actions/resource/availability'
 import { Resource } from '@/types/resource'
-import { TimeFormat } from '@/types/shifts'
+import { ShiftType, TimeFormat } from '@/types/shifts'
 import { formatTimeRange } from '@/utils/time'
 import { Mode } from '@/types/crud'
 import z from 'zod'
@@ -32,6 +32,7 @@ import {
 } from '@/lib/actions/resource/reservation'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Faith } from '@/types/faiths'
 
 /* ------------------------------------------------------------------ */
 /* UI Schema (matches server form shape) */
@@ -42,11 +43,14 @@ function schema(t: (k: string) => string) {
 		resourceId: z.string().uuid(t('required')),
 		date: z.string().min(1, t('required')),
 		startTime: z.string().min(1, t('required')),
-
+		phone: z.string().min(7, t('required')),
 		attendeeCount: z.string().min(1, t('required')),
 		assistanceLevel: z.enum(['none', 'startup', 'full']),
 		isClosedDayRequest: z.boolean(),
+		groupAffiliation: z.enum(['lds', 'other-faith', 'none']).optional(),
 
+		faithId: z.string().uuid().nullable().optional(),
+		wardId: z.string().uuid().nullable().optional(),
 		notes: z.string().catch(''),
 
 		status: z.enum(['pending', 'confirmed', 'denied', 'cancelled']).optional(),
@@ -61,11 +65,18 @@ type Props = {
 	locale: string
 	mode: Mode
 	reservationId?: string
-	initialValues?: Partial<ReservationFormValues>
+	initialValues?: Partial<ReservationFormUIValues>
 	resources: Resource[]
+	faithTree: Faith[]
 	timeFormat: TimeFormat
 	canSetStatus?: boolean
 	successRedirect?: string
+}
+
+type ReservationFormUIValues = ReservationFormValues & {
+	groupAffiliation?: 'lds' | 'other-faith' | 'none'
+	faithId?: string | null
+	wardId?: string | null
 }
 
 /* ------------------------------------------------------------------ */
@@ -78,6 +89,7 @@ export function ReservationForm({
 	reservationId,
 	initialValues,
 	resources,
+	faithTree,
 	timeFormat,
 	canSetStatus = false,
 	successRedirect,
@@ -88,13 +100,14 @@ export function ReservationForm({
 
 	/* ---------------- form ---------------- */
 
-	const form = useForm<ReservationFormValues>({
+	const form = useForm<ReservationFormUIValues>({
 		resolver: zodResolver(schema(t)),
 		defaultValues: {
 			resourceId: '',
 			date: '',
+			phone: '',
 			startTime: '',
-			attendeeCount: '',
+			attendeeCount: '1',
 			assistanceLevel: 'none',
 			isClosedDayRequest: false,
 			notes: '',
@@ -115,12 +128,52 @@ export function ReservationForm({
 	const resourceId = useWatch({ control, name: 'resourceId' })
 	const date = useWatch({ control, name: 'date' })
 	const startTime = useWatch({ control, name: 'startTime' })
+	const groupAffiliation = useWatch({ control, name: 'groupAffiliation' })
+
+	const attendeeCountRaw = useWatch({ control, name: 'attendeeCount' })
+	const attendeeCount = Number(attendeeCountRaw || 0)
+	const showFaithQuestion = attendeeCount > 2
+	const ldsFaith =
+		faithTree.find((f) => f.name.toLowerCase().includes('latter-day')) ?? null
+
+	useEffect(() => {
+		if (!showFaithQuestion) {
+			form.setValue('groupAffiliation', undefined)
+			form.setValue('wardId', null)
+			form.setValue('faithId', null)
+			return
+		}
+
+		if (groupAffiliation === 'lds') {
+			form.setValue('faithId', null)
+		}
+
+		if (groupAffiliation === 'other-faith') {
+			form.setValue('wardId', null)
+		}
+
+		if (groupAffiliation === 'none') {
+			form.setValue('wardId', null)
+			form.setValue('faithId', null)
+		}
+	}, [showFaithQuestion, groupAffiliation, form])
+
+	useEffect(() => {
+		if (attendeeCount > 2) {
+			form.setValue('assistanceLevel', 'full')
+		}
+	}, [attendeeCount, form])
 
 	/* ---------------- availability ---------------- */
 
-	const [slots, setSlots] = useState<{ startTime: string; endTime: string }[]>(
-		[]
-	)
+	const [slots, setSlots] = useState<
+		{
+			startTime: string
+			endTime: string
+			shiftType: ShiftType
+		}[]
+	>([])
+
 	const [loadingSlots, setLoadingSlots] = useState(false)
 
 	useEffect(() => {
@@ -147,6 +200,7 @@ export function ReservationForm({
 					res.timeSlots.map((s) => ({
 						startTime: s.startTime,
 						endTime: s.endTime,
+						shiftType: s.shiftType,
 					}))
 				)
 
@@ -167,9 +221,13 @@ export function ReservationForm({
 		}
 	}, [resourceId, date, reservationId])
 
+	const selectedSlot = slots.find((s) => s.startTime === startTime)
+
+	const isAppointmentSlot = selectedSlot?.shiftType === 'appointment'
+
 	/* ---------------- submit ---------------- */
 
-	async function onSubmit(values: ReservationFormValues) {
+	async function onSubmit(values: ReservationFormUIValues) {
 		const redirectTo = successRedirect ?? `/${locale}/admin/reservation`
 
 		if (mode === 'delete') {
@@ -211,7 +269,7 @@ export function ReservationForm({
 		<Card className="w-full">
 			<CardContent>
 				<form id="reservation-form" onSubmit={handleSubmit(onSubmit)}>
-					<FieldGroup>
+					<FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						{/* Root error */}
 						{errors.root && (
 							<p className="text-sm text-destructive">{errors.root.message}</p>
@@ -222,7 +280,7 @@ export function ReservationForm({
 							name="resourceId"
 							control={control}
 							render={({ field, fieldState }) => (
-								<Field data-invalid={fieldState.invalid}>
+								<Field data-invalid={fieldState.invalid} className="col-span-2">
 									<FieldLabel>
 										<Required>{t('resource.title')}</Required>
 									</FieldLabel>
@@ -243,11 +301,17 @@ export function ReservationForm({
 												][]
 											).map(([type, items]) => (
 												<div key={type}>
-													<div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
+													<div className="px-2 py-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground bg-muted/50">
+														<span className="inline-block h-2 w-2 rounded-full bg-primary" />
 														{t(`resource.typesP.${type}`)}
 													</div>
+
 													{items.map((r) => (
-														<SelectItem key={r.id} value={r.id}>
+														<SelectItem
+															key={r.id}
+															value={r.id}
+															className="pl-6"
+														>
 															{r.name}
 														</SelectItem>
 													))}
@@ -318,6 +382,11 @@ export function ReservationForm({
 															s.endTime,
 															timeFormat
 														)}
+														{s.shiftType === 'appointment' && (
+															<span className="ml-2 text-xs text-muted-foreground">
+																({t('reservation.byAppointmentOnly')})
+															</span>
+														)}
 													</SelectItem>
 												))
 											)}
@@ -330,6 +399,12 @@ export function ReservationForm({
 								</Field>
 							)}
 						/>
+
+						{isAppointmentSlot && (
+							<p className="text-base  p-6 bg-(--green-logo-soft) border border-(--green-logo) rounded-xl">
+								{t('reservation.appointmentDisclaimer')}
+							</p>
+						)}
 
 						{/* Attendees */}
 						<Controller
@@ -344,31 +419,182 @@ export function ReservationForm({
 										{...field}
 										disabled={fieldsDisabled}
 									/>
+									{/* <p className="text-xs text-muted-foreground">
+										{t('reservation.attendeesSub')}
+									</p> */}
 								</Field>
 							)}
 						/>
 
 						{/* Assistance */}
+						{attendeeCount <= 4 && (
+							<Controller
+								name="assistanceLevel"
+								control={control}
+								render={({ field }) => (
+									<Field>
+										<FieldLabel>{t('assistance')}</FieldLabel>
+										<Select
+											value={field.value}
+											onValueChange={field.onChange}
+											disabled={fieldsDisabled}
+										>
+											<SelectTrigger>
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="none">
+													{t('reservation.none')}
+												</SelectItem>
+												<SelectItem value="startup">
+													{t('reservation.startup')}
+												</SelectItem>
+												<SelectItem value="full">
+													{t('reservation.full')}
+												</SelectItem>
+											</SelectContent>
+										</Select>
+									</Field>
+								)}
+							/>
+						)}
+
+						<div className="col-span-2 flex flex-col md:flex-row gap-4">
+							{' '}
+							{showFaithQuestion && (
+								<Controller
+									name="groupAffiliation"
+									control={control}
+									render={({ field }) => (
+										<Field>
+											<FieldLabel>
+												Is your group associated with a faith community?
+											</FieldLabel>
+
+											<Select
+												value={field.value ?? undefined}
+												onValueChange={field.onChange}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Select one" />
+												</SelectTrigger>
+
+												<SelectContent>
+													<SelectItem value="lds">
+														Yes – Church of Jesus Christ of Latter-day Saints
+													</SelectItem>
+													<SelectItem value="other-faith">
+														No, another faith
+													</SelectItem>
+													<SelectItem value="none">
+														Not associated with a faith group
+													</SelectItem>
+												</SelectContent>
+											</Select>
+										</Field>
+									)}
+								/>
+							)}
+							{showFaithQuestion && groupAffiliation === 'lds' && ldsFaith && (
+								<Controller
+									name="wardId"
+									control={control}
+									render={({ field }) => (
+										<Field>
+											<FieldLabel>{t('reservation.selectWard')}</FieldLabel>
+
+											<Select
+												value={field.value ?? undefined}
+												onValueChange={field.onChange}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Select ward" />
+												</SelectTrigger>
+
+												<SelectContent>
+													{ldsFaith.stakes.map((stake) => (
+														<div key={stake.id}>
+															<div className="px-2 py-1 text-base font-semibold text-muted-foreground">
+																{stake.name} Stake
+															</div>
+															{stake.wards.map((ward) => (
+																<SelectItem
+																	key={ward.id}
+																	value={ward.id}
+																	className="pl-4"
+																>
+																	{ward.name}
+																</SelectItem>
+															))}
+														</div>
+													))}
+												</SelectContent>
+											</Select>
+										</Field>
+									)}
+								/>
+							)}
+							{showFaithQuestion && groupAffiliation === 'other-faith' && (
+								<Controller
+									name="faithId"
+									control={control}
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel>
+												<Required>{t('reservation.selectFaith')}</Required>
+											</FieldLabel>
+
+											<Select
+												value={field.value ?? undefined}
+												onValueChange={field.onChange}
+											>
+												<SelectTrigger>
+													<SelectValue
+														placeholder={t('reservation.selectFaith')}
+													/>
+												</SelectTrigger>
+
+												<SelectContent>
+													{faithTree.map((f) => (
+														<SelectItem key={f.id} value={f.id}>
+															{f.name}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+
+											{fieldState.error && (
+												<FieldError errors={[fieldState.error]} />
+											)}
+										</Field>
+									)}
+								/>
+							)}
+						</div>
+
 						<Controller
-							name="assistanceLevel"
+							name="phone"
 							control={control}
-							render={({ field }) => (
-								<Field>
-									<FieldLabel>{t('assistance')}</FieldLabel>
-									<Select
-										value={field.value}
-										onValueChange={field.onChange}
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid} className="col-span-2">
+									<FieldLabel>
+										<Required>{t('phone')}</Required>
+									</FieldLabel>
+
+									<Input
+										type="tel"
+										placeholder="(208) 555-1234"
+										{...field}
 										disabled={fieldsDisabled}
-									>
-										<SelectTrigger>
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="none">{t('none')}</SelectItem>
-											<SelectItem value="startup">{t('startup')}</SelectItem>
-											<SelectItem value="full">{t('full')}</SelectItem>
-										</SelectContent>
-									</Select>
+									/>
+
+									<p className="text-xs text-muted-foreground">
+										{t('reservation.phoneHelp')}
+									</p>
+
+									{fieldState.error && (
+										<FieldError errors={[fieldState.error]} />
+									)}
 								</Field>
 							)}
 						/>
@@ -414,9 +640,13 @@ export function ReservationForm({
 							name="notes"
 							control={control}
 							render={({ field }) => (
-								<Field>
+								<Field className="col-span-2">
 									<FieldLabel>{t('notes')}</FieldLabel>
-									<Textarea {...field} disabled={fieldsDisabled} />
+									<Textarea
+										{...field}
+										disabled={fieldsDisabled}
+										placeholder="If you are filling this out for another person, make sure to put their email address here."
+									/>
 								</Field>
 							)}
 						/>

@@ -75,6 +75,8 @@ type CalendarClass = {
 	startsAtIso: string
 	title: string
 	location: string
+	description: string | null
+	descriptionOverride: string | null
 	isCanceled: boolean
 	presenters: string[]
 }
@@ -325,27 +327,39 @@ export default function CenterCalendar({
 				<ul className="space-y-2">
 					{dayClasses.map((c) => {
 						const startsAt = new Date(c.startsAtIso)
+
 						return (
 							<li
 								key={c.id}
 								className={cn(
-									'text-sm',
-									c.isCanceled && 'line-through text-muted-foreground'
+									'border rounded px-1 text-[11px] truncate',
+									classColorMap.get(c.title) ?? EVENT_COLORS[0],
+									c.isCanceled && 'line-through opacity-70'
 								)}
 							>
-								<div>
+								<div className="text-base mb-2">
 									{toAmPm(format(startsAt, 'HH:mm'))} — {c.title}
 								</div>
 
-								<div className="text-xs text-muted-foreground">
-									{c.location}
+								<div className="text-base ">
+									Location: {c.location}
 									{c.isCanceled && ' (Canceled)'}
 								</div>
 
 								{c.presenters.length > 0 && (
-									<div className="text-xs text-muted-foreground">
+									<div className="text-base ">
 										Presenter{c.presenters.length > 1 ? 's' : ''}:{' '}
 										{c.presenters.join(', ')}
+									</div>
+								)}
+								{c.description && (
+									<div className="text-base text-wrap">
+										Description:{c.description}
+									</div>
+								)}
+								{c.descriptionOverride && (
+									<div className="text-base text-wrap">
+										{c.descriptionOverride}
 									</div>
 								)}
 							</li>
@@ -827,36 +841,45 @@ export default function CenterCalendar({
 	return (
 		<div className="flex flex-col gap-4">
 			{/* Toolbar */}
-			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-				<div className="flex items-center gap-2">
+			<div className="grid grid-cols-1 xl:grid-cols-3 xl:items-center gap-3">
+				<div className="flex mx-auto xl:mx-0">
 					<Button
 						variant="outline"
+						size="sm"
+						onClick={goToday}
+						className="xl:hidden mr-2"
+					>
+						Today
+					</Button>
+					<ViewSwitcher />
+				</div>
+				<div className="flex items-center gap-2 mx-auto">
+					<Button
+						variant="ghost"
 						size="icon"
 						onClick={goPrev}
 						aria-label="Previous"
 					>
 						<ChevronLeft className="h-4 w-4" />
 					</Button>
-
+					<div className="text-base xl:text-xl font-semibold text-center">
+						{headerLabel}
+					</div>
 					<Button
-						variant="outline"
+						variant="ghost"
 						size="icon"
 						onClick={goNext}
 						aria-label="Next"
 					>
 						<ChevronRight className="h-4 w-4" />
 					</Button>
+				</div>
 
+				<div className="hidden xl:flex justify-end mx-auto xl:mx-0">
 					<Button variant="outline" size="sm" onClick={goToday}>
 						Today
 					</Button>
-
-					<div className="ml-2 text-base sm:text-lg font-semibold">
-						{headerLabel}
-					</div>
 				</div>
-
-				<ViewSwitcher />
 			</div>
 
 			{/* Animated view container */}

@@ -4,10 +4,15 @@
 import { unstable_noStore as noStore } from 'next/cache'
 import { and, eq, lt, gt, ne } from 'drizzle-orm'
 import { db, reservations, resources } from '@/db'
-import { operatingHours, specialHours } from '@/db/schema/tables/shifts'
+import {
+	operatingHours,
+	specialHours,
+	weeklyShifts,
+} from '@/db/schema/tables/shifts'
 import type { AvailabilityResponse, TimeSlot } from '@/types/resource'
 import { addMinutes } from 'date-fns'
 import { toHHMM, toLocalDateTime, weekdayFromYYYYMMDD } from '@/utils/time'
+import { inArray } from 'drizzle-orm'
 
 type Args = {
 	resourceId: string
@@ -48,14 +53,49 @@ export async function getAvailability({
 	 * ------------------------------------------- */
 
 	const weekday = weekdayFromYYYYMMDD(date)
-
 	const special = await db.query.specialHours.findFirst({
 		where: eq(specialHours.date, date),
 	})
+	if (special?.isClosed) {
+		return {
+			resourceId,
+			date,
+			status: 'closed',
+			defaultDurationMinutes: r.defaultDurationMinutes,
+			capacity: r.capacity,
+			opensAt: special.opensAt ?? null,
+			closesAt: special.closesAt ?? null,
+			timeSlots: [],
+		}
+	}
+
+	const shifts = await db.query.weeklyShifts.findMany({
+		where: and(
+			eq(weeklyShifts.weekday, weekday),
+			eq(weeklyShifts.isActive, true)
+		),
+		orderBy: (t, { asc }) => [asc(t.sortOrder), asc(t.startTime)],
+	})
+
+	const hasRegularShifts = shifts.some((s) => s.type === 'regular')
+	const hasAppointmentShifts = shifts.some((s) => s.type === 'appointment')
 
 	let isClosed = false
 	let opensAt: string | null = null
 	let closesAt: string | null = null
+
+	if (shifts.length === 0) {
+		return {
+			resourceId,
+			date,
+			status: 'closed',
+			defaultDurationMinutes: r.defaultDurationMinutes,
+			capacity: r.capacity,
+			opensAt,
+			closesAt,
+			timeSlots: [],
+		}
+	}
 
 	if (special) {
 		if (special.isClosed) {
@@ -66,20 +106,23 @@ export async function getAvailability({
 		}
 	}
 
-	if (!special || (!isClosed && (!opensAt || !closesAt))) {
-		const op = await db.query.operatingHours.findFirst({
-			where: eq(operatingHours.weekday, weekday),
-		})
+	const op = await db.query.operatingHours.findFirst({
+		where: eq(operatingHours.weekday, weekday),
+	})
 
-		if (!op || op.isClosed) {
-			isClosed = true
-		} else {
-			opensAt = op.opensAt
-			closesAt = op.closesAt
-		}
+	// operating hours only define REGULAR shift bounds
+	if (op && !op.isClosed) {
+		opensAt = opensAt ?? op.opensAt
+		closesAt = closesAt ?? op.closesAt
 	}
 
-	if (isClosed || !opensAt || !closesAt) {
+	// 🚨 DO NOT mark closed here
+
+	if (
+		isClosed ||
+		shifts.length === 0 ||
+		(hasRegularShifts && (!opensAt || !closesAt))
+	) {
 		return {
 			resourceId,
 			date,
@@ -96,28 +139,35 @@ export async function getAvailability({
 	 * 3) Convert open window to Date objects
 	 * ------------------------------------------- */
 
-	const openDt = toLocalDateTime(date, opensAt)
-	const closeDt = toLocalDateTime(date, closesAt)
+	const openDt =
+		hasRegularShifts && opensAt ? toLocalDateTime(date, opensAt) : null
+
+	const closeDt =
+		hasRegularShifts && closesAt ? toLocalDateTime(date, closesAt) : null
 
 	/* ---------------------------------------------
 	 * 4) Fetch overlapping reservations
 	 * ------------------------------------------- */
 
+	const reservationWhere = and(
+		eq(reservations.resourceId, resourceId),
+
+		// Only apply open/close window when regular shifts exist
+		hasRegularShifts && openDt && closeDt
+			? and(
+					lt(reservations.startTime, closeDt),
+					gt(reservations.endTime, openDt)
+			  )
+			: undefined,
+
+		ne(reservations.status, 'cancelled'),
+		ne(reservations.status, 'denied'),
+
+		excludeReservationId ? ne(reservations.id, excludeReservationId) : undefined
+	)
+
 	const existing = await db.query.reservations.findMany({
-		where: and(
-			eq(reservations.resourceId, resourceId),
-
-			// overlaps the open window
-			lt(reservations.startTime, closeDt),
-			gt(reservations.endTime, openDt),
-
-			ne(reservations.status, 'cancelled'),
-			ne(reservations.status, 'denied'),
-
-			excludeReservationId
-				? ne(reservations.id, excludeReservationId)
-				: undefined
-		),
+		where: reservationWhere,
 		columns: {
 			startTime: true,
 			endTime: true,
@@ -132,36 +182,82 @@ export async function getAvailability({
 	const duration = r.defaultDurationMinutes
 	const slots: TimeSlot[] = []
 
-	let cursor = new Date(openDt)
+	for (const shift of shifts) {
+		const rawStart = toLocalDateTime(date, shift.startTime)
+		const rawEnd = toLocalDateTime(date, shift.endTime)
 
-	while (true) {
-		const end = addMinutes(cursor, duration)
-		if (end > closeDt) break
+		const shiftStart =
+			shift.type === 'appointment'
+				? rawStart
+				: openDt && rawStart < openDt
+				? openDt
+				: rawStart
 
-		const used = usedCapacity(cursor, end, existing)
+		const shiftEnd =
+			shift.type === 'appointment'
+				? rawEnd
+				: closeDt && rawEnd > closeDt
+				? closeDt
+				: rawEnd
 
-		let isAvailable: boolean
-		let reason: string | undefined
+		if (shiftEnd <= shiftStart) continue
 
-		if (r.capacity == null) {
-			// capacity does not apply → any overlap blocks
-			isAvailable = used === 0
-			reason = isAvailable ? undefined : 'Reserved'
-		} else {
-			const remaining = Math.max(r.capacity - used, 0)
-			isAvailable = remaining > 0
-			reason = isAvailable ? undefined : 'At capacity'
+		let cursor = new Date(shiftStart)
+
+		while (true) {
+			const end = addMinutes(cursor, duration)
+			if (end > shiftEnd) break
+
+			const used = usedCapacity(cursor, end, existing)
+
+			let isAvailable: boolean
+			let reason: string | undefined
+
+			if (r.capacity == null) {
+				isAvailable = used === 0
+			} else {
+				isAvailable = r.capacity - used > 0
+				if (!isAvailable) reason = 'At capacity'
+			}
+
+			slots.push({
+				startTime: toHHMM(cursor),
+				endTime: toHHMM(end),
+				isAvailable,
+				reason,
+				shiftType: shift.type,
+			})
+
+			cursor = addMinutes(cursor, stepMinutes)
+		}
+	}
+	/* ---------------------------------------------
+	 * 6) De-duplicate overlapping slots
+	 *    Prefer REGULAR over APPOINTMENT
+	 * ------------------------------------------- */
+
+	const uniqueSlots = new Map<string, TimeSlot>()
+
+	for (const s of slots) {
+		const key = `${s.startTime}-${s.endTime}`
+		const existing = uniqueSlots.get(key)
+
+		if (!existing) {
+			uniqueSlots.set(key, s)
+			continue
 		}
 
-		slots.push({
-			startTime: toHHMM(cursor),
-			endTime: toHHMM(end),
-			isAvailable,
-			reason,
-		})
-
-		cursor = addMinutes(cursor, stepMinutes)
+		// If either slot is regular, the result is regular
+		if (existing.shiftType === 'regular' || s.shiftType === 'regular') {
+			uniqueSlots.set(key, {
+				...existing,
+				shiftType: 'regular',
+			})
+		}
+		// else both are appointment → keep appointment
 	}
+
+	const finalSlots = Array.from(uniqueSlots.values())
 
 	return {
 		resourceId,
@@ -171,7 +267,7 @@ export async function getAvailability({
 		capacity: r.capacity,
 		opensAt,
 		closesAt,
-		timeSlots: slots.filter((s) => s.isAvailable),
+		timeSlots: finalSlots.filter((s) => s.isAvailable),
 	}
 }
 

@@ -33,22 +33,65 @@ export type UserCertificateWithStatus = UserCertificate & {
 	badgeImageUrl?: string | null
 }
 
+export type DashboardCertificateItem =
+	| (UserCertificateWithStatus & { kind: 'earned' })
+	| {
+			kind: 'missing'
+			courseId: string
+			title: string
+			category: string | null
+			level: number | null
+			contentVersion: number
+			badgeImageUrl?: string | null
+	  }
+
+export type EarnedCertificate = {
+	kind: 'earned'
+	id: string
+	userId: string
+	courseId: string | null
+	courseVersion: number | null
+	title: string
+	category: string | null
+	level: number | null
+	source: 'internal' | 'external'
+	issuedAt: Date
+	verifyUrl: string | null
+	status: CertificateStatus
+	badgeImageUrl?: string | null
+}
+
+export type MissingCertificate = {
+	kind: 'missing'
+	courseId: string
+	title: string
+	category: string | null
+	level: number | null
+	contentVersion: number
+	badgeImageUrl?: string | null
+}
+
 export async function getUserCertificates(
 	userId: string
 ): Promise<UserCertificateWithStatus[]> {
 	const rows = await db
 		.select({
+			// ---- certificate snapshot
 			id: userCertificates.id,
 			userId: userCertificates.userId,
 			courseId: userCertificates.courseId,
 			courseVersion: userCertificates.courseVersion,
-			title: userCertificates.title,
-			category: userCertificates.category,
-			level: userCertificates.level,
+			certTitle: userCertificates.title,
+			certCategory: userCertificates.category,
+			certLevel: userCertificates.level,
 			source: userCertificates.source,
 			issuedAt: userCertificates.issuedAt,
 			verifyUrl: userCertificates.verifyUrl,
 
+			// ---- course source-of-truth
+			courseTitle: learningCourses.title,
+			courseCategory: learningCourses.category,
+			courseLevel: learningCourses.level,
 			currentCourseVersion: learningCourses.contentVersion,
 			isPublished: learningCourses.isPublished,
 			badgeImagePath: learningCourses.badgeImagePath,
@@ -74,14 +117,30 @@ export async function getUserCertificates(
 			}
 		}
 
+		// ✅ derive display metadata
+		const title =
+			row.source === 'internal' && row.courseTitle
+				? row.courseTitle
+				: row.certTitle
+
+		const category =
+			row.source === 'internal' && row.courseCategory
+				? row.courseCategory
+				: row.certCategory
+
+		const level =
+			row.source === 'internal' && row.courseLevel !== null
+				? row.courseLevel
+				: row.certLevel
+
 		return {
 			id: row.id,
 			userId: row.userId,
 			courseId: row.courseId,
 			courseVersion: row.courseVersion,
-			title: row.title,
-			category: row.category,
-			level: row.level,
+			title,
+			category,
+			level,
 			source: row.source,
 			issuedAt: row.issuedAt,
 			verifyUrl: row.verifyUrl,
@@ -89,6 +148,93 @@ export async function getUserCertificates(
 			badgeImageUrl: getCourseBadgeUrl(row.badgeImagePath),
 		}
 	})
+}
+
+function collapseEarnedCertificates(
+	certs: EarnedCertificate[]
+): EarnedCertificate[] {
+	const byCourse = new Map<string, EarnedCertificate>()
+	const result: EarnedCertificate[] = []
+
+	for (const cert of certs) {
+		// External or no course → always keep
+		if (cert.source === 'external' || !cert.courseId) {
+			result.push(cert)
+			continue
+		}
+
+		const existing = byCourse.get(cert.courseId)
+
+		// First one wins (temporarily)
+		if (!existing) {
+			byCourse.set(cert.courseId, cert)
+			continue
+		}
+
+		// Prefer CURRENT over anything else
+		if (existing.status !== 'current' && cert.status === 'current') {
+			byCourse.set(cert.courseId, cert)
+		}
+	}
+
+	return [...result, ...byCourse.values()]
+}
+
+export async function getUserCertificatesWithMissing(
+	userId: string
+): Promise<DashboardCertificateItem[]> {
+	const [rawCertificates, publishedCourses] = await Promise.all([
+		getUserCertificates(userId),
+		db
+			.select({
+				id: learningCourses.id,
+				title: learningCourses.title,
+				category: learningCourses.category,
+				level: learningCourses.level,
+				contentVersion: learningCourses.contentVersion,
+				badgeImagePath: learningCourses.badgeImagePath,
+			})
+			.from(learningCourses)
+			.where(eq(learningCourses.isPublished, true)),
+	])
+
+	// ---- normalize earned certs
+	const earnedRaw: EarnedCertificate[] = rawCertificates.map((c) => ({
+		...c,
+		kind: 'earned',
+		courseId: c.courseId ?? null,
+		courseVersion: c.courseVersion ?? null,
+		category: c.category ?? null,
+		level: c.level ?? null,
+		verifyUrl: c.verifyUrl ?? null,
+	}))
+
+	// ✅ collapse duplicates (THIS IS THE KEY)
+	const earned = collapseEarnedCertificates(earnedRaw)
+
+	// ---- determine which courses are already current
+	const earnedCourseIds = new Set(
+		earned
+			.filter(
+				(c) => c.kind === 'earned' && c.source === 'internal' && c.courseId
+			)
+			.map((c) => c.courseId!)
+	)
+
+	// ---- build missing placeholders
+	const missing: MissingCertificate[] = publishedCourses
+		.filter((course) => !earnedCourseIds.has(course.id))
+		.map((course) => ({
+			kind: 'missing',
+			courseId: course.id,
+			title: course.title,
+			category: course.category,
+			level: course.level,
+			contentVersion: course.contentVersion,
+			badgeImageUrl: getCourseBadgeUrl(course.badgeImagePath),
+		}))
+
+	return [...earned, ...missing]
 }
 
 /**

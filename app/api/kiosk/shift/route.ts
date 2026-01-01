@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { kioskShiftLogs, kioskPeople } from '@/db/schema/tables/kiosk'
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 
 type ShiftRequest = {
 	personId: string
@@ -18,23 +18,23 @@ export async function POST(req: Request) {
 			{ status: 400 }
 		)
 	}
-	// console.log('SHIFT BODY:', body)
 
-	// 1. Get userId from kiosk_people
+	// 1️⃣ Get linked userId
 	const person = await db.query.kioskPeople.findFirst({
 		columns: { userId: true },
 		where: eq(kioskPeople.id, body.personId),
 	})
-	// console.log('PERSON LOOKUP RESULT:', person)
 
-	if (!person || !person.userId) {
+	if (!person?.userId) {
 		return NextResponse.json(
 			{ error: 'This worker has no linked userId' },
 			{ status: 400 }
 		)
 	}
 
-	// 2. Combine today's date with provided time (HH:MM)
+	const userId = person.userId
+
+	// 2️⃣ Build expected departure datetime (today + HH:MM)
 	const now = new Date()
 	const [hourStr, minuteStr] = body.expectedDepartureAt.split(':')
 	const hours = Number(hourStr)
@@ -50,15 +50,31 @@ export async function POST(req: Request) {
 		0
 	)
 
-	// 3. Insert shift log
-	const [created] = await db
-		.insert(kioskShiftLogs)
-		.values({
-			personId: body.personId,
-			userId: person.userId,
-			expectedDepartureAt: expectedDepartureDate,
-		})
-		.returning()
+	// 3️⃣ TRANSACTION: close existing shift, then open new one
+	const result = await db.transaction(async (tx) => {
+		// close any existing active shift
+		await tx
+			.update(kioskShiftLogs)
+			.set({ actualDepartureAt: new Date() })
+			.where(
+				and(
+					eq(kioskShiftLogs.personId, body.personId),
+					isNull(kioskShiftLogs.actualDepartureAt)
+				)
+			)
 
-	return NextResponse.json({ success: true, shift: created })
+		// insert new shift (NOW TYPE-SAFE)
+		const [created] = await tx
+			.insert(kioskShiftLogs)
+			.values({
+				personId: body.personId,
+				userId, // ← now guaranteed string
+				expectedDepartureAt: expectedDepartureDate,
+			})
+			.returning()
+
+		return created
+	})
+
+	return NextResponse.json({ success: true, shift: result })
 }

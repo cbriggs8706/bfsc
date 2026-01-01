@@ -7,7 +7,7 @@ import { getTranslations } from 'next-intl/server'
 import { announcement, db } from '@/db'
 import { sql } from 'drizzle-orm'
 import { AnnouncementBanner } from '@/components/custom/AnnouncementBanner'
-import { getUserCertificates } from '@/db/queries/training'
+import { getUserCertificatesWithMissing } from '@/db/queries/training'
 import { CertificatesGrid } from '@/components/training/CertificatesGrid'
 import WorkerShiftsDashboard from '@/components/shifts/WorkerShifts'
 import { getUpcomingShiftInstances } from '@/db/queries/shift-instances'
@@ -41,7 +41,7 @@ export default async function Page({ params }: DashboardPageProps) {
 		)
 		.orderBy(announcement.createdAt)
 
-	const certificates = await getUserCertificates(session.user.id)
+	const certificates = await getUserCertificatesWithMissing(session.user.id)
 	const shiftInstances = await getUpcomingShiftInstances(session.user.id)
 	const requests = user ? await getOpenSubstituteRequests(user) : []
 	const openRequests = requests.filter((r) => !r.hasVolunteeredByMe)

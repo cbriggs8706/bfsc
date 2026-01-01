@@ -2,7 +2,7 @@
 import { db, learningCourses, userCertificates } from '@/db'
 import { kioskShiftLogs, kioskPeople } from '@/db/schema/tables/kiosk'
 import { CertificateSummary } from '@/types/training'
-import { gt, eq, inArray } from 'drizzle-orm'
+import { gt, eq, inArray, and, isNull } from 'drizzle-orm'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -21,7 +21,12 @@ export async function GET() {
 		})
 		.from(kioskShiftLogs)
 		.innerJoin(kioskPeople, eq(kioskShiftLogs.personId, kioskPeople.id))
-		.where(gt(kioskShiftLogs.expectedDepartureAt, now))
+		.where(
+			and(
+				gt(kioskShiftLogs.expectedDepartureAt, now),
+				isNull(kioskShiftLogs.actualDepartureAt)
+			)
+		)
 	console.log('ON SHIFT ROUTE HIT')
 
 	// console.log('SHIFT LOGS FOUND', await db.select().from(kioskShiftLogs))
@@ -40,16 +45,23 @@ export async function GET() {
 			.select({
 				id: userCertificates.id,
 				userId: userCertificates.userId,
-				title: userCertificates.title,
-				category: userCertificates.category,
-				level: userCertificates.level,
+
+				// snapshot (fallback)
+				certTitle: userCertificates.title,
+				certCategory: userCertificates.category,
+				certLevel: userCertificates.level,
+
 				source: userCertificates.source,
 				courseVersion: userCertificates.courseVersion,
+
+				// course source-of-truth
+				courseTitle: learningCourses.title,
+				courseCategory: learningCourses.category,
+				courseLevel: learningCourses.level,
 				currentCourseVersion: learningCourses.contentVersion,
 			})
 			.from(userCertificates)
 			.leftJoin(
-				// ✅ MUST be leftJoin
 				learningCourses,
 				eq(userCertificates.courseId, learningCourses.id)
 			)
@@ -70,20 +82,37 @@ export async function GET() {
 				status = 'renewal-required'
 			}
 
+			// ✅ derive display metadata (same rule as dashboard)
+			const title =
+				cert.source === 'internal' && cert.courseTitle
+					? cert.courseTitle
+					: cert.certTitle
+
+			const category =
+				cert.source === 'internal' && cert.courseCategory
+					? cert.courseCategory
+					: cert.certCategory
+
+			const level =
+				cert.source === 'internal' && cert.courseLevel !== null
+					? cert.courseLevel
+					: cert.certLevel
+
 			if (!certificatesByUser[cert.userId]) {
 				certificatesByUser[cert.userId] = []
 			}
 
 			certificatesByUser[cert.userId].push({
 				id: cert.id,
-				title: cert.title,
-				category: cert.category,
-				level: cert.level,
+				title,
+				category,
+				level,
 				source: cert.source,
 				status,
 			})
 		}
 	}
+
 	return new Response(JSON.stringify({ workers, certificatesByUser }), {
 		headers: {
 			'Content-Type': 'application/json',
