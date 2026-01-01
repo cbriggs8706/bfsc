@@ -60,7 +60,7 @@ export function buildSidebarData(t: TFunction, locale: string) {
 			},
 			{
 				title: t('sidebar.main.communityProjects'),
-				url: `/${locale}/community-projects`,
+				url: `/${locale}/projects`,
 				icon: MapIcon,
 				items: [],
 			},

@@ -48,6 +48,7 @@ import {
 import { toAmPm, formatLongDate } from '@/utils/time'
 import { formatHourShort } from '@/lib/date'
 import { getDayInfo } from '@/lib/calendar/day-info'
+import Link from 'next/link'
 
 /* ============================
    TYPES
@@ -145,12 +146,14 @@ export default function CenterCalendar({
 	classes,
 	initialYear,
 	initialMonth,
+	locale,
 }: {
 	specials: Special[]
 	weekly: Weekly[]
 	classes: CalendarClass[]
 	initialYear: number
 	initialMonth: number
+	locale: string
 }) {
 	const isMobile = useIsMobile()
 
@@ -239,6 +242,30 @@ export default function CenterCalendar({
 	// 		source: 'weekly' as const,
 	// 	}
 	// }
+
+	function getDayColorClasses(info: ReturnType<typeof getDayInfo>) {
+		// Closed with an explicit reason (true closure)
+		if (info.isClosed && info.reason) {
+			return {
+				bg: 'bg-(--red-accent-soft)',
+				dot: 'bg-(--red-accent)',
+			}
+		}
+
+		// Closed but no reason → appointment only
+		if (info.isClosed && !info.reason) {
+			return {
+				bg: 'bg-neutral-100',
+				dot: 'bg-neutral-400',
+			}
+		}
+
+		// Open
+		return {
+			bg: 'bg-(--green-logo-soft)',
+			dot: 'bg-(--green-logo)',
+		}
+	}
 
 	/* ============================
 	   NAVIGATION
@@ -389,9 +416,17 @@ export default function CenterCalendar({
 		if (info.isClosed) {
 			return (
 				<>
-					<p className="text-neutral-700 font-semibold">
+					<p className="text-neutral-700 font-semibold mb-4">
 						Open By Appointment Only
 					</p>
+					<p className="text-neutral-700 mb-4 text-wrap">
+						Reservations outside of regular hours require us to find 2 staff
+						volunteers to assist, which we will be happy to do for groups of 5
+						or more.
+					</p>
+					<Link href={`/${locale}/reservation`}>
+						<Button>Make an appointment</Button>
+					</Link>
 					{renderClassesList(dayClasses)}
 				</>
 			)
@@ -406,6 +441,76 @@ export default function CenterCalendar({
 				{renderClassesList(dayClasses)}
 			</>
 		)
+	}
+
+	function isHourOpen(info: ReturnType<typeof getDayInfo>, hour: number) {
+		if (info.isClosed) return false
+		if (!info.opensAt || !info.closesAt) return false
+
+		const [openH] = info.opensAt.split(':').map(Number)
+		const [closeH] = info.closesAt.split(':').map(Number)
+
+		return hour >= openH && hour < closeH
+	}
+
+	type PositionedEvent = CalendarClass & {
+		top: number
+		height: number
+		columnIndex: number
+		columnCount: number
+	}
+
+	function layoutDayEvents(events: CalendarClass[]): PositionedEvent[] {
+		// Convert to positioned events
+		const positioned = events.map((c) => {
+			const start = parseISO(c.startsAtIso)
+			const top = eventTopPx(start)
+			const height = eventHeightPx()
+
+			return {
+				...c,
+				top,
+				height,
+				columnIndex: 0,
+				columnCount: 1,
+			}
+		})
+
+		// Sort by start time
+		positioned.sort((a, b) => a.top - b.top)
+
+		// Group overlapping events
+		const groups: PositionedEvent[][] = []
+
+		for (const ev of positioned) {
+			let placed = false
+
+			for (const group of groups) {
+				const overlaps = group.some(
+					(g) => ev.top < g.top + g.height && ev.top + ev.height > g.top
+				)
+
+				if (overlaps) {
+					group.push(ev)
+					placed = true
+					break
+				}
+			}
+
+			if (!placed) {
+				groups.push([ev])
+			}
+		}
+
+		// Assign columns within each group
+		for (const group of groups) {
+			group.forEach((ev, index) => {
+				ev.columnIndex = index
+				ev.columnCount = group.length
+			})
+		}
+
+		return positioned
 	}
 
 	/* ============================
@@ -442,20 +547,17 @@ export default function CenterCalendar({
 						const dayClasses = classesByDate.get(key) ?? []
 						const info = getDayInfo(d, specials, weekly)
 						const inMonth = isSameMonth(d, viewDate)
+						const colors = getDayColorClasses(info)
 
 						return (
 							<button
 								key={key}
 								onClick={() => setSelectedDate(d)}
 								className={cn(
-									'relative border p-1 text-left flex flex-col gap-1 transition bg-(--green-logo-soft)',
-									// height: Apple-ish; smaller on mobile
+									'relative border p-1 text-left flex flex-col gap-1 transition',
 									isMobile ? 'h-20' : 'h-28',
-									!inMonth && 'bg-neutral-200 text-muted-foreground',
+									inMonth ? colors.bg : 'bg-neutral-200 text-muted-foreground',
 									'hover:bg-card',
-									// Closed styling
-									info.isClosed && inMonth && 'bg-(--red-accent-soft)',
-									// Today highlight (sticky feel)
 									isToday(d) && 'ring-2 ring-primary ring-inset'
 								)}
 							>
@@ -463,11 +565,13 @@ export default function CenterCalendar({
 									<div className="text-xs font-semibold">{format(d, 'd')}</div>
 
 									{/* subtle “Closed” dot */}
-									{info.isClosed && inMonth && (
-										<span className="h-2 w-2 rounded-full bg-(--red-accent)" />
-									)}
-									{!info.isClosed && inMonth && (
-										<span className="h-2 w-2 rounded-full bg-(--green-logo)" />
+									{inMonth && (
+										<span
+											className={cn(
+												'h-2 w-2 rounded-full',
+												getDayColorClasses(info).dot
+											)}
+										/>
 									)}
 								</div>
 
@@ -492,7 +596,7 @@ export default function CenterCalendar({
 									})}
 
 									{dayClasses.length > (isMobile ? 2 : 3) && (
-										<div className="text-[10px] text-muted-foreground">
+										<div className="text-[10px] text-muted-foreground ">
 											+{dayClasses.length - (isMobile ? 2 : 3)} more
 										</div>
 									)}
@@ -573,29 +677,41 @@ export default function CenterCalendar({
 							className="grid"
 							style={{ gridTemplateColumns: `repeat(7, minmax(160px, 1fr))` }}
 						>
-							{days.map((d) => (
-								<div
-									key={ymd(d)}
-									className={cn(
-										'p-2 border-l text-sm',
-										isToday(d) && 'bg-primary/5'
-									)}
-								>
-									<div className="flex flex-col items-center justify-between">
-										<div className="font-medium">
-											{format(d, isMobile ? 'EEE d' : 'EEEE d')}
-										</div>
-										{getDayInfo(d, specials, weekly).isClosed && (
-											<Badge
-												variant="destructive"
-												className="h-5 px-2 text-[10px]"
-											>
-												Closed
-											</Badge>
+							{days.map((d) => {
+								const info = getDayInfo(d, specials, weekly)
+								const colors = getDayColorClasses(info)
+
+								return (
+									<button
+										key={ymd(d)}
+										onClick={() => setSelectedDate(d)}
+										className={cn(
+											'border-l px-2 py-1 text-left transition',
+											colors.bg,
+											'hover:bg-card',
+											isToday(d) && 'ring-2 ring-primary ring-inset'
 										)}
-									</div>
-								</div>
-							))}
+									>
+										<div className="flex items-center justify-between">
+											<div className="leading-tight">
+												<div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+													{format(d, isMobile ? 'EEE' : 'EEEE')}
+												</div>
+												<div className="text-sm font-semibold">
+													{format(d, 'MMM d')}
+												</div>
+											</div>
+
+											<span
+												className={cn(
+													'h-2 w-2 rounded-full shrink-0',
+													colors.dot
+												)}
+											/>
+										</div>
+									</button>
+								)
+							})}
 						</div>
 					</div>
 				</div>
@@ -645,15 +761,26 @@ export default function CenterCalendar({
 										onClick={() => setSelectedDate(d)}
 									>
 										{/* hour lines */}
-										{hours.map((h) => (
-											<div
-												key={h}
-												className="absolute left-0 right-0 border-t"
-												style={{
-													top: ((h - START_HOUR) * 60) / MINUTES_PER_PIXEL,
-												}}
-											/>
-										))}
+										{hours.map((h) => {
+											const info = getDayInfo(d, specials, weekly)
+											const open = isHourOpen(info, h)
+
+											return (
+												<div
+													key={h}
+													className={cn(
+														// TODO fix colors day rows
+
+														'absolute left-0 right-0 border-t bg-neutral-100',
+														open && 'bg-(--green-logo)/60'
+													)}
+													style={{
+														top: ((h - START_HOUR) * 60) / MINUTES_PER_PIXEL,
+														height: 60 / MINUTES_PER_PIXEL,
+													}}
+												/>
+											)
+										})}
 
 										{/* events */}
 										{dayClasses.map((c) => {
@@ -687,9 +814,9 @@ export default function CenterCalendar({
 													style={{ top, height }}
 													title={`${time} — ${c.title}`}
 												>
-													<div className="font-medium truncate">{c.title}</div>
-													<div className="text-[10px] opacity-80 truncate">
-														{time}
+													<div className=" truncate">
+														<span className="font-semibold">{time}</span>{' '}
+														{c.title}
 													</div>
 												</button>
 											)
@@ -709,14 +836,20 @@ export default function CenterCalendar({
 		const day = startOfDay(viewDate)
 		const key = ymd(day)
 		const dayClasses = classesByDate.get(key) ?? []
+		const info = getDayInfo(day, specials, weekly)
+		const positionedEvents = layoutDayEvents(dayClasses)
 
 		return (
 			<div className="rounded-md border bg-card overflow-hidden ">
 				<div className="p-3 border-b flex items-center justify-between bg-primary/70">
 					<div className="font-medium">{format(day, 'EEEE, MMM d, yyyy')}</div>
-					{getDayInfo(day, specials, weekly).isClosed && (
-						<Badge variant="destructive" className="h-6">
-							Closed
+
+					{info.isClosed && (
+						<Badge
+							variant={info.reason ? 'destructive' : 'secondary'}
+							className="h-5 px-2 text-[10px]"
+						>
+							{info.reason ? 'Closed' : 'Appointment Only'}
 						</Badge>
 					)}
 				</div>
@@ -725,17 +858,19 @@ export default function CenterCalendar({
 					{/* time axis */}
 					<div className="relative border-r">
 						<div style={{ height: gridHeightPx }} className="relative">
-							{hours.map((h) => (
-								<div
-									key={h}
-									className="absolute left-0 w-full text-[10px] text-muted-foreground"
-									style={{
-										top: ((h - START_HOUR) * 60) / MINUTES_PER_PIXEL - 6,
-									}}
-								>
-									<div className="px-4 py-3">{formatHourShort(h)}</div>
-								</div>
-							))}
+							{hours.map((h) => {
+								return (
+									<div
+										key={h}
+										className="absolute left-0 w-full text-[10px] text-muted-foreground"
+										style={{
+											top: ((h - START_HOUR) * 60) / MINUTES_PER_PIXEL - 6,
+										}}
+									>
+										<div className="px-4 py-3">{formatHourShort(h)}</div>
+									</div>
+								)
+							})}
 						</div>
 					</div>
 
@@ -745,28 +880,30 @@ export default function CenterCalendar({
 						style={{ height: gridHeightPx }}
 						onClick={() => setSelectedDate(day)}
 					>
-						{hours.map((h) => (
-							<div
-								key={h}
-								className="absolute left-0 right-0 border-t"
-								style={{ top: ((h - START_HOUR) * 60) / MINUTES_PER_PIXEL }}
-							/>
-						))}
+						{hours.map((h) => {
+							const open = isHourOpen(info, h)
 
-						{dayClasses.map((c) => {
-							const start = parseISO(c.startsAtIso)
-							const top = eventTopPx(start)
-							const height = eventHeightPx()
-							const time = toAmPm(format(start, 'HH:mm'))
+							return (
+								<div
+									key={h}
+									className={cn(
+										// TODO fix colors day rows
+										'absolute left-0 right-0 border-t bg-neutral-100',
+										open && 'bg-(--green-logo)/60'
+									)}
+									style={{
+										top: ((h - START_HOUR) * 60) / MINUTES_PER_PIXEL,
+										height: 60 / MINUTES_PER_PIXEL,
+									}}
+								/>
+							)
+						})}
 
-							const minutesFromStart =
-								minutesSinceMidnight(start) - START_HOUR * 60
-							if (
-								minutesFromStart < 0 ||
-								minutesFromStart > (END_HOUR - START_HOUR) * 60
-							) {
-								return null
-							}
+						{positionedEvents.map((c) => {
+							const time = toAmPm(format(parseISO(c.startsAtIso), 'HH:mm'))
+
+							const widthPercent = 100 / c.columnCount
+							const leftPercent = c.columnIndex * widthPercent
 
 							return (
 								<button
@@ -776,11 +913,16 @@ export default function CenterCalendar({
 										setSelectedDate(day)
 									}}
 									className={cn(
-										'absolute left-2 right-2 rounded border px-3 py-2 text-left text-[12px] overflow-hidden',
+										'absolute rounded border px-3 py-2 text-left text-[12px] overflow-hidden',
 										classColorMap.get(c.title) ?? EVENT_COLORS[0],
 										c.isCanceled && 'line-through opacity-70'
 									)}
-									style={{ top, height }}
+									style={{
+										top: c.top,
+										height: c.height,
+										width: `calc(${widthPercent}% - 6px)`,
+										left: `calc(${leftPercent}% + 3px)`,
+									}}
 									title={`${time} — ${c.title}`}
 								>
 									<div className="font-medium truncate">{c.title}</div>

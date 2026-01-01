@@ -1,5 +1,6 @@
 // app/[locale]/(patron)/projects/[id]/checkpoints/[checkpointId]/contribute/page.tsx
 import { CheckpointContributionForm } from '@/components/projects/CheckpointContributionForm'
+import { requireRole } from '@/utils/require-role'
 
 type Props = {
 	params: Promise<{
@@ -11,6 +12,19 @@ type Props = {
 
 export default async function ContributeCheckpointPage({ params }: Props) {
 	const { locale, id, checkpointId } = await params
+
+	await requireRole(
+		locale,
+		[
+			'Admin',
+			'Director',
+			'Assistant Director',
+			'Shift Lead',
+			'Worker',
+			'Patron',
+		],
+		`/${locale}/projects/${id}/checkpoints/${checkpointId}`
+	)
 
 	return (
 		<div className="p-4 space-y-4">

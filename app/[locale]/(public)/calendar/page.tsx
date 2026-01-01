@@ -67,6 +67,7 @@ export default async function Page({ params }: Props) {
 				classes={classes}
 				initialYear={year}
 				initialMonth={month}
+				locale={locale}
 			/>
 		</div>
 	)

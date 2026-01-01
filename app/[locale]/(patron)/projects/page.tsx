@@ -1,4 +1,4 @@
-// app/[locale]/(public)/community-projects/page.tsx
+// app/[locale]/(patron)/projects/page.tsx
 import { ProjectCardExpanded } from '@/components/admin/projects/ProjectCardExpanded'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -9,7 +9,7 @@ interface Props {
 	params: Promise<{ locale: string }>
 }
 
-export default async function CommunityProjectsPage({ params }: Props) {
+export default async function ProjectsPage({ params }: Props) {
 	const { locale } = await params
 	const projects = await readProjectSummariesExpanded()
 	console.log(projects[3])

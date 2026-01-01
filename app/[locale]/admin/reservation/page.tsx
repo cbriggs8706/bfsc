@@ -20,7 +20,6 @@ export default async function ReservationsPage({ params }: Props) {
 	const { locale } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
 
-	// TODO tear this out
 	await requireRole(
 		locale,
 		['Admin', 'Director', 'Assistant Director', 'Shift Lead'],

@@ -38,6 +38,10 @@ export function ProjectCardExpanded({ projects, locale, isAdmin }: Props) {
 					? `/${locale}/admin/projects/${p.id}`
 					: `/${locale}/projects/${p.id}`
 
+				const MAX_VISIBLE = 10
+				const visibleCheckpoints = p.topCheckpoints.slice(0, MAX_VISIBLE)
+				const hasMore = p.topCheckpoints.length > MAX_VISIBLE
+
 				return (
 					<Card
 						key={p.id}
@@ -129,7 +133,7 @@ export function ProjectCardExpanded({ projects, locale, isAdmin }: Props) {
 									</span>
 								)}
 
-								{p.topCheckpoints.map((cp) => {
+								{visibleCheckpoints.map((cp) => {
 									const checkpointHref = `/${locale}/projects/${p.id}/checkpoints/${cp.id}`
 
 									// if (cp.completed) {
@@ -160,6 +164,16 @@ export function ProjectCardExpanded({ projects, locale, isAdmin }: Props) {
 										</Button>
 									)
 								})}
+								{hasMore && (
+									<Button
+										variant="outline"
+										size="sm"
+										className="text-muted-foreground"
+										onClick={() => router.push(`/${locale}/projects/${p.id}`)}
+									>
+										See all {p.topCheckpoints.length}
+									</Button>
+								)}
 							</div>
 						</div>
 					</Card>

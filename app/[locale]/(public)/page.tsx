@@ -78,7 +78,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 		},
 		{
 			title: 'Community Projects',
-			url: `/${locale}/community-projects`,
+			url: `/${locale}/projects`,
 			icon: MapIcon,
 			description: 'Explore and contribute to local history projects.',
 		},
