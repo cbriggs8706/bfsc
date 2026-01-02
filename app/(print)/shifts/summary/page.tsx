@@ -1,12 +1,15 @@
 // app/(print)/shifts/summary/page.tsx
 import { headers } from 'next/headers'
-import { format } from 'date-fns'
 import { ShiftSummaryPrint } from '@/components/reports/ShiftSummaryPrint'
 import type { DateRangePreset, ShiftSummaryPoint } from '@/types/shift-report'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { formatInTz } from '@/utils/time'
 
 type Props = {
 	searchParams: Promise<{ header?: string }>
 }
+
+//CORRECTED TIMEZONE
 
 const PRESETS: { preset: DateRangePreset; title: string }[] = [
 	{ preset: 'wtd', title: 'Week to Date' },
@@ -19,9 +22,17 @@ const PRESETS: { preset: DateRangePreset; title: string }[] = [
 
 export default async function ShiftSummaryPrintPage({ searchParams }: Props) {
 	const { header } = await searchParams
+
+	const centerTime = await getCenterTimeConfig()
+	const nowUtc = new Date()
+
 	const headerTrimmed =
-		header?.trim() ||
-		`Shift Summary as of ${format(new Date(), 'MMMM d, yyyy')}`
+		header?.trim() ??
+		`Shift Summary as of ${formatInTz(
+			nowUtc,
+			centerTime.timeZone,
+			centerTime.dateFormat
+		)}`
 
 	const headersList = await headers()
 	const host = headersList.get('host')

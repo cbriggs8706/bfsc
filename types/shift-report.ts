@@ -91,6 +91,7 @@ export type TodayShift = {
 		departedAt: Date | null
 	}[]
 	reservations: ShiftReservation[]
+	centerTimeZone: string
 }
 
 export type ShiftReservation = {

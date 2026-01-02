@@ -2,7 +2,6 @@
 import 'server-only'
 import { db } from '@/db'
 import { and, gte, lte, eq } from 'drizzle-orm'
-import { format } from 'date-fns'
 
 import {
 	classSeries,
@@ -10,6 +9,7 @@ import {
 	classSeriesPresenter,
 } from '@/db/schema/tables/classes'
 import { user } from '@/db/schema/tables/auth'
+import { ymdInTz } from '@/utils/time'
 
 export type CalendarClass = {
 	id: string
@@ -25,7 +25,8 @@ export type CalendarClass = {
 
 export async function listCalendarClasses(
 	rangeStart: Date,
-	rangeEnd: Date
+	rangeEnd: Date,
+	centerTimeZone: string
 ): Promise<CalendarClass[]> {
 	const rows = await db
 		.select({
@@ -64,11 +65,11 @@ export async function listCalendarClasses(
 
 		if (!entry) {
 			const dt = new Date(r.startsAt)
-			const ymdLocal = format(dt, 'yyyy-MM-dd')
+			const ymdCenter = ymdInTz(dt, centerTimeZone)
 
 			entry = {
 				id: r.sessionId,
-				date: ymdLocal,
+				date: ymdCenter,
 				startsAtIso: dt.toISOString(),
 				title: r.titleOverride || r.seriesTitle,
 				description: r.description || null,

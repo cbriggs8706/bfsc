@@ -1,5 +1,5 @@
 // db/queries/shift-instances.ts
-import { addMonths, parseISO } from 'date-fns'
+import { addMonths } from 'date-fns'
 import { eq, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 
@@ -12,6 +12,9 @@ import { generateShiftInstances } from '@/lib/shifts/generate-shift-instances'
 
 import type { ShiftInstance } from '@/types/shifts'
 import type { RequestDetail } from '@/types/substitutes'
+import { weekdayFromYmd } from '@/utils/time'
+
+//CORRECTED TIMEZONES
 
 /* ======================================================
  * Types
@@ -121,9 +124,9 @@ export async function getUpcomingShiftInstances(
 	 * -------------------------------------------------- */
 
 	const openShifts = generated.filter((shift) => {
-		const date = parseISO(shift.date)
+		const weekday = weekdayFromYmd(shift.date)
 
-		if (closedWeekdays.has(date.getDay())) return false
+		if (closedWeekdays.has(weekday)) return false
 		if (closedDates.has(shift.date)) return false
 
 		return true

@@ -1,8 +1,8 @@
 // app/[locale]/admin/center/page.tsx
 
-import { TimeFormatSettings } from '@/components/admin/definitions/TimeFormatSettings'
+import { CenterTimeSettings } from '@/components/admin/definitions/CenterTimeSettings'
 import { Button } from '@/components/ui/button'
-import { getAppSettings } from '@/lib/actions/app-settings'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 import { requireRole } from '@/utils/require-role'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
@@ -21,7 +21,7 @@ export default async function Page({ params }: Props) {
 	await requireRole(locale, ['Admin', 'Director'], `/${locale}/admin`)
 	const t = await getTranslations({ locale })
 
-	const settings = await getAppSettings()
+	const centerTime = await getCenterTimeConfig()
 
 	return (
 		<div className="p-4 space-y-4">
@@ -32,9 +32,11 @@ export default async function Page({ params }: Props) {
 				</p>
 			</div>
 
-			{/* 🔧 Time & Display Settings */}
-			<TimeFormatSettings initialFormat={settings.timeFormat} />
-
+			<CenterTimeSettings
+				initialTimeZone={centerTime.timeZone}
+				initialTimeFormat={centerTime.timeFormat}
+				initialDateFormat={centerTime.dateFormat}
+			/>
 			<ul className="space-y-4">
 				<li>
 					{' '}

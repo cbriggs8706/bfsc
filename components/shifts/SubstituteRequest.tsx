@@ -15,15 +15,13 @@ import { withdrawVolunteer } from '@/app/actions/substitute/withdraw-volunteer'
 import { confirmNominatedSub } from '@/app/actions/substitute/confirm-nominated-sub'
 import { nominateSubstitute } from '@/app/actions/substitute/nominate-substitute'
 import { useState } from 'react'
-import { toAmPm } from '@/utils/time'
+import { formatYmdLong, toAmPm } from '@/utils/time'
 import { declineNominatedSub } from '@/app/actions/substitute/decline-nominated-sub'
 import { withdrawAcceptedSub } from '@/app/actions/substitute/withdraw-accepted-sub'
 import { cancelSubRequest } from '@/app/actions/substitute/cancel-request'
 import { cancelNomination } from '@/app/actions/substitute/cancel-nomination'
 import { useTranslations } from 'next-intl'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import Link from 'next/link'
-import { format, parseISO } from 'date-fns'
 import { Card } from '../ui/card'
 
 type Props = {
@@ -33,6 +31,8 @@ type Props = {
 	availabilityMatches: AvailabilityMatch[]
 	locale: string
 }
+
+//CORRECTED TIMEZONE
 
 export function SubstituteRequest({
 	request,
@@ -115,7 +115,7 @@ export function SubstituteRequest({
 
 								<p className="text-base font-semibold mt-1">
 									{t('shiftOn', {
-										date: request.date,
+										date: formatYmdLong(request.date),
 										time: `${toAmPm(request.startTime)}–${toAmPm(
 											request.endTime
 										)}`,
@@ -221,52 +221,6 @@ export function SubstituteRequest({
 					</div>
 				</div>
 			)}
-
-			{/* {acceptedRequests.length > 0 && (
-				<div className="space-y-2">
-					<h2 className="text-2xl font-semibold">{t('substituteConfirmed')}</h2>
-
-					<ul className="space-y-2">
-						{acceptedRequests.map((r) => (
-							<li
-								key={r.id}
-								className="flex items-center justify-between border rounded p-3 bg-green-50 border-green-300"
-							>
-								<div>
-									<div className="font-medium">
-										{format(parseISO(r.date), 'EEE MMM d')} ·{' '}
-										{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
-									</div>
-
-									<div className="flex items-center gap-2 text-sm text-muted-foreground">
-										<Avatar className="h-5 w-5">
-											<AvatarImage
-												src={r.requestedBy.imageUrl ?? undefined}
-												alt={r.requestedBy.name}
-											/>
-											<AvatarFallback className="text-[10px]">
-												{initials(r.requestedBy.name)}
-											</AvatarFallback>
-										</Avatar>
-
-										<span>
-											{t('requestedBy')}{' '}
-											<span className="font-medium">{r.requestedBy.name}</span>
-										</span>
-									</div>
-								</div>
-
-								<Link
-									href={`/${locale}/substitutes/request/${r.id}`}
-									className="text-sm underline text-green-700"
-								>
-									{t('viewDetails')}
-								</Link>
-							</li>
-						))}
-					</ul>
-				</div>
-			)} */}
 
 			{/* ================= Volunteer Actions ================= */}
 			{request.status === 'open' && !isRequester && !isNominated && (

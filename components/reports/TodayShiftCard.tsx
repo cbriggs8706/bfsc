@@ -5,7 +5,9 @@
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { TodayShift } from '@/types/shift-report'
-import { toAmPm } from '@/utils/time'
+import { formatInTz, toAmPm } from '@/utils/time'
+
+//CORRECTED TIMEZONES
 
 export function TodayShiftCard({ shift }: { shift: TodayShift }) {
 	const hasTimes = shift.startTime !== '—' && shift.endTime !== '—'
@@ -44,7 +46,12 @@ export function TodayShiftCard({ shift }: { shift: TodayShift }) {
 								<div>
 									<p className="text-sm">{c.fullName}</p>
 									<p className="text-xs text-muted-foreground">
-										Arrived {new Date(c.arrivalAt).toLocaleTimeString()}
+										Arrived{' '}
+										{formatInTz(
+											new Date(c.arrivalAt),
+											shift.centerTimeZone,
+											'hh:mm a'
+										)}
 									</p>
 								</div>
 							</div>
@@ -81,7 +88,11 @@ export function TodayShiftCard({ shift }: { shift: TodayShift }) {
 									<span>{p.fullName}</span>
 									<span>{p.purposeName}</span>
 									<span className="text-muted-foreground">
-										{new Date(p.arrivedAt).toLocaleTimeString()}
+										{formatInTz(
+											new Date(p.arrivedAt),
+											shift.centerTimeZone,
+											'hh:mm a'
+										)}
 									</span>
 								</li>
 							))}

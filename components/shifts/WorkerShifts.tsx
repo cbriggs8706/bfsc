@@ -2,15 +2,15 @@
 'use client'
 
 import Link from 'next/link'
-import { format, parseISO } from 'date-fns'
 import type { ShiftInstance } from '@/types/shifts'
 import type { RequestDetail } from '@/types/substitutes'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { toAmPm } from '@/utils/time'
+import { formatYmdMonth, formatYmdShort, toAmPm } from '@/utils/time'
 import { useTranslations } from 'next-intl'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useState } from 'react'
+
+//CORRECTED TIMEZONE
 
 /* ======================================================
  * Types
@@ -229,7 +229,7 @@ export default function WorkerShiftsDashboard({
 		.map((s) => ({
 			...s,
 			isMine: s.assignedUserIds.includes(currentUserId),
-			monthKey: format(parseISO(s.date), 'yyyy-MM'),
+			monthKey: s.date.slice(0, 7), // YYYY-MM
 		}))
 		.filter((s) => s.isMine)
 
@@ -259,7 +259,7 @@ export default function WorkerShiftsDashboard({
 				{Object.entries(byMonth)
 					.sort(([a], [b]) => a.localeCompare(b))
 					.map(([monthKey, shifts]) => {
-						const monthLabel = format(parseISO(`${monthKey}-01`), 'MMMM yyyy')
+						const monthLabel = formatYmdMonth(monthKey)
 
 						return (
 							<Card key={monthKey}>
@@ -281,7 +281,7 @@ export default function WorkerShiftsDashboard({
 													{/* Left: shift info */}
 													<div className="min-w-0 space-y-1">
 														<div className="font-medium leading-tight">
-															{format(parseISO(shift.date), 'EEE MMM d')}
+															{formatYmdShort(shift.date)}
 														</div>
 
 														<div className="text-sm text-muted-foreground">

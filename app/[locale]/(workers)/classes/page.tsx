@@ -4,6 +4,7 @@ import { listSeriesForTable } from '@/db/queries/classes'
 import { ClassesTable } from '@/components/classes/ClassesTable'
 import { requireCurrentUser } from '@/utils/require-current-user'
 import { getTranslations } from 'next-intl/server'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 
 interface Props {
 	params: Promise<{ locale: string }>
@@ -23,6 +24,7 @@ export default async function ClassesPage({ params }: Props) {
 	}
 
 	const classes = await listSeriesForTable()
+	const centerTime = await getCenterTimeConfig()
 
 	return (
 		<div className="p-4 space-y-4">
@@ -37,6 +39,7 @@ export default async function ClassesPage({ params }: Props) {
 					<ClassesTable
 						classes={classes}
 						locale={locale}
+						centerTime={centerTime}
 						currentUser={currentUser}
 					/>
 				</CardContent>

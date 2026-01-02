@@ -5,10 +5,9 @@ import { authOptions } from '@/lib/auth'
 import type { Resource } from '@/types/resource'
 import { getTranslations } from 'next-intl/server'
 import { readAllResources } from '@/lib/actions/resource/resource'
-import { getAppSettings } from '@/lib/actions/app-settings'
 import { ReservationForm } from '@/components/resource/ReservationForm'
-import { db } from '@/db'
 import { getFaithTree } from '@/db/queries/faiths'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 
 type Props = {
 	params: Promise<{ locale: string }>
@@ -29,7 +28,7 @@ export default async function Page({ params }: Props) {
 		type: r.type as Resource['type'],
 	}))
 
-	const settings = await getAppSettings()
+	const centerTime = await getCenterTimeConfig()
 
 	const faithTree = await getFaithTree()
 
@@ -47,7 +46,7 @@ export default async function Page({ params }: Props) {
 				mode="create"
 				resources={resources}
 				faithTree={faithTree}
-				timeFormat={settings.timeFormat}
+				timeFormat={centerTime.timeFormat}
 				canSetStatus={false}
 				successRedirect={`/${locale}/reservation/success`}
 			/>

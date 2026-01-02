@@ -1,7 +1,7 @@
 // components/report/ShiftReport.tsx
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { TodayShiftCard } from '@/components/reports/TodayShiftCard'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,24 +13,36 @@ import type {
 	TodayShift,
 } from '@/types/shift-report'
 import { supabase } from '@/lib/supabase-client'
-import { format, isToday } from 'date-fns'
+import { formatInTz, ymdInTz } from '@/utils/time'
 
 type Props = {
 	initialShifts: TodayShift[]
 	initialOffShift: TodayShift[]
 	locale: string
+	centerTime: {
+		timeZone: string
+		dateFormat: string
+	}
 }
 
-export function ShiftReport({ initialShifts, initialOffShift, locale }: Props) {
+//CORRECTED TIMEZONE
+
+export function ShiftReport({
+	initialShifts,
+	initialOffShift,
+	locale,
+	centerTime,
+}: Props) {
+	const todayYmd = ymdInTz(new Date(), centerTime.timeZone)
+
 	const [preset, setPreset] = useState<DateRangePreset>('lastWeek')
 	const [summary, setSummary] = useState<ShiftSummaryPoint[]>([])
 	const refetchTimer = useRef<number | null>(null)
 	const [shifts, setShifts] = useState<TodayShift[]>(initialShifts)
 	const [offShift, setOffShift] = useState<TodayShift[]>(initialOffShift)
-	const [selectedDateStr, setSelectedDateStr] = useState(
-		format(new Date(), 'yyyy-MM-dd')
-	)
-	const selectedDate = new Date(`${selectedDateStr}T12:00:00`)
+	const [selectedDateStr, setSelectedDateStr] = useState(todayYmd)
+
+	const selectedDate = new Date(`${selectedDateStr}T12:00:00Z`)
 
 	const refetchForDate = useCallback(async (dateStr: string) => {
 		const res = await fetch(`/api/reports/shifts/day?date=${dateStr}`, {
@@ -44,15 +56,20 @@ export function ShiftReport({ initialShifts, initialOffShift, locale }: Props) {
 		setOffShift(json.offShift)
 	}, [])
 
+	const isCenterToday = useMemo(
+		() => selectedDateStr === ymdInTz(new Date(), centerTime.timeZone),
+		[selectedDateStr, centerTime.timeZone]
+	)
+
 	const scheduleRefetch = useCallback(() => {
-		if (!isToday(selectedDate)) return
+		if (!isCenterToday) return
 
 		if (refetchTimer.current) window.clearTimeout(refetchTimer.current)
 
 		refetchTimer.current = window.setTimeout(() => {
 			refetchForDate(selectedDateStr)
 		}, 250)
-	}, [selectedDate, selectedDateStr, refetchForDate])
+	}, [isCenterToday, selectedDateStr, refetchForDate])
 
 	useEffect(() => {
 		let cancelled = false
@@ -106,7 +123,12 @@ export function ShiftReport({ initialShifts, initialOffShift, locale }: Props) {
 			<Card>
 				<CardHeader className="flex flex-wrap gap-4 items-center">
 					<CardTitle>
-						Shifts for {format(selectedDate, 'MMM d, yyyy')}
+						Shifts for{' '}
+						{formatInTz(
+							selectedDate,
+							centerTime.timeZone,
+							centerTime.dateFormat
+						)}{' '}
 					</CardTitle>
 
 					<input
@@ -123,9 +145,10 @@ export function ShiftReport({ initialShifts, initialOffShift, locale }: Props) {
 					<Button
 						onClick={() => {
 							const dateStr = selectedDateStr
-							const header = `Shift Report – ${format(
+							const header = `Shift Report – ${formatInTz(
 								selectedDate,
-								'MMMM d, yyyy'
+								centerTime.timeZone,
+								centerTime.dateFormat
 							)}`
 							window.open(
 								`/shifts/report?date=${dateStr}&header=${encodeURIComponent(
@@ -170,10 +193,12 @@ export function ShiftReport({ initialShifts, initialOffShift, locale }: Props) {
 						<Button
 							variant="default"
 							onClick={() => {
-								const header = `Shift Summary – ${format(
+								const header = `Shift Summary – ${formatInTz(
 									selectedDate,
-									'MMMM d, yyyy'
+									centerTime.timeZone,
+									centerTime.dateFormat
 								)}`
+
 								window.open(
 									`/shifts/summary?header=${encodeURIComponent(header)}`,
 									'_blank',

@@ -207,6 +207,15 @@ export const appSettings = pgTable(
 	{
 		id: uuid('id').defaultRandom().primaryKey(),
 
+		// 🌍 Canonical center timezone (IANA)
+		timeZone: varchar('time_zone', { length: 50 })
+			.notNull()
+			.default('America/Boise'),
+		// examples:
+		// 'America/Boise'
+		// 'Europe/London'
+		// 'America/Sao_Paulo'
+
 		// --- Time & date formatting ---
 		timeFormat: varchar('time_format', { length: 20 })
 			.notNull()
@@ -219,6 +228,15 @@ export const appSettings = pgTable(
 
 		// --- Future-proof toggles ---
 		use24HourClock: boolean('use_24_hour_clock').notNull().default(false),
+
+		// 📅 Date formatting (future-proof)
+		dateFormat: varchar('date_format', { length: 20 })
+			.notNull()
+			.default('MMM d, yyyy'),
+		// examples:
+		// 'MMM d, yyyy'
+		// 'dd/MM/yyyy'
+		// 'yyyy-MM-dd'
 
 		// --- Auditing ---
 		updatedAt: timestamp('updated_at', { withTimezone: true })

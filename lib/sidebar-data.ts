@@ -116,7 +116,7 @@ export function buildSidebarData(t: TFunction, locale: string) {
 					},
 					{
 						title: t('sidebar.worker.shiftReport'),
-						url: `/${locale}/reports/shifts`,
+						url: `/${locale}/shifts/reports`,
 					},
 				],
 			},

@@ -1,8 +1,9 @@
-// app/[locale]/(workers)/reports/shifts/page.tsx
+// app/[locale]/(workers)/shifts/reports/page.tsx
 
 import { headers } from 'next/headers'
 import { ShiftReport } from '@/components/reports/ShiftReport'
 import { getTranslations } from 'next-intl/server'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 interface Props {
 	params: Promise<{ locale: string }>
 }
@@ -29,6 +30,7 @@ export default async function ShiftReportPage({ params }: Props) {
 	}
 
 	const data = await res.json()
+	const centerTime = await getCenterTimeConfig()
 
 	return (
 		<div className="p-4 space-y-4">
@@ -38,6 +40,7 @@ export default async function ShiftReportPage({ params }: Props) {
 			</div>
 			<ShiftReport
 				initialShifts={data.shifts}
+				centerTime={centerTime}
 				initialOffShift={data.offShift}
 				locale={locale}
 			/>

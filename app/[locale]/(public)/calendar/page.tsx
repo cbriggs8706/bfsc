@@ -5,6 +5,7 @@ import { toLocalYMD } from '@/utils/time'
 import { and, gte, lte } from 'drizzle-orm'
 import { listCalendarClasses } from '@/db/queries/calendar-classes'
 import { getTranslations } from 'next-intl/server'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 
 type Props = {
 	params: Promise<{ locale: string }>
@@ -50,7 +51,12 @@ export default async function Page({ params }: Props) {
 		isClosed: w.isClosed,
 	}))
 
-	const classes = await listCalendarClasses(rangeStart, rangeEnd)
+	const centerTime = await getCenterTimeConfig()
+	const classes = await listCalendarClasses(
+		rangeStart,
+		rangeEnd,
+		centerTime.timeZone
+	)
 
 	return (
 		<div className="p-4 space-y-4">
@@ -65,6 +71,7 @@ export default async function Page({ params }: Props) {
 				specials={specials}
 				weekly={weekly}
 				classes={classes}
+				centerTime={centerTime}
 				initialYear={year}
 				initialMonth={month}
 				locale={locale}

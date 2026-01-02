@@ -1,7 +1,6 @@
 // lib/date-ranges.ts
 import type { DateRangePreset } from '@/types/shift-report'
 import {
-	startOfDay,
 	endOfDay,
 	startOfWeek,
 	endOfWeek,
@@ -15,12 +14,10 @@ import {
 } from 'date-fns'
 import { toZonedTime, fromZonedTime } from 'date-fns-tz'
 
-const TZ = 'America/Boise'
-
-export function resolveDateRange(preset: DateRangePreset) {
+export function resolveDateRange(preset: DateRangePreset, timeZone: string) {
 	// Convert "now" into Boise time FIRST
 	const nowUtc = new Date()
-	const now = toZonedTime(nowUtc, TZ)
+	const now = toZonedTime(nowUtc, timeZone)
 
 	let start: Date
 	let end: Date
@@ -68,7 +65,7 @@ export function resolveDateRange(preset: DateRangePreset) {
 
 	// Convert BACK to UTC so DB comparisons are correct
 	return {
-		start: fromZonedTime(start, TZ),
-		end: fromZonedTime(end, TZ),
+		start: fromZonedTime(start, timeZone),
+		end: fromZonedTime(end, timeZone),
 	}
 }

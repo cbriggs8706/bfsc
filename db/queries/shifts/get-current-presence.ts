@@ -6,18 +6,14 @@ import {
 	kioskVisitLogs,
 	kioskVisitPurposes,
 } from '@/db/schema/tables/kiosk'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 import { CertificateSummary } from '@/types/training'
 import { gt, eq, inArray, and, isNull, sql } from 'drizzle-orm'
 
-/**
- * Fixed timezone for the physical center.
- * Change this if the center ever relocates.
- */
-const CENTER_TIMEZONE = 'America/Boise'
-
 export async function getCurrentPresence() {
 	const now = new Date()
-
+	const centerTime = await getCenterTimeConfig()
+	const timeZone = centerTime.timeZone
 	// ──────────────────────────────
 	// WORKERS CURRENTLY ON SHIFT
 	// ──────────────────────────────
@@ -119,13 +115,13 @@ export async function getCurrentPresence() {
 				// Not currently on a worker shift
 				isNull(kioskShiftLogs.personId),
 
-				// Only visits from "today" in CENTER_TIMEZONE
+				// Only visits from "today" in timeZone
 				sql`
 					${kioskVisitLogs.createdAt}
-					AT TIME ZONE ${CENTER_TIMEZONE}
+					AT TIME ZONE ${timeZone}
 					>= date_trunc(
 						'day',
-						now() AT TIME ZONE ${CENTER_TIMEZONE}
+						now() AT TIME ZONE ${timeZone}
 					)
 				`
 			)

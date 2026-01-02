@@ -1,5 +1,8 @@
+// components/admin/shift/ShiftSchedulePrint.tsx
 import { ShiftType } from '@/types/shifts'
 import { toAmPm } from '@/utils/time'
+
+//CORRECTED TIMEZONE - Ok to use toAmPM here
 
 const ROLE_ORDER: Array<Assignment['assignmentRole']> = [
 	'shift_lead',
@@ -7,7 +10,6 @@ const ROLE_ORDER: Array<Assignment['assignmentRole']> = [
 	'worker',
 ]
 
-// components/admin/shift/ShiftSchedulePrint.tsx
 type Day = {
 	weekday: number
 	label: string

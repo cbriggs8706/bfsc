@@ -1,15 +1,13 @@
 // app/[locale]/admin/reservation/[id]/page.tsx
 import { redirect } from 'next/navigation'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { readReservationForForm } from '@/lib/actions/resource/reservation'
 import { ReservationForm } from '@/components/resource/ReservationForm'
 import type { Resource } from '@/types/resource'
 import { getTranslations } from 'next-intl/server'
 import { readAllResources } from '@/lib/actions/resource/resource'
-import { getAppSettings } from '@/lib/actions/app-settings'
 import { getFaithTree } from '@/db/queries/faiths'
 import { requireRole } from '@/utils/require-role'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 
 type Props = {
 	params: Promise<{ locale: string; id: string }>
@@ -35,8 +33,8 @@ export default async function Page({ params }: Props) {
 		...r,
 		type: r.type as Resource['type'],
 	}))
-	const settings = await getAppSettings()
-	const timeFormat = settings.timeFormat
+	const centerTime = await getCenterTimeConfig()
+	const timeFormat = centerTime.timeFormat
 	const faithTree = await getFaithTree()
 	return (
 		<div className="p-4 space-y-4">

@@ -1,5 +1,8 @@
 {
 	"main": {
+		"home": "Home",
+		"dashboard": "Dashboard",
+		"dash": "Dash",
 		"groups": "Groups",
 		"projects": "Projects",
 		"digitization": "Digitization",
@@ -15,7 +18,8 @@
 		"communityProjects": "Community Projects",
 		"memoryLane": "Memory Lane",
 		"activities": "Activities",
-		"newsletters": "Newsletters"
+		"newsletters": "Newsletters",
+		"news": "News"
 	},
 	"groups": {
 		"schedule": "Schedule a visit"

@@ -14,7 +14,8 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import type { UISeriesTableRow } from '@/db/queries/classes'
-import { format } from 'date-fns'
+import { CenterTimeConfig } from '@/lib/time/center-time'
+import { formatInTz } from '@/utils/time'
 
 export type CurrentUser = {
 	id: string
@@ -25,6 +26,7 @@ interface Props {
 	classes: UISeriesTableRow[]
 	locale: string
 	currentUser: CurrentUser | null
+	centerTime: CenterTimeConfig
 }
 
 function canEditClass(c: UISeriesTableRow, user: CurrentUser | null): boolean {
@@ -34,7 +36,14 @@ function canEditClass(c: UISeriesTableRow, user: CurrentUser | null): boolean {
 	return c.createdByUserId === user.id
 }
 
-export function ClassesTable({ classes, locale, currentUser }: Props) {
+//CORRECTED TIMEZONE
+
+export function ClassesTable({
+	classes,
+	locale,
+	currentUser,
+	centerTime,
+}: Props) {
 	return (
 		<>
 			<div className="flex justify-end">
@@ -58,8 +67,6 @@ export function ClassesTable({ classes, locale, currentUser }: Props) {
 
 				<TableBody>
 					{classes.map((c) => {
-						const editable = canEditClass(c, currentUser)
-
 						return (
 							<TableRow key={c.id}>
 								<TableCell className="font-medium">{c.title}</TableCell>
@@ -74,7 +81,11 @@ export function ClassesTable({ classes, locale, currentUser }: Props) {
 
 								<TableCell>
 									{c.startsAt ? (
-										format(c.startsAt, 'MMM d, yyyy')
+										formatInTz(
+											new Date(c.startsAt),
+											centerTime.timeZone,
+											centerTime.dateFormat
+										)
 									) : (
 										<span className="text-muted-foreground">Not scheduled</span>
 									)}

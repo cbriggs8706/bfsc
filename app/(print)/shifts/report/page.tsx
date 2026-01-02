@@ -1,7 +1,8 @@
 // app/(print)/shifts/report/page.tsx
 import { ShiftReportPrint } from '@/components/reports/ShiftReportPrint'
 import { getShiftReportDay } from '@/db/queries/shifts/shift-report-day'
-import { format } from 'date-fns'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { formatInTz } from '@/utils/time'
 
 type Props = {
 	searchParams: Promise<{
@@ -10,15 +11,27 @@ type Props = {
 	}>
 }
 
+//CORRECTED TIMEZONE
+
 export default async function ShiftReportPrintPage({ searchParams }: Props) {
 	const { date, header } = await searchParams
 
-	const day = date ? new Date(date) : new Date()
-	const headerTrimmed =
-		header?.trim() || `Shift Report – ${format(day, 'MMMM d, yyyy')}`
+	const centerTime = await getCenterTimeConfig()
 
-	const dateStr = date ?? format(new Date(), 'yyyy-MM-dd')
-	const data = await getShiftReportDay(dateStr)
+	const dayUtc = date ? new Date(`${date}T12:00:00Z`) : new Date()
+
+	const headerTrimmed =
+		header?.trim() ??
+		`Shift Report – ${formatInTz(
+			dayUtc,
+			centerTime.timeZone,
+			centerTime.dateFormat
+		)}`
+
+	const dateStr =
+		date ?? formatInTz(new Date(), centerTime.timeZone, 'yyyy-MM-dd')
+
+	const data = await getShiftReportDay(dateStr, centerTime.timeZone)
 
 	return (
 		<html>
@@ -65,7 +78,7 @@ export default async function ShiftReportPrintPage({ searchParams }: Props) {
 			<body>
 				<ShiftReportPrint
 					header={headerTrimmed}
-					date={data.date}
+					centerTime={centerTime}
 					// report={data.report}
 					shifts={data.shifts}
 					offShift={data.offShift}

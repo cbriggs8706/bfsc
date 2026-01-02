@@ -6,14 +6,11 @@ import {
 	addDays,
 	addMonths,
 	addWeeks,
-	differenceInCalendarDays,
 	endOfMonth,
 	endOfWeek,
 	format,
-	isSameDay,
 	isSameMonth,
 	isToday,
-	parseISO,
 	startOfDay,
 	startOfMonth,
 	startOfWeek,
@@ -35,7 +32,6 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 
 import {
 	ChevronLeft,
@@ -45,10 +41,12 @@ import {
 	Calendar as CalendarIcon,
 } from 'lucide-react'
 
-import { toAmPm, formatLongDate } from '@/utils/time'
+import { toAmPm, formatLongDate, formatInTz } from '@/utils/time'
 import { formatHourShort } from '@/lib/date'
 import { getDayInfo } from '@/lib/calendar/day-info'
 import Link from 'next/link'
+
+//CORRECTED TIMEZONE
 
 /* ============================
    TYPES
@@ -92,32 +90,12 @@ function ymd(date: Date) {
 	return format(date, 'yyyy-MM-dd')
 }
 
-function clamp(n: number, min: number, max: number) {
-	return Math.max(min, Math.min(max, n))
-}
+function minutesSinceMidnightInCenter(iso: string, timeZone: string) {
+	const [hh, mm] = formatInTz(new Date(iso), timeZone, 'HH:mm')
+		.split(':')
+		.map(Number)
 
-function minutesSinceMidnight(d: Date) {
-	return d.getHours() * 60 + d.getMinutes()
-}
-
-// Stable “color” class from title hash (Tailwind utilities)
-function classColorClass(title: string) {
-	let h = 0
-	for (let i = 0; i < title.length; i++)
-		h = (h * 31 + title.charCodeAt(i)) >>> 0
-	const idx = h % 7
-
-	// subtle, Apple-ish (no neon)
-	const styles = [
-		'bg-blue-100 text-blue-900 border-blue-200',
-		'bg-emerald-100 text-emerald-900 border-emerald-200',
-		'bg-amber-100 text-amber-900 border-amber-200',
-		'bg-violet-100 text-violet-900 border-violet-200',
-		'bg-rose-100 text-rose-900 border-rose-200',
-		'bg-sky-100 text-sky-900 border-sky-200',
-		'bg-stone-100 text-stone-900 border-stone-200',
-	]
-	return styles[idx]
+	return hh * 60 + mm
 }
 
 // For week/day time grid sizing
@@ -147,6 +125,7 @@ export default function CenterCalendar({
 	initialYear,
 	initialMonth,
 	locale,
+	centerTime,
 }: {
 	specials: Special[]
 	weekly: Weekly[]
@@ -154,6 +133,9 @@ export default function CenterCalendar({
 	initialYear: number
 	initialMonth: number
 	locale: string
+	centerTime: {
+		timeZone: string
+	}
 }) {
 	const isMobile = useIsMobile()
 
@@ -171,11 +153,6 @@ export default function CenterCalendar({
 	/* ============================
 	   MAPS
 	============================ */
-
-	const specialsMap = useMemo(
-		() => new Map(specials.map((s) => [s.date, s])),
-		[specials]
-	)
 
 	const classesByDate = useMemo(() => {
 		const m = new Map<string, CalendarClass[]>()
@@ -206,42 +183,6 @@ export default function CenterCalendar({
 	/* ============================
 	   DAY INFO
 	============================ */
-
-	// const getDayInfo = (date: Date) => {
-	// 	const key = ymd(date)
-	// 	const special = specialsMap.get(key)
-
-	// 	if (special) {
-	// 		return {
-	// 			isClosed: special.isClosed,
-	// 			opensAt: special.opensAt,
-	// 			closesAt: special.closesAt,
-	// 			reason: special.reason,
-	// 			source: 'special' as const,
-	// 		}
-	// 	}
-
-	// 	const weekday = date.getDay()
-	// 	const w = weekly.find((w) => w.weekday === weekday)
-
-	// 	if (!w) {
-	// 		return {
-	// 			isClosed: true,
-	// 			opensAt: null,
-	// 			closesAt: null,
-	// 			reason: null,
-	// 			source: 'missing' as const,
-	// 		}
-	// 	}
-
-	// 	return {
-	// 		isClosed: w.isClosed,
-	// 		opensAt: w.opensAt,
-	// 		closesAt: w.closesAt,
-	// 		reason: null,
-	// 		source: 'weekly' as const,
-	// 	}
-	// }
 
 	function getDayColorClasses(info: ReturnType<typeof getDayInfo>) {
 		// Closed with an explicit reason (true closure)
@@ -353,7 +294,9 @@ export default function CenterCalendar({
 				<h3 className="font-semibold">Classes</h3>
 				<ul className="space-y-2">
 					{dayClasses.map((c) => {
-						const startsAt = new Date(c.startsAtIso)
+						const time = toAmPm(
+							formatInTz(new Date(c.startsAtIso), centerTime.timeZone, 'HH:mm')
+						)
 
 						return (
 							<li
@@ -365,7 +308,7 @@ export default function CenterCalendar({
 								)}
 							>
 								<div className="text-base mb-2">
-									{toAmPm(format(startsAt, 'HH:mm'))} — {c.title}
+									{time} — {c.title}
 								</div>
 
 								<div className="text-base ">
@@ -463,8 +406,7 @@ export default function CenterCalendar({
 	function layoutDayEvents(events: CalendarClass[]): PositionedEvent[] {
 		// Convert to positioned events
 		const positioned = events.map((c) => {
-			const start = parseISO(c.startsAtIso)
-			const top = eventTopPx(start)
+			const top = eventTopPx(c.startsAtIso)
 			const height = eventHeightPx()
 
 			return {
@@ -577,8 +519,14 @@ export default function CenterCalendar({
 
 								<div className="flex flex-col gap-0.5 overflow-hidden">
 									{dayClasses.slice(0, isMobile ? 2 : 3).map((c) => {
-										const startsAt = parseISO(c.startsAtIso)
-										const time = toAmPm(format(startsAt, 'HH:mm'))
+										const time = toAmPm(
+											formatInTz(
+												new Date(c.startsAtIso),
+												centerTime.timeZone,
+												'HH:mm'
+											)
+										)
+
 										return (
 											<div
 												key={c.id}
@@ -623,8 +571,10 @@ export default function CenterCalendar({
 
 	const gridHeightPx = ((END_HOUR - START_HOUR) * 60) / MINUTES_PER_PIXEL
 
-	function eventTopPx(start: Date) {
-		const minutes = minutesSinceMidnight(start) - START_HOUR * 60
+	function eventTopPx(iso: string) {
+		const minutes =
+			minutesSinceMidnightInCenter(iso, centerTime.timeZone) - START_HOUR * 60
+
 		return Math.max(0, minutes / MINUTES_PER_PIXEL)
 	}
 
@@ -784,17 +734,28 @@ export default function CenterCalendar({
 
 										{/* events */}
 										{dayClasses.map((c) => {
-											const start = parseISO(c.startsAtIso)
-											const top = eventTopPx(start)
+											const start = new Date(c.startsAtIso)
+											const top = eventTopPx(c.startsAtIso)
 											const height = eventHeightPx()
-											const time = toAmPm(format(start, 'HH:mm'))
+											const time = toAmPm(
+												formatInTz(
+													new Date(start),
+													centerTime.timeZone,
+													'HH:mm'
+												)
+											)
 
 											// Hide events outside our visible window
-											const minutesFromStart =
-												minutesSinceMidnight(start) - START_HOUR * 60
+											const minutes =
+												minutesSinceMidnightInCenter(
+													c.startsAtIso,
+													centerTime.timeZone
+												) -
+												START_HOUR * 60
+
 											if (
-												minutesFromStart < 0 ||
-												minutesFromStart > (END_HOUR - START_HOUR) * 60
+												minutes < 0 ||
+												minutes > (END_HOUR - START_HOUR) * 60
 											) {
 												return null
 											}
@@ -900,7 +861,13 @@ export default function CenterCalendar({
 						})}
 
 						{positionedEvents.map((c) => {
-							const time = toAmPm(format(parseISO(c.startsAtIso), 'HH:mm'))
+							const time = toAmPm(
+								formatInTz(
+									new Date(c.startsAtIso),
+									centerTime.timeZone,
+									'HH:mm'
+								)
+							)
 
 							const widthPercent = 100 / c.columnCount
 							const leftPercent = c.columnIndex * widthPercent

@@ -1,7 +1,6 @@
 // components/kiosk/ShiftStep.tsx
 'use client'
 
-import { cn } from '@/lib/utils'
 import { KioskButton } from './KioskButton'
 import { toAmPm } from '@/utils/time'
 
@@ -11,6 +10,8 @@ type Props = {
 	setExpectedDeparture: (v: string) => void
 	onSubmit: () => void
 }
+
+//CORRECTED TIMEZONES
 
 export function ShiftStep({
 	timeSlots,

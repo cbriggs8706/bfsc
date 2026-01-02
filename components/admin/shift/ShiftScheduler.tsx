@@ -25,6 +25,8 @@ import { Plus } from 'lucide-react'
 import { toAmPm } from '@/utils/time'
 import { ShiftType } from '@/types/shifts'
 
+//CORRECTED TIMEZONE - Ok to use toAmPM here
+
 type Day = {
 	weekday: number
 	label: string

@@ -1,22 +1,28 @@
 // components/reports/ShiftReportPrint.tsx
-import type {
-	ShiftReportWorker,
-	ShiftReportItem,
-	ShiftReportPatron,
-	TodayShift,
-} from '@/types/shift-report'
-import { toAmPm } from '@/utils/time'
-import { format } from 'date-fns'
+import type { TodayShift } from '@/types/shift-report'
+import { TimeFormat } from '@/types/shifts'
+import { formatInTz, formatTimeRange } from '@/utils/time'
 import React from 'react'
 
 type Props = {
 	header: string
-	date: string
 	shifts: TodayShift[]
 	offShift: TodayShift[]
+	centerTime: {
+		timeZone: string
+		timeFormat: TimeFormat
+		dateFormat: string
+	}
 }
 
-export function ShiftReportPrint({ header, date, shifts, offShift }: Props) {
+//CORRECTED TIMEZONE
+
+export function ShiftReportPrint({
+	header,
+	shifts,
+	offShift,
+	centerTime,
+}: Props) {
 	return (
 		<div className="p-6">
 			<h1 className="text-2xl font-bold">{header}</h1>
@@ -31,7 +37,11 @@ export function ShiftReportPrint({ header, date, shifts, offShift }: Props) {
 					<React.Fragment key={shift.shiftId}>
 						<section>
 							<h2 className="text-lg font-semibold">
-								{toAmPm(shift.startTime)} – {toAmPm(shift.endTime)}
+								{formatTimeRange(
+									shift.startTime,
+									shift.endTime,
+									centerTime.timeFormat
+								)}
 							</h2>
 
 							<p>
@@ -52,7 +62,13 @@ export function ShiftReportPrint({ header, date, shifts, offShift }: Props) {
 										<tr key={p.visitId}>
 											<td>{p.fullName}</td>
 											<td>{p.purposeName}</td>
-											<td>{format(new Date(p.arrivedAt), 'h:mm a')}</td>
+											<td>
+												{formatInTz(
+													new Date(p.arrivedAt),
+													centerTime.timeZone,
+													centerTime.timeFormat
+												)}
+											</td>
 										</tr>
 									))}
 								</tbody>
@@ -77,7 +93,11 @@ export function ShiftReportPrint({ header, date, shifts, offShift }: Props) {
 													<td>{r.patronName}</td>
 													<td>{r.resourceName}</td>
 													<td>
-														{toAmPm(r.startTime)} – {toAmPm(r.endTime)}
+														{formatTimeRange(
+															r.startTime,
+															r.endTime,
+															centerTime.timeFormat
+														)}
 													</td>
 													<td>{r.status}</td>
 												</tr>
@@ -115,7 +135,13 @@ export function ShiftReportPrint({ header, date, shifts, offShift }: Props) {
 										<tr key={p.visitId}>
 											<td>{p.fullName}</td>
 											<td>{p.purposeName ?? '—'}</td>
-											<td>{format(new Date(p.arrivedAt), 'h:mm a')}</td>
+											<td>
+												{formatInTz(
+													new Date(p.arrivedAt),
+													centerTime.timeZone,
+													centerTime.timeFormat
+												)}
+											</td>
 										</tr>
 									))}
 								</tbody>

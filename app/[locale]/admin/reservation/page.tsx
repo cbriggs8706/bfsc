@@ -4,14 +4,15 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { getAppSettings } from '@/lib/actions/app-settings'
-import { formatTimeRange, toHHMM } from '@/utils/time'
-import { format } from 'date-fns'
+import { formatInTz } from '@/utils/time'
 import { requireRole } from '@/utils/require-role'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 
 type Props = {
 	params: Promise<{ locale: string }>
 }
+
+//CORRECTED TIMEZONE
 
 export default async function ReservationsPage({ params }: Props) {
 	const { locale } = await params
@@ -34,8 +35,8 @@ export default async function ReservationsPage({ params }: Props) {
 		{}
 	)
 
-	const settings = await getAppSettings()
-	const timeFormat = settings.timeFormat
+	const centerTime = await getCenterTimeConfig()
+	const timeFormat = centerTime.timeFormat
 
 	return (
 		<div className="p-4 space-y-4">
@@ -89,12 +90,21 @@ export default async function ReservationsPage({ params }: Props) {
 													</div>
 
 													<div className="text-base text-muted-foreground">
-														{format(new Date(r.startTime), 'MMM d, yyyy')} ·{' '}
-														{formatTimeRange(
-															toHHMM(new Date(r.startTime)),
-															toHHMM(new Date(r.endTime)),
+														{formatInTz(
+															new Date(r.startTime),
+															centerTime.timeZone,
+															centerTime.dateFormat
+														)}{' '}
+														·{' '}
+														{`${formatInTz(
+															new Date(r.startTime),
+															centerTime.timeZone,
 															timeFormat
-														)}
+														)} – ${formatInTz(
+															new Date(r.endTime),
+															centerTime.timeZone,
+															timeFormat
+														)}`}
 													</div>
 													<div>{r.resource.name}</div>
 													<div className="text-sm text-muted-foreground">

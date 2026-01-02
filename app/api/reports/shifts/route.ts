@@ -9,6 +9,7 @@ import {
 } from '@/db/schema/tables/kiosk'
 import { weeklyShifts } from '@/db/schema/tables/shifts'
 import { and, eq, gte, lte, asc } from 'drizzle-orm'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 
 type ShiftSlot = {
 	slotId: string // `${date}|${weeklyShiftId}`
@@ -29,7 +30,7 @@ type SlotWorker = {
 	userId: string
 	fullName: string
 	arrivalAtIso: string
-	expectedDepartureAtIso: string
+	expectedDepartureAtIso: string | null
 }
 
 type SlotPatron = {
@@ -45,10 +46,6 @@ export type ShiftSlotReport = ShiftSlot & {
 }
 
 // ---- helpers ----
-function pad2(n: number): string {
-	return String(n).padStart(2, '0')
-}
-
 function ymdInTz(date: Date, timeZone: string): string {
 	const dtf = new Intl.DateTimeFormat('en-CA', {
 		timeZone,
@@ -152,6 +149,7 @@ export async function GET(req: Request) {
 	const { searchParams } = new URL(req.url)
 	const start = searchParams.get('start')
 	const end = searchParams.get('end')
+	const centerTime = await getCenterTimeConfig()
 
 	if (!start || !end) {
 		return NextResponse.json({ error: 'Missing date range' }, { status: 400 })
@@ -163,9 +161,6 @@ export async function GET(req: Request) {
 	if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
 		return NextResponse.json({ error: 'Invalid date range' }, { status: 400 })
 	}
-
-	// Center timezone for shift slots
-	const timeZone = 'America/Boise'
 
 	// 1) Pull active weekly shifts (schedule)
 	const scheduled = await db
@@ -186,18 +181,18 @@ export async function GET(req: Request) {
 		)
 
 	// 2) Build slots for each day in range
-	const dayYmds = eachDayYmd(startDate, endDate, timeZone)
+	const dayYmds = eachDayYmd(startDate, endDate, centerTime.timeZone)
 
 	const slots: ShiftSlot[] = []
 	for (const dateYmd of dayYmds) {
 		// compute weekday for this date in Boise
 		const tmp = new Date(dateYmd + 'T12:00:00Z')
-		const weekday = weekdayInTz(tmp, timeZone)
+		const weekday = weekdayInTz(tmp, centerTime.timeZone)
 
 		const shiftsForDay = scheduled.filter((s) => s.weekday === weekday)
 		for (const s of shiftsForDay) {
-			const startAt = zonedDateToUtc(dateYmd, s.startTime, timeZone)
-			const endAt = zonedDateToUtc(dateYmd, s.endTime, timeZone)
+			const startAt = zonedDateToUtc(dateYmd, s.startTime, centerTime.timeZone)
+			const endAt = zonedDateToUtc(dateYmd, s.endTime, centerTime.timeZone)
 
 			// If endTime is past midnight (rare), handle by adding a day when end < start
 			const endAtFixed =
@@ -305,7 +300,9 @@ export async function GET(req: Request) {
 					userId: c.userId,
 					fullName: c.fullName,
 					arrivalAtIso: c.arrivalAt.toISOString(),
-					expectedDepartureAtIso: c.expectedDepartureAt.toISOString(),
+					expectedDepartureAtIso: c.expectedDepartureAt
+						? c.expectedDepartureAt.toISOString()
+						: null,
 				}))
 
 			const patrons: SlotPatron[] = patronVisits

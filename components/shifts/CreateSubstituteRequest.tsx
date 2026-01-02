@@ -16,6 +16,8 @@ type Props = {
 	currentUserId: string
 }
 
+//CORRECTED TIMEZONES
+
 export function CreateSubstituteRequestClient({ shift, date }: Props) {
 	return (
 		<Card>

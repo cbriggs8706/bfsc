@@ -18,6 +18,8 @@ type Props = {
 	shifts: Shift[]
 }
 
+//CORRECTED TIMEZONE - Ok to use toAmPM here
+
 export function ShiftDefinitionsManager({ days, shifts }: Props) {
 	const [localShifts, setLocalShifts] = useState<Shift[]>(shifts)
 	const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set())

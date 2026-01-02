@@ -1,0 +1,2 @@
+ALTER TABLE "app_settings" ADD COLUMN "time_zone" varchar(50) DEFAULT 'America/Boise' NOT NULL;--> statement-breakpoint
+ALTER TABLE "app_settings" ADD COLUMN "date_format" varchar(20) DEFAULT 'MMM d, yyyy' NOT NULL;

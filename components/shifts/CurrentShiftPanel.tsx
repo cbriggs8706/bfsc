@@ -4,9 +4,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase-client'
-import { format, isToday } from 'date-fns'
 import type { TodayShift } from '@/types/shift-report'
-import { toAmPm, toLocalDateTimeInputValue } from '@/utils/time'
+import { formatInTz, toLocalDateTimeInputValue, ymdInTz } from '@/utils/time'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -19,12 +18,14 @@ import {
 } from '../ui/dialog'
 import { Input } from '../ui/input'
 import Link from 'next/link'
+import { CenterTimeConfig } from '@/lib/time/center-time'
 
 type Props = {
 	title?: string
 	pollMs?: number
 	showPatrons?: boolean
 	locale: string
+	centerTime: CenterTimeConfig
 }
 
 type DisplayCard =
@@ -80,11 +81,14 @@ function combineOffShift(offShift: TodayShift[]): OutsideShift | null {
 	}
 }
 
+//CORRECTED TIMEZONE
+
 export function CurrentShiftPanel({
 	title = 'Today in the Center',
 	pollMs,
 	showPatrons = true,
 	locale,
+	centerTime,
 }: Props) {
 	const [loading, setLoading] = useState(true)
 	const [shifts, setShifts] = useState<TodayShift[]>([])
@@ -96,8 +100,8 @@ export function CurrentShiftPanel({
 	const [selectedKey, setSelectedKey] = useState<string | null>(null)
 	const [manualPick, setManualPick] = useState(false)
 
-	const todayStr = format(new Date(), 'yyyy-MM-dd')
-	const todayDate = new Date(`${todayStr}T12:00:00`)
+	const todayStr = ymdInTz(new Date(), centerTime.timeZone)
+
 	const [departing, setDeparting] = useState<Departing | null>(null)
 
 	const refetch = useCallback(async () => {
@@ -120,12 +124,13 @@ export function CurrentShiftPanel({
 	}, [todayStr])
 
 	const scheduleRefetch = useCallback(() => {
-		if (!isToday(todayDate)) return
+		// This panel always represents "today" in center time
 		if (refetchTimer.current) window.clearTimeout(refetchTimer.current)
+
 		refetchTimer.current = window.setTimeout(() => {
 			refetch()
 		}, 250)
-	}, [refetch, todayDate])
+	}, [refetch])
 
 	useEffect(() => {
 		refetch()
@@ -177,7 +182,15 @@ export function CurrentShiftPanel({
 		const regular = shifts.map((s) => ({
 			key: `shift:${s.shiftId}`,
 			kind: 'regular' as const,
-			label: `${toAmPm(s.startTime)} – ${toAmPm(s.endTime)}`,
+			label: `${formatInTz(
+				new Date(`${todayStr}T${s.startTime}:00Z`),
+				centerTime.timeZone,
+				centerTime.timeFormat
+			)} – ${formatInTz(
+				new Date(`${todayStr}T${s.endTime}:00Z`),
+				centerTime.timeZone,
+				centerTime.timeFormat
+			)}`,
 			startTime: s.startTime!,
 			endTime: s.endTime!,
 			shift: s,
@@ -196,13 +209,14 @@ export function CurrentShiftPanel({
 	}, [shifts, offShift])
 
 	const currentKey = useMemo(() => {
-		const now = new Date()
-
+		const nowInCenter = new Date(
+			formatInTz(new Date(), centerTime.timeZone, "yyyy-MM-dd'T'HH:mm:ss")
+		)
 		// 1) find a regular shift that matches current time
 		const activeRegular = cards.find(
 			(c) =>
 				c.kind === 'regular' &&
-				isNowInShift(todayStr, now, c.startTime, c.endTime)
+				isNowInShift(todayStr, nowInCenter, c.startTime, c.endTime)
 		)
 
 		// 2) if none, outside
@@ -263,7 +277,7 @@ export function CurrentShiftPanel({
 				</div>
 
 				<div className="flex items-center gap-2">
-					<Link href={`/${locale}/reports/shifts`}>
+					<Link href={`/${locale}/shifts/reports`}>
 						<Button variant="outline" size="sm">
 							Shift Reports
 						</Button>
@@ -340,14 +354,23 @@ export function CurrentShiftPanel({
 									<span className="text-sm text-muted-foreground">Worker</span>
 
 									<span className="text-sm">
-										Arrived {new Date(c.arrivalAt).toLocaleTimeString()}
+										Arrived{' '}
+										{formatInTz(
+											new Date(c.arrivalAt),
+											centerTime.timeZone,
+											centerTime.timeFormat
+										)}
 									</span>
 
 									<div className="md:text-right">
 										{c.actualDepartureAt ? (
 											<span className="text-sm text-muted-foreground">
 												Departed{' '}
-												{new Date(c.actualDepartureAt).toLocaleTimeString()}
+												{formatInTz(
+													new Date(c.actualDepartureAt),
+													centerTime.timeZone,
+													centerTime.timeFormat
+												)}
 											</span>
 										) : (
 											<Button
@@ -400,13 +423,23 @@ export function CurrentShiftPanel({
 										</span>
 
 										<span className="text-sm">
-											Arrived {new Date(p.arrivedAt).toLocaleTimeString()}
+											Arrived{' '}
+											{formatInTz(
+												new Date(p.arrivedAt),
+												centerTime.timeZone,
+												centerTime.timeFormat
+											)}
 										</span>
 
 										<div className="md:text-right">
 											{p.departedAt ? (
 												<span className="text-sm text-muted-foreground">
-													Departed {new Date(p.departedAt).toLocaleTimeString()}
+													Departed{' '}
+													{formatInTz(
+														new Date(p.departedAt),
+														centerTime.timeZone,
+														centerTime.timeFormat
+													)}
 												</span>
 											) : (
 												<Button

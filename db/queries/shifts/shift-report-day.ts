@@ -1,4 +1,5 @@
 // db/queries/shifts/shift-report-day.ts
+
 import { db, reservations, resources, user } from '@/db'
 import {
 	weeklyShifts,
@@ -8,12 +9,16 @@ import {
 	kioskVisitPurposes,
 } from '@/db/schema'
 import { eq, and, gte, lte, asc } from 'drizzle-orm'
-import { toZonedTime, fromZonedTime } from 'date-fns-tz'
+import { fromZonedTime, toZonedTime } from 'date-fns-tz'
 import { startOfDay, endOfDay, parseISO, format } from 'date-fns'
 import { TodayShift } from '@/types/shift-report'
 import { ReservationStatus } from '@/types/resource'
 
-const TZ = 'America/Boise'
+//CORRECTED TIMEZONES
+
+/* ======================================================
+ * Helpers
+ * ==================================================== */
 
 function toReservationStatus(value: string): ReservationStatus {
 	switch (value) {
@@ -27,18 +32,42 @@ function toReservationStatus(value: string): ReservationStatus {
 	}
 }
 
-export async function getShiftReportDay(dateStr: string) {
-	const dayBoise = toZonedTime(parseISO(dateStr), TZ)
-	const weekday = dayBoise.getDay()
+/* ======================================================
+ * Query
+ * ==================================================== */
 
-	const startUtc = fromZonedTime(startOfDay(dayBoise), TZ)
-	const endUtc = fromZonedTime(endOfDay(dayBoise), TZ)
+/**
+ * Get a full shift report for a calendar day
+ * - dateStr is a LOCAL calendar date (YYYY-MM-DD)
+ * - all DB timestamps are stored & queried in UTC
+ */
+export async function getShiftReportDay(dateStr: string, timeZone: string) {
+	/* --------------------------------------------
+	 * 1️⃣ Convert calendar day → UTC window
+	 * ------------------------------------------ */
+
+	const localDate = parseISO(dateStr)
+
+	// Convert calendar day boundaries to UTC
+	const startUtc = fromZonedTime(startOfDay(localDate), timeZone)
+	const endUtc = fromZonedTime(endOfDay(localDate), timeZone)
+
+	// Correct weekday (must be computed in center TZ)
+	const weekday = toZonedTime(startUtc, timeZone).getDay()
+
+	/* --------------------------------------------
+	 * 2️⃣ Load weekly shifts for this weekday
+	 * ------------------------------------------ */
 
 	const shifts = await db
 		.select()
 		.from(weeklyShifts)
 		.where(eq(weeklyShifts.weekday, weekday))
 		.orderBy(asc(weeklyShifts.startTime))
+
+	/* --------------------------------------------
+	 * 3️⃣ Load workers (check-ins)
+	 * ------------------------------------------ */
 
 	const workers = await db
 		.select({
@@ -58,6 +87,10 @@ export async function getShiftReportDay(dateStr: string) {
 				lte(kioskShiftLogs.arrivalAt, endUtc)
 			)
 		)
+
+	/* --------------------------------------------
+	 * 4️⃣ Load patrons (visits)
+	 * ------------------------------------------ */
 
 	const patrons = await db
 		.select({
@@ -81,6 +114,10 @@ export async function getShiftReportDay(dateStr: string) {
 			)
 		)
 
+	/* --------------------------------------------
+	 * 5️⃣ Load reservations
+	 * ------------------------------------------ */
+
 	const allReservations = await db
 		.select({
 			id: reservations.id,
@@ -101,74 +138,85 @@ export async function getShiftReportDay(dateStr: string) {
 			)
 		)
 
+	/* --------------------------------------------
+	 * 6️⃣ Build shift buckets
+	 * ------------------------------------------ */
+
 	const results: TodayShift[] = shifts.map((shift) => {
 		const [sh, sm] = shift.startTime.split(':').map(Number)
 		const [eh, em] = shift.endTime.split(':').map(Number)
 
-		const shiftStartBoise = new Date(dayBoise)
-		shiftStartBoise.setHours(sh, sm, 0, 0)
+		const shiftStartLocal = new Date(localDate)
+		shiftStartLocal.setHours(sh, sm, 0, 0)
 
-		const shiftEndBoise = new Date(dayBoise)
-		shiftEndBoise.setHours(eh, em, 0, 0)
+		const shiftEndLocal = new Date(localDate)
+		shiftEndLocal.setHours(eh, em, 0, 0)
 
-		const shiftStartUtc = fromZonedTime(shiftStartBoise, TZ)
-		const shiftEndUtc = fromZonedTime(shiftEndBoise, TZ)
-
-		const reservationsInShift = allReservations
-			.filter((r) => r.startTime >= shiftStartUtc && r.startTime <= shiftEndUtc)
-			.map((r) => ({
-				id: r.id,
-				resourceName: r.resourceName,
-				startTime: format(r.startTime, 'HH:mm'),
-				endTime: format(r.endTime, 'HH:mm'),
-				status: toReservationStatus(r.status),
-				patronName: r.patronName ?? r.patronEmail,
-			}))
-
-		const workersInShift = workers
-			.filter((c) => c.arrivalAt >= shiftStartUtc && c.arrivalAt <= shiftEndUtc)
-			.map((c) => ({
-				shiftLogId: c.shiftLogId,
-				userId: c.userId,
-				fullName: c.fullName,
-				profileImageUrl: c.profileImageUrl,
-				arrivalAt: c.arrivalAt,
-				actualDepartureAt: c.actualDepartureAt, // may be null
-			}))
-
-		const patronsInShift = patrons
-			.filter((p) => p.arrivedAt >= shiftStartUtc && p.arrivedAt <= shiftEndUtc)
-			.map((p) => ({
-				visitId: p.visitId,
-				fullName: p.fullName,
-				purposeName: p.purposeName,
-				arrivedAt: p.arrivedAt,
-				departedAt: p.departedAt, // may be null
-			}))
+		const shiftStartUtc = fromZonedTime(shiftStartLocal, timeZone)
+		const shiftEndUtc = fromZonedTime(shiftEndLocal, timeZone)
 
 		return {
 			shiftId: shift.id,
 			weekday,
 			startTime: shift.startTime,
 			endTime: shift.endTime,
-			workers: workersInShift,
-			patrons: patronsInShift,
-			reservations: reservationsInShift,
+			centerTimeZone: timeZone,
+
+			workers: workers
+				.filter(
+					(w) => w.arrivalAt >= shiftStartUtc && w.arrivalAt <= shiftEndUtc
+				)
+				.map((w) => ({
+					shiftLogId: w.shiftLogId,
+					userId: w.userId,
+					fullName: w.fullName,
+					profileImageUrl: w.profileImageUrl,
+					arrivalAt: w.arrivalAt,
+					actualDepartureAt: w.actualDepartureAt,
+				})),
+
+			patrons: patrons
+				.filter(
+					(p) => p.arrivedAt >= shiftStartUtc && p.arrivedAt <= shiftEndUtc
+				)
+				.map((p) => ({
+					visitId: p.visitId,
+					fullName: p.fullName,
+					purposeName: p.purposeName,
+					arrivedAt: p.arrivedAt,
+					departedAt: p.departedAt,
+				})),
+
+			reservations: allReservations
+				.filter(
+					(r) => r.startTime >= shiftStartUtc && r.startTime <= shiftEndUtc
+				)
+				.map((r) => ({
+					id: r.id,
+					resourceName: r.resourceName,
+					startTime: format(r.startTime, 'HH:mm'),
+					endTime: format(r.endTime, 'HH:mm'),
+					status: toReservationStatus(r.status),
+					patronName: r.patronName ?? r.patronEmail,
+				})),
 		}
 	})
 
-	const assignedWorkers = new Set(
-		results.flatMap((r) => r.workers.map((c) => c.userId))
+	/* --------------------------------------------
+	 * 7️⃣ Off-shift activity bucket
+	 * ------------------------------------------ */
+
+	const assignedWorkerIds = new Set(
+		results.flatMap((r) => r.workers.map((w) => w.userId))
 	)
-	const assignedPatrons = new Set(
+	const assignedPatronIds = new Set(
 		results.flatMap((r) => r.patrons.map((p) => p.visitId))
 	)
-
 	const assignedReservationIds = new Set(
-		results.flatMap((r) => r.reservations.map((res) => res.id))
+		results.flatMap((r) => r.reservations.map((r) => r.id))
 	)
 
-	const offShiftResults: TodayShift[] =
+	const offShift: TodayShift[] =
 		workers.length > 0 || patrons.length > 0
 			? [
 					{
@@ -176,25 +224,10 @@ export async function getShiftReportDay(dateStr: string) {
 						weekday,
 						startTime: '—',
 						endTime: '—',
-						workers: workers
-							.filter((c) => !assignedWorkers.has(c.userId))
-							.map((c) => ({
-								shiftLogId: c.shiftLogId,
-								userId: c.userId,
-								fullName: c.fullName,
-								profileImageUrl: c.profileImageUrl,
-								arrivalAt: c.arrivalAt,
-								actualDepartureAt: c.actualDepartureAt,
-							})),
-						patrons: patrons
-							.filter((p) => !assignedPatrons.has(p.visitId))
-							.map((p) => ({
-								visitId: p.visitId,
-								fullName: p.fullName,
-								purposeName: p.purposeName,
-								arrivedAt: p.arrivedAt,
-								departedAt: p.departedAt,
-							})),
+						centerTimeZone: timeZone,
+
+						workers: workers.filter((w) => !assignedWorkerIds.has(w.userId)),
+						patrons: patrons.filter((p) => !assignedPatronIds.has(p.visitId)),
 						reservations: allReservations
 							.filter((r) => !assignedReservationIds.has(r.id))
 							.map((r) => ({
@@ -212,6 +245,6 @@ export async function getShiftReportDay(dateStr: string) {
 	return {
 		date: dateStr,
 		shifts: results,
-		offShift: offShiftResults,
+		offShift,
 	}
 }

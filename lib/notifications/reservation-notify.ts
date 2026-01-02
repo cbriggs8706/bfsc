@@ -3,10 +3,13 @@ import { getReservationNotificationContext } from '@/db/queries/reservation-noti
 import { sendReservationNotificationEmail } from '@/lib/email/send-reservation-notification-email'
 import { db, reservations } from '@/db'
 import { eq } from 'drizzle-orm'
-import { format } from 'date-fns'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { formatInTz } from '@/utils/time'
 
 const DEBUG_NOTIFY = process.env.NODE_ENV !== 'production'
 const APP_BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+
+//CORRECTED TIMEZONE
 
 export async function notifyReservationChanged(args: {
 	reservationId: string
@@ -17,16 +20,16 @@ export async function notifyReservationChanged(args: {
 	const adminReservationUrl = `${APP_BASE_URL}/${ctx.locale}/admin/reservation`
 	const roleOrder = ['Director', 'Assistant Director', 'Shift Leader']
 
-	DEBUG_NOTIFY &&
-		console.log('[notify] context:', {
-			reservationId: ctx.reservationId,
-			submitterEmail: ctx.submitterEmail,
-			staffRecipients: ctx.staffRecipients,
-			resourceName: ctx.resourceName,
-			wardName: ctx.wardName,
-			stakeName: ctx.stakeName,
-			faithName: ctx.faithName,
-		})
+	// DEBUG_NOTIFY &&
+	// 	console.log('[notify] context:', {
+	// 		reservationId: ctx.reservationId,
+	// 		submitterEmail: ctx.submitterEmail,
+	// 		staffRecipients: ctx.staffRecipients,
+	// 		resourceName: ctx.resourceName,
+	// 		wardName: ctx.wardName,
+	// 		stakeName: ctx.stakeName,
+	// 		faithName: ctx.faithName,
+	// 	})
 
 	// Pull the full reservation details for the email body
 	const r = await db.query.reservations.findFirst({
@@ -42,6 +45,8 @@ export async function notifyReservationChanged(args: {
 		},
 	})
 	if (!r) return
+
+	const centerTime = await getCenterTimeConfig()
 
 	type ReservationStatus = 'pending' | 'confirmed' | 'denied' | 'cancelled'
 
@@ -117,11 +122,20 @@ export async function notifyReservationChanged(args: {
 
 	const submitterRecipient = ctx.submitterEmail ? [ctx.submitterEmail] : []
 
-	DEBUG_NOTIFY && console.log('[notify] FINAL RECIPIENTS:', staffEmails)
+	// DEBUG_NOTIFY && console.log('[notify] FINAL RECIPIENTS:', staffEmails)
 
-	const when = `${format(new Date(r.startTime), 'PPPP p')} – ${format(
+	const when = `${formatInTz(
+		new Date(r.startTime),
+		centerTime.timeZone,
+		centerTime.dateFormat
+	)} · ${formatInTz(
+		new Date(r.startTime),
+		centerTime.timeZone,
+		centerTime.timeFormat
+	)} – ${formatInTz(
 		new Date(r.endTime),
-		'p'
+		centerTime.timeZone,
+		centerTime.timeFormat
 	)}`
 
 	const subjectPrefix = DEBUG_NOTIFY ? '[DEV] ' : ''
@@ -288,12 +302,12 @@ ${showActionButtons ? adminButton : ''}
 		return
 	}
 
-	DEBUG_NOTIFY &&
-		console.log('[notify] sending email', {
-			to: staffEmails,
-			subject: staffSubject,
-			mode: args.mode,
-		})
+	// DEBUG_NOTIFY &&
+	// 	console.log('[notify] sending email', {
+	// 		to: staffEmails,
+	// 		subject: staffSubject,
+	// 		mode: args.mode,
+	// 	})
 
 	if (staffEmails.length > 0) {
 		await sendReservationNotificationEmail({

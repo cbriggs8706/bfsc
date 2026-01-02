@@ -11,6 +11,8 @@ import { Separator } from '@/components/ui/separator'
 import { AppSidebar } from '@/components/nav/AppSidebar'
 import { db, operatingHours, specialHours } from '@/db'
 import { eq } from 'drizzle-orm'
+import FSHeader from '@/components/nav/FSHeader'
+import MobileFooter from '@/components/nav/MobileFooterMenu'
 
 export default async function Layout({
 	children,
@@ -34,6 +36,7 @@ export default async function Layout({
 				specials={specials}
 			/>
 			<SidebarInset>
+				<FSHeader />
 				<header className="flex h-16 shrink-0 items-center gap-2">
 					<div className="flex items-center gap-2 px-4">
 						<SidebarTrigger className="-ml-1" />
@@ -47,16 +50,7 @@ export default async function Layout({
 
 				{/* Actual dashboard content */}
 				<div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
-				<footer className="flex h-16 shrink-0 items-center gap-2 border-t bg-muted/40 md:hidden">
-					<div className="flex items-center gap-2 px-4">
-						<SidebarTrigger className="-ml-1" />
-
-						<Separator
-							orientation="vertical"
-							className="mr-2 data-[orientation=vertical]:h-4"
-						/>
-					</div>
-				</footer>
+				<MobileFooter />
 			</SidebarInset>
 		</SidebarProvider>
 	)

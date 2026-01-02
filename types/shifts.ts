@@ -24,6 +24,11 @@ export type TimeFormat =
 	| 'hh:mm a' // 04:00 PM
 	| 'H:mm' // 16:00
 	| 'HH:mm' // 16:00
+	| 'h a' // 4 PM
+
+export type AbbreviatedTimeFormat =
+	| 'ha-short' // 4p
+	| 'h-short' // 4
 
 export type Day = {
 	weekday: number

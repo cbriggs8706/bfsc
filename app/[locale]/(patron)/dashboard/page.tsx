@@ -16,6 +16,7 @@ import { getOpenSubstituteRequests } from '@/db/queries/shifts'
 import { CurrentShiftPanel } from '@/components/shifts/CurrentShiftPanel'
 import { ProjectCardGrid } from '@/components/admin/projects/ProjectCardGrid'
 import { readProjectSummaries } from '@/lib/actions/projects/projects'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 
 interface DashboardPageProps {
 	params: Promise<{ locale: string }>
@@ -27,6 +28,7 @@ export default async function Page({ params }: DashboardPageProps) {
 
 	const session = await getServerSession(authOptions)
 	if (!session) redirect(`/${locale}`)
+	const centerTime = await getCenterTimeConfig()
 
 	const role = session.user.role ?? 'Patron'
 	const user = session.user.id
@@ -58,7 +60,7 @@ export default async function Page({ params }: DashboardPageProps) {
 						))}
 					</div>
 				)}
-				<CurrentShiftPanel locale={locale} />
+				<CurrentShiftPanel locale={locale} centerTime={centerTime} />
 				<h2 className="text-2xl font-semibold">Current Projects</h2>
 				{/* TODO add a prop to determine how many ProjectCards to display */}
 				<ProjectCardGrid projects={projects} locale={locale} />

@@ -1,6 +1,7 @@
 // app/api/reports/shifts/summary/route.ts
 import { db } from '@/db'
 import { resolveDateRange } from '@/lib/date-ranges'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 import type { DateRangePreset } from '@/types/shift-report'
 import { sql } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
@@ -24,15 +25,15 @@ function toPgLocalTimestamp(d: Date) {
 export async function GET(req: Request) {
 	const { searchParams } = new URL(req.url)
 	const preset = searchParams.get('preset') as DateRangePreset | null
+	const centerTime = await getCenterTimeConfig()
 
 	if (!preset) {
 		return NextResponse.json({ error: 'Missing preset' }, { status: 400 })
 	}
 
-	const { start, end } = resolveDateRange(preset)
+	const { start, end } = resolveDateRange(preset, centerTime.timeZone)
 
 	// IMPORTANT: compare + label using Boise calendar days
-	const tz = 'America/Boise'
 	const isYearRange = preset === 'ytd' || preset === 'lastYear'
 	const groupFormat = isYearRange ? 'YYYY-MM' : 'YYYY-MM-DD'
 
@@ -41,21 +42,24 @@ export async function GET(req: Request) {
 
 	const workersResult = await db.execute<CountRow>(sql`
 		select
-			to_char((arrival_at at time zone ${tz}), ${groupFormat}) as label,
+			to_char((arrival_at at time zone ${centerTime.timeZone}), ${groupFormat}) as label,
 			count(*)::int as count
 		from kiosk_shift_logs
-		where (arrival_at at time zone ${tz})
-			between ${startLocal}::timestamp and ${endLocal}::timestamp
+		where (arrival_at at time zone ${centerTime.timeZone})
+	>= ${startLocal}::timestamp
+and (arrival_at at time zone ${centerTime.timeZone})
+	< ${endLocal}::timestamp
+
 		group by 1
 		order by 1
 	`)
 
 	const patronsResult = await db.execute<CountRow>(sql`
 		select
-			to_char((created_at at time zone ${tz}), ${groupFormat}) as label,
+			to_char((created_at at time zone ${centerTime.timeZone}), ${groupFormat}) as label,
 			count(*)::int as count
 		from kiosk_visit_logs
-		where (created_at at time zone ${tz})
+		where (created_at at time zone ${centerTime.timeZone})
 			between ${startLocal}::timestamp and ${endLocal}::timestamp
 		group by 1
 		order by 1
@@ -77,6 +81,8 @@ export async function GET(req: Request) {
 		label,
 		...values,
 	}))
+
+	const tz = centerTime.timeZone
 
 	return NextResponse.json({
 		summary,

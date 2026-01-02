@@ -3,7 +3,6 @@
 
 import Link from 'next/link'
 import {
-	parseISO,
 	startOfMonth,
 	endOfMonth,
 	startOfWeek,
@@ -29,6 +28,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '../ui/card'
 import { OpenRequestsSection } from './OpenRequestsSection'
+import { formatYmdShort, formatYmdLong } from '@/utils/time'
 
 type Props = {
 	requests: CalendarRequest[]
@@ -37,6 +37,8 @@ type Props = {
 	currentUserId: string
 	locale: string
 }
+
+//CORRECTED TIMEZONE
 
 function groupRequestsByDate(requests: CalendarRequest[]) {
 	const map = new Map<string, CalendarRequest[]>()
@@ -87,8 +89,8 @@ export function SubstituteCalendarClient({
 							>
 								<div>
 									<div className="font-medium">
-										{format(parseISO(r.date), 'EEE MMM d')} ·{' '}
-										{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
+										{formatYmdShort(r.date)} · {toAmPm(r.startTime)}–
+										{toAmPm(r.endTime)}
 									</div>
 
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -131,8 +133,8 @@ export function SubstituteCalendarClient({
 							>
 								<div>
 									<div className="font-medium">
-										{format(parseISO(r.date), 'EEE MMM d')} ·{' '}
-										{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
+										{formatYmdShort(r.date)} · {toAmPm(r.startTime)}–
+										{toAmPm(r.endTime)}
 									</div>
 
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -176,7 +178,7 @@ export function SubstituteCalendarClient({
 							>
 								{/* <div>
 									<div className="font-medium">
-										{format(parseISO(r.date), 'EEE MMM d')} ·{' '}
+										{formatYmdShort(r.date)} ·{' '}
 										{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
 									</div>
 
@@ -193,8 +195,8 @@ export function SubstituteCalendarClient({
 								</Link> */}
 								<div>
 									<div className="font-medium">
-										{format(parseISO(r.date), 'EEE MMM d')} ·{' '}
-										{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
+										{formatYmdShort(r.date)} · {toAmPm(r.startTime)}–
+										{toAmPm(r.endTime)}
 									</div>
 
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -365,7 +367,7 @@ export function MonthCalendar({
 														{r.requestedBy.name}
 													</div>
 													<div className="text-xs text-muted-foreground">
-														{format(parseISO(r.date), 'EEEE, MMM d')}
+														{formatYmdLong(r.date)}
 													</div>
 													<div className="text-xs text-muted-foreground">
 														{toAmPm(r.startTime)}–{toAmPm(r.endTime)}

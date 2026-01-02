@@ -1,11 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { format, parseISO } from 'date-fns'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { toAmPm } from '@/utils/time'
+import { formatYmdLong, toAmPm } from '@/utils/time'
 import type { CalendarRequest } from '@/types/substitutes'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -17,6 +16,8 @@ type Props = {
 	collapsible?: boolean
 	defaultCollapsed?: boolean
 }
+
+//CORRECTED TIMEZONE
 
 export function OpenRequestsSection({
 	openRequests,
@@ -76,8 +77,8 @@ export function OpenRequestsSection({
 									>
 										<div>
 											<div className="font-medium">
-												{format(parseISO(r.date), 'EEE MMM d')} ·{' '}
-												{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
+												{formatYmdLong(r.date)} · {toAmPm(r.startTime)}–
+												{toAmPm(r.endTime)}
 											</div>
 
 											<div className="flex items-center gap-2 text-sm text-muted-foreground">

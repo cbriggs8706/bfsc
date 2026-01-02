@@ -9,6 +9,8 @@ import type { AvailabilityValue } from '@/types/substitutes'
 import { toAmPm } from '@/utils/time'
 import { clearAvailability } from '@/app/actions/substitute/clear-availability'
 
+//CORRECTED TIMEZONES
+
 type Shift = {
 	id: string
 	weekday: number

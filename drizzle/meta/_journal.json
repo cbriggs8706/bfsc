@@ -288,6 +288,13 @@
       "when": 1767289068126,
       "tag": "0040_demonic_zombie",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1767310781664,
+      "tag": "0041_faithful_deathstrike",
+      "breakpoints": true
     }
   ]
 }

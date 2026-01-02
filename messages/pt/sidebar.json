@@ -1,5 +1,8 @@
 {
 	"main": {
+		"home": "Início",
+		"dashboard": "Painel",
+		"dash": "Painel",
 		"groups": "Grupos",
 		"projects": "Projetos",
 		"digitization": "Digitalização",
@@ -11,11 +14,12 @@
 		"groupVisits": "Visitas em grupo",
 		"researchSpecialists": "Especialistas em pesquisa",
 		"trainingGuide": "Guia de treinamento",
-		"consultantHelps": "Ajuda dos consultores",
+		"consultantHelps": "Ajuda de consultores",
 		"communityProjects": "Projetos comunitários",
 		"memoryLane": "Caminho das memórias",
 		"activities": "Atividades",
-		"newsletters": "Boletins informativos"
+		"newsletters": "Boletins informativos",
+		"news": "Notícias"
 	},
 	"groups": {
 		"schedule": "Agendar uma visita"
