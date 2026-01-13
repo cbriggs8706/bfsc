@@ -38,7 +38,7 @@ export default function MobileFooter() {
 			icon: Newspaper,
 		},
 		{
-			name: t('dashboard'),
+			name: t('dash'),
 			href: `/${locale}/dashboard`,
 			icon: CircuitBoard,
 		},

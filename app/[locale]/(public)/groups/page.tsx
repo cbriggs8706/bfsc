@@ -1,6 +1,8 @@
 // app/[locale]/(public)/groups/page.tsx
+import { GroupActivities } from '@/components/resource/GroupActivities'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { readAllResources } from '@/lib/actions/resource/resource'
 import Link from 'next/link'
 
 interface Props {
@@ -9,6 +11,14 @@ interface Props {
 
 export default async function ClassesPage({ params }: Props) {
 	const { locale } = await params
+	const { items } = await readAllResources({
+		type: 'activity',
+		page: 1,
+		pageSize: 200,
+	})
+
+	// public page: only active
+	const active = items.filter((r) => r.isActive)
 
 	return (
 		<div className="p-4 space-y-6">
@@ -20,6 +30,8 @@ export default async function ClassesPage({ params }: Props) {
 					welcome to schedule activities at the FamilySearch Center.
 				</p>
 			</div>
+
+			<GroupActivities items={active} locale={locale} />
 
 			{/* Scheduling Info */}
 			<Card>

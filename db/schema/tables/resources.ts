@@ -31,6 +31,8 @@ export const resources = pgTable(
 		prep: text('prep'),
 		notes: text('notes'),
 		link: text('link'),
+		image: text('image'),
+		video: text('video'),
 
 		createdAt: timestamp('created_at', { withTimezone: true })
 			.notNull()

@@ -11,10 +11,12 @@ import { getCenterTimeConfig } from '@/lib/time/center-time'
 
 type Props = {
 	params: Promise<{ locale: string }>
+	searchParams: Promise<{ resourceId?: string }>
 }
 
-export default async function Page({ params }: Props) {
+export default async function Page({ params, searchParams }: Props) {
 	const { locale } = await params
+	const { resourceId } = await searchParams
 	const t = await getTranslations({ locale, namespace: 'common' })
 
 	const session = await getServerSession(authOptions)
@@ -48,6 +50,7 @@ export default async function Page({ params }: Props) {
 				faithTree={faithTree}
 				timeFormat={centerTime.timeFormat}
 				canSetStatus={false}
+				initialValues={resourceId ? { resourceId } : undefined}
 				successRedirect={`/${locale}/reservation/success`}
 			/>
 		</div>

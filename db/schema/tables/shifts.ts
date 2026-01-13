@@ -251,3 +251,63 @@ export const appSettings = pgTable(
 		),
 	})
 )
+
+export const center = pgTable(
+	'center',
+	{
+		id: integer('id').primaryKey().default(1),
+
+		name: varchar('name', { length: 120 }).notNull(),
+
+		// 4 capital letters (e.g., "BFSC")
+		abbreviation: varchar('abbreviation', { length: 4 }).notNull(),
+
+		address: varchar('address', { length: 160 }).notNull(),
+		city: varchar('city', { length: 80 }).notNull(),
+
+		// Keep as text/varchar to support "ID", "UT", etc.
+		state: varchar('state', { length: 2 }).notNull(),
+
+		// Keep as string to preserve leading zeros
+		zipcode: varchar('zipcode', { length: 10 }).notNull(),
+
+		phoneNumber: varchar('phone_number', { length: 20 }).notNull(),
+
+		primaryLanguage: varchar('primary_language', { length: 5 })
+			.notNull()
+			.default('en'),
+
+		// Optional year (e.g., 1998)
+		established: integer('established'),
+
+		createdAt: timestamp('created_at', { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+
+		updatedAt: timestamp('updated_at', { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(t) => ({
+		abbrUq: uniqueIndex('center_abbreviation_uq').on(t.abbreviation),
+		nameIdx: index('center_name_idx').on(t.name),
+
+		abbrFormatCk: check(
+			'center_abbreviation_format_ck',
+			// exactly 4 uppercase letters
+			sql`${t.abbreviation} ~ '^[A-Z]{4}$'`
+		),
+
+		stateFormatCk: check(
+			'center_state_format_ck',
+			// exactly 2 uppercase letters
+			sql`${t.state} ~ '^[A-Z]{2}$'`
+		),
+
+		establishedRangeCk: check(
+			'center_established_range_ck',
+			// allow null; otherwise a sane range
+			sql`${t.established} is null or (${t.established} between 1700 and 2100)`
+		),
+	})
+)

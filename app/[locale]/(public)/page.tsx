@@ -23,6 +23,7 @@ import { SubscribeNewsletterCTA } from '@/components/newsletters/SubscribeNewsle
 import { SidebarCalendar } from '@/components/nav/SidebarCalendar'
 import { db, operatingHours, specialHours } from '@/db'
 import { eq } from 'drizzle-orm'
+import { getCenterProfile } from '@/lib/actions/center/center'
 
 type Props = {
 	params: Promise<{ locale: NewsletterLocale }>
@@ -35,6 +36,8 @@ export default async function HomePage({ params, searchParams }: Props) {
 
 	const subscribed = sp.subscribed === '1'
 	const posts = await getPublicNewsletters(locale)
+
+	const center = await getCenterProfile()
 
 	const [latest, ...rest] = posts
 
@@ -135,11 +138,13 @@ export default async function HomePage({ params, searchParams }: Props) {
 					{/* Center Info */}
 					<div className="space-y-4 md:space-y-5">
 						<h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center whitespace-nowrap">
-							Burley FamilySearch Center
+							{center.name}
 						</h1>
 
 						<div className="space-y-2 text-lg md:text-xl text-muted-foreground text-center justify-center">
-							<p>224 East 14th Street, Burley, ID</p>
+							<p>
+								{center.address}, {center.city}, {center.state}
+							</p>
 
 							<Button
 								asChild
@@ -147,7 +152,8 @@ export default async function HomePage({ params, searchParams }: Props) {
 								className="text-2xl px-8 py-6"
 								aria-label="Call the Burley FamilySearch Center"
 							>
-								<a href="tel:+12088787286">208-878-7286</a>
+								{/* TODO make this world friendly */}
+								<a href={`tel:+1${center.phoneNumber}`}>{center.phoneNumber}</a>
 							</Button>
 						</div>
 

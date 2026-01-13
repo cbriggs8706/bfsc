@@ -1,5 +1,7 @@
 'use client'
 
+import * as React from 'react'
+import { uploadResourceImage } from '@/utils/upload-resource-image'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -28,6 +30,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Required } from '@/components/Required'
 import { Mode } from '@/types/crud'
+import Image from 'next/image'
 
 /* ------------------------------------------------------------------ */
 /* Schema (UI validation only — strings) */
@@ -46,6 +49,8 @@ function schema(t: (k: string) => string) {
 		prep: z.string().catch(''),
 		notes: z.string().catch(''),
 		link: z.union([z.literal(''), z.string().url(t('invalidUrl'))]).catch(''),
+		video: z.union([z.literal(''), z.string().url(t('invalidUrl'))]).catch(''),
+		image: z.string().catch(''),
 	})
 }
 
@@ -88,6 +93,8 @@ export function ResourceForm({
 			prep: '',
 			notes: '',
 			link: '',
+			video: '',
+			image: '',
 			...initialValues,
 		},
 	})
@@ -279,6 +286,37 @@ export function ResourceForm({
 								</Field>
 							)}
 						/>
+
+						{/* Image */}
+						<Controller
+							name="image"
+							control={control}
+							render={({ field }) => (
+								<Field>
+									<FieldLabel>{t('image')}</FieldLabel>
+									<ResourceImageField
+										value={field.value ?? ''}
+										disabled={fieldsDisabled}
+										onChange={field.onChange}
+									/>
+								</Field>
+							)}
+						/>
+
+						{/* Video */}
+						<Controller
+							name="video"
+							control={control}
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid}>
+									<FieldLabel>{t('videoUrl')}</FieldLabel>
+									<Input {...field} disabled={fieldsDisabled} />
+									{fieldState.error && (
+										<FieldError errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
 					</FieldGroup>
 				</form>
 			</CardContent>
@@ -302,5 +340,96 @@ export function ResourceForm({
 				)}
 			</CardFooter>
 		</Card>
+	)
+}
+
+function ResourceImageField(props: {
+	value: string
+	disabled?: boolean
+	onChange: (url: string) => void
+}) {
+	const { value, disabled, onChange } = props
+	const fileRef = React.useRef<HTMLInputElement | null>(null)
+	const [isUploading, setIsUploading] = React.useState(false)
+	const [error, setError] = React.useState<string | null>(null)
+
+	async function handlePickFile(e: React.ChangeEvent<HTMLInputElement>) {
+		const file = e.target.files?.[0]
+		if (!file) return
+
+		setError(null)
+		setIsUploading(true)
+
+		try {
+			const url = await uploadResourceImage(file)
+			onChange(url)
+		} catch (err) {
+			if (err instanceof Error) {
+				setError(err.message)
+			} else {
+				setError('Upload failed.')
+			}
+		} finally {
+			setIsUploading(false)
+			if (fileRef.current) fileRef.current.value = ''
+		}
+	}
+
+	return (
+		<div className="space-y-2">
+			<input
+				ref={fileRef}
+				type="file"
+				accept="image/*"
+				className="hidden"
+				onChange={handlePickFile}
+				disabled={disabled || isUploading}
+			/>
+
+			<div className="flex items-center gap-2">
+				<Button
+					type="button"
+					variant="secondary"
+					onClick={() => fileRef.current?.click()}
+					disabled={disabled || isUploading}
+				>
+					{isUploading
+						? 'Uploading…'
+						: value
+						? 'Replace image'
+						: 'Upload image'}
+				</Button>
+
+				{value ? (
+					<Button
+						type="button"
+						variant="ghost"
+						onClick={() => onChange('')}
+						disabled={disabled || isUploading}
+					>
+						Remove
+					</Button>
+				) : null}
+			</div>
+
+			{/* optional: show stored url */}
+			<Input value={value ?? ''} readOnly />
+
+			{value ? (
+				<div className="rounded-md border overflow-hidden w-full max-w-[320px]">
+					<div className="relative w-full max-w-[320px] aspect-video">
+						<Image
+							src={value}
+							alt="Resource image"
+							fill
+							className="object-contain"
+							sizes="320px"
+						/>
+					</div>
+				</div>
+			) : null}
+
+			{error ? <p className="text-sm text-destructive">{error}</p> : null}
+		</div>
 	)
 }

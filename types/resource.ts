@@ -132,4 +132,6 @@ export type ResourceFormValues = {
 	prep: string
 	notes: string
 	link: string
+	video: string
+	image: string
 }

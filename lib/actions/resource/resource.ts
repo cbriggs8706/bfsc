@@ -1,3 +1,4 @@
+// lib/actions/resource/resource.ts
 'use server'
 
 import { db } from '@/db'
@@ -18,7 +19,9 @@ const ResourceInputSchema = z.object({
 	requiredItems: z.string().optional(),
 	prep: z.string().optional(),
 	notes: z.string().optional(),
+	image: z.string().optional(),
 	link: z.union([z.literal(''), z.string().url()]).optional(),
+	video: z.union([z.literal(''), z.string().url()]).optional(),
 })
 
 export type ResourceActionResult = { ok: true } | { ok: false; message: string }
@@ -44,7 +47,9 @@ export async function readResource(resourceId: string) {
 		requiredItems: row.requiredItems ?? '',
 		prep: row.prep ?? '',
 		notes: row.notes ?? '',
+		image: row.image ?? '',
 		link: row.link ?? '',
+		video: row.video ?? '',
 	}
 }
 
@@ -80,7 +85,9 @@ export async function readAllResources(filters?: {
 			requiredItems: resources.requiredItems,
 			prep: resources.prep,
 			notes: resources.notes,
+			image: resources.image,
 			link: resources.link,
+			video: resources.video,
 		})
 		.from(resources)
 		.where(and(...where))
@@ -106,7 +113,9 @@ export async function readAllResources(filters?: {
 			requiredItems: r.requiredItems,
 			prep: r.prep,
 			notes: r.notes,
+			image: r.image,
 			link: r.link,
+			video: r.video,
 		})),
 		total: Number(total),
 	}
