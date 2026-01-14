@@ -2,6 +2,7 @@
 
 import { AnyLessonBlock, LessonBlock } from '@/types/training'
 import Image from 'next/image'
+import { Card } from '../ui/card'
 
 type Props = {
 	blocks: AnyLessonBlock[]
@@ -9,7 +10,7 @@ type Props = {
 
 export function LessonBlocksRenderer({ blocks }: Props) {
 	return (
-		<div className="space-y-4">
+		<Card className="space-y-4 p-4">
 			{blocks.map((block) => {
 				switch (block.type) {
 					case 'text':
@@ -20,7 +21,7 @@ export function LessonBlocksRenderer({ blocks }: Props) {
 						return <LinkBlock key={block.id} block={block} />
 				}
 			})}
-		</div>
+		</Card>
 	)
 }
 

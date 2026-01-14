@@ -1,12 +1,11 @@
-// app/[locale]/(workers)/training/lessons/[lessonId]/page.tsx
-
 import { db } from '@/db'
-import { eq } from 'drizzle-orm'
-import { learningLessons } from '@/db'
+import { eq, and } from 'drizzle-orm'
+import { learningLessons, learningLessonCompletions } from '@/db'
 import { notFound } from 'next/navigation'
 import { UserLesson } from '@/types/training'
 import { mapLessonBlock } from '@/lib/training/block-mapper'
 import { LessonViewer } from '@/components/training/LessonViewer'
+import { getCurrentUser } from '@/lib/auth'
 
 type Props = {
 	params: { locale: string; lessonId: string }
@@ -14,6 +13,9 @@ type Props = {
 
 export default async function LessonPage({ params }: Props) {
 	const { locale, lessonId } = await params
+
+	const user = await getCurrentUser()
+	if (!user) return null
 
 	const lesson = await db.query.learningLessons.findFirst({
 		where: eq(learningLessons.id, lessonId),
@@ -26,12 +28,19 @@ export default async function LessonPage({ params }: Props) {
 
 	if (!lesson) notFound()
 
+	const completion = await db.query.learningLessonCompletions.findFirst({
+		where: and(
+			eq(learningLessonCompletions.userId, user.id),
+			eq(learningLessonCompletions.lessonId, lessonId)
+		),
+	})
+
 	const userLesson: UserLesson = {
 		id: lesson.id,
 		title: lesson.title,
-		isCompleted: false, // completion handled in course view
+		isCompleted: Boolean(completion),
 		blocks: lesson.blocks.map(mapLessonBlock),
 	}
 
-	return <LessonViewer lesson={userLesson} />
+	return <LessonViewer lesson={userLesson} locale={locale} />
 }

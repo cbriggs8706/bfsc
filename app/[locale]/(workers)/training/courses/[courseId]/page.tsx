@@ -71,5 +71,15 @@ export default async function CoursePage({ params }: Props) {
 		})),
 	}
 
-	return <CourseViewer course={userCourse} locale={locale} />
+	return (
+		<div className="p-4 space-y-4">
+			<div>
+				<h1 className="text-3xl font-bold">Course</h1>
+				{/* <p className="text-sm text-muted-foreground">
+					{t('classes.deleteSub')}
+				</p> */}
+			</div>
+			<CourseViewer course={userCourse} locale={locale} />
+		</div>
+	)
 }
