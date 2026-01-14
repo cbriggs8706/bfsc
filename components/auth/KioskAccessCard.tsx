@@ -4,14 +4,16 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
-import { formatPhoneDisplay } from '@/utils/phone'
+import { formatPhoneInternational } from '@/utils/phone'
 import { KioskAccessDialog } from './KioskAccessDialog'
+import type { CountryCode } from 'libphonenumber-js'
 
 interface Props {
 	kioskPersonId: string
 	phone: string | null
 	passcode: string | null
 	onUpdated: () => void
+	countryCode: CountryCode
 }
 
 export function KioskAccessCard({
@@ -19,6 +21,7 @@ export function KioskAccessCard({
 	phone,
 	passcode,
 	onUpdated,
+	countryCode,
 }: Props) {
 	const t = useTranslations('auth.kiosk')
 	const [open, setOpen] = useState(false)
@@ -36,7 +39,7 @@ export function KioskAccessCard({
 				<CardContent className="space-y-2 text-sm md:text-base">
 					<div>
 						<span className="font-medium">{t('phone')}:</span>{' '}
-						{phone ? formatPhoneDisplay(phone) : '—'}
+						{phone ? formatPhoneInternational(phone) : '—'}
 					</div>
 
 					<div>
@@ -56,6 +59,7 @@ export function KioskAccessCard({
 					setOpen(false)
 					onUpdated()
 				}}
+				countryCode={countryCode}
 			/>
 		</>
 	)

@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getTranslations } from 'next-intl/server'
 import UserDetails from '@/components/auth/AuthUserDetails'
+import { getCenterProfile } from '@/lib/actions/center/center'
 
 interface Props {
 	params: Promise<{ locale: string }>
@@ -13,6 +14,7 @@ interface Props {
 export default async function Page({ params }: Props) {
 	const { locale } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
+	const center = await getCenterProfile()
 
 	const session = await getServerSession(authOptions)
 	// const userId = session?.user.id
@@ -24,7 +26,7 @@ export default async function Page({ params }: Props) {
 				<h1 className="text-3xl font-bold">{t('userAccount')}</h1>
 				<p className="text-sm text-muted-foreground">{t('userSub')}</p>
 			</div>
-			<UserDetails />
+			<UserDetails countryCode={center.phoneCountry} />
 		</div>
 	)
 }

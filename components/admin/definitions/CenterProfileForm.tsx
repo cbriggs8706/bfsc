@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select'
 
 import { upsertCenterProfile } from '@/lib/actions/center/center'
+import { normalizePhoneToE164, toCountryCode } from '@/utils/phone'
 
 const CenterProfileSchema = z.object({
 	name: z.string().min(2, 'Name is required'),
@@ -31,7 +32,11 @@ const CenterProfileSchema = z.object({
 		.string()
 		.min(5, 'Zipcode is required')
 		.max(10, 'Zipcode is too long'),
-	phoneNumber: z.string().min(7, 'Phone number is required').max(20),
+	phoneCountry: z
+		.string()
+		.regex(/^[A-Z]{2}$/)
+		.default('US'),
+	phoneNumber: z.string().min(4, 'Phone number is required').max(40),
 
 	// ✅ REQUIRED string, with default provided via useForm defaultValues
 	primaryLanguage: z.string().min(2).default('en'),
@@ -60,6 +65,7 @@ type Props = {
 		state: string
 		zipcode: string
 		phoneNumber: string
+		phoneCountry: string
 		primaryLanguage: string
 		established: number | null
 	}
@@ -77,6 +83,7 @@ export function CenterProfileForm({ initialCenter }: Props) {
 			state: (initialCenter.state ?? '').toUpperCase(),
 			zipcode: initialCenter.zipcode ?? '',
 			phoneNumber: initialCenter.phoneNumber ?? '',
+			phoneCountry: (initialCenter.phoneCountry ?? 'US').toUpperCase(),
 			primaryLanguage: initialCenter.primaryLanguage ?? 'en',
 			established: initialCenter.established ?? null,
 		}),
@@ -98,9 +105,17 @@ export function CenterProfileForm({ initialCenter }: Props) {
 		startTransition(async () => {
 			try {
 				const parsed = CenterProfileSchema.parse(values) // CenterProfilePayload
+				const phoneCountry = toCountryCode(parsed.phoneCountry, 'US')
 
+				const e164 = normalizePhoneToE164(parsed.phoneNumber, phoneCountry)
+				if (!e164) {
+					toast.error('Phone number is not valid for the selected country')
+					return
+				}
 				const payload = {
 					...parsed,
+					phoneNumber: e164, //
+					phoneCountry,
 					abbreviation: parsed.abbreviation.toUpperCase().slice(0, 4),
 					state: parsed.state.toUpperCase().slice(0, 2),
 					primaryLanguage: parsed.primaryLanguage || 'en',
@@ -228,17 +243,31 @@ export function CenterProfileForm({ initialCenter }: Props) {
 							)}
 						</div>
 
-						<div className="space-y-1">
-							<label className="text-sm font-medium">Phone Number</label>
-							<Input
-								{...register('phoneNumber')}
-								placeholder="(208) 555-1234"
-							/>
-							{errors.phoneNumber && (
-								<p className="text-xs text-destructive">
-									{errors.phoneNumber.message}
-								</p>
-							)}
+						<div className="grid gap-4 md:grid-cols-3">
+							<div className="space-y-1">
+								<label className="text-sm font-medium">Country</label>
+								<Input
+									{...register('phoneCountry')}
+									placeholder="US"
+									maxLength={2}
+									onChange={(e) => {
+										const v = e.target.value
+											.toUpperCase()
+											.replace(/[^A-Z]/g, '')
+										setValue('phoneCountry', v.slice(0, 2), {
+											shouldValidate: true,
+										})
+									}}
+								/>
+							</div>
+
+							<div className="space-y-1 md:col-span-2">
+								<label className="text-sm font-medium">Phone Number</label>
+								<Input
+									{...register('phoneNumber')}
+									placeholder="+1 208 555 1234"
+								/>
+							</div>
 						</div>
 
 						<div className="space-y-1">

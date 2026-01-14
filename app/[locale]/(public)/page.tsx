@@ -24,6 +24,7 @@ import { SidebarCalendar } from '@/components/nav/SidebarCalendar'
 import { db, operatingHours, specialHours } from '@/db'
 import { eq } from 'drizzle-orm'
 import { getCenterProfile } from '@/lib/actions/center/center'
+import { formatPhoneInternational } from '@/utils/phone'
 
 type Props = {
 	params: Promise<{ locale: NewsletterLocale }>
@@ -153,7 +154,9 @@ export default async function HomePage({ params, searchParams }: Props) {
 								aria-label="Call the Burley FamilySearch Center"
 							>
 								{/* TODO make this world friendly */}
-								<a href={`tel:+1${center.phoneNumber}`}>{center.phoneNumber}</a>
+								<a href={`tel:+1${center.phoneNumber}`}>
+									{formatPhoneInternational(center.phoneNumber)}
+								</a>
 							</Button>
 						</div>
 

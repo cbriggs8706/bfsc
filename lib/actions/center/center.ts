@@ -6,6 +6,8 @@ import { eq } from 'drizzle-orm'
 // ✅ Adjust these two imports to match your project
 import { db } from '@/db'
 import { center } from '@/db/schema/tables/shifts'
+import { type CountryCode } from 'libphonenumber-js'
+import { toCountryCode } from '@/utils/phone'
 
 type CenterProfile = {
 	name: string
@@ -15,6 +17,7 @@ type CenterProfile = {
 	state: string
 	zipcode: string
 	phoneNumber: string
+	phoneCountry: CountryCode
 	primaryLanguage: string
 	established: number | null
 }
@@ -27,6 +30,7 @@ const DEFAULT_CENTER: CenterProfile = {
 	state: '',
 	zipcode: '',
 	phoneNumber: '',
+	phoneCountry: 'US',
 	primaryLanguage: 'en',
 	established: null,
 }
@@ -46,6 +50,7 @@ export async function getCenterProfile(): Promise<CenterProfile> {
 		state: row.state ?? '',
 		zipcode: row.zipcode ?? '',
 		phoneNumber: row.phoneNumber ?? '',
+		phoneCountry: toCountryCode(row.phoneCountry, 'US'),
 		primaryLanguage: row.primaryLanguage ?? 'en',
 		established: row.established ?? null,
 	}

@@ -271,7 +271,13 @@ export const center = pgTable(
 		// Keep as string to preserve leading zeros
 		zipcode: varchar('zipcode', { length: 10 }).notNull(),
 
+		// ✅ store E.164, like "+12085551234"
 		phoneNumber: varchar('phone_number', { length: 20 }).notNull(),
+
+		// ✅ keep country so parsing/normalizing works globally
+		phoneCountry: varchar('phone_country', { length: 2 })
+			.notNull()
+			.default('US'),
 
 		primaryLanguage: varchar('primary_language', { length: 5 })
 			.notNull()
@@ -302,6 +308,18 @@ export const center = pgTable(
 			'center_state_format_ck',
 			// exactly 2 uppercase letters
 			sql`${t.state} ~ '^[A-Z]{2}$'`
+		),
+
+		// ✅ E.164 basic check: + then 8–15 digits (E.164 max is 15 digits)
+		phoneE164Ck: check(
+			'center_phone_e164_ck',
+			sql`${t.phoneNumber} ~ '^\\+[1-9][0-9]{7,14}$'`
+		),
+
+		// ✅ ISO-3166 alpha-2 check (simple)
+		phoneCountryCk: check(
+			'center_phone_country_ck',
+			sql`${t.phoneCountry} ~ '^[A-Z]{2}$'`
 		),
 
 		establishedRangeCk: check(

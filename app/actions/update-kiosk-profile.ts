@@ -2,7 +2,8 @@
 
 import { db } from '@/db'
 import { kioskPeople } from '@/db'
-import { normalizePhone } from '@/utils/phone'
+import { getCenterProfile } from '@/lib/actions/center/center'
+import { normalizePhoneToE164 } from '@/utils/phone'
 import { eq } from 'drizzle-orm'
 
 interface UpdateKioskProfileInput {
@@ -23,9 +24,11 @@ interface UpdateKioskProfileInput {
 export async function updateKioskProfile(
 	input: UpdateKioskProfileInput
 ): Promise<void> {
+	const center = await getCenterProfile()
+
 	const normalizedPhone =
 		input.phone !== undefined && input.phone !== null
-			? normalizePhone(input.phone)
+			? normalizePhoneToE164(input.phone, center.phoneCountry)
 			: undefined
 
 	await db

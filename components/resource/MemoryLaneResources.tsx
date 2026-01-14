@@ -48,29 +48,23 @@ export function MemoryLaneResources({
 	return (
 		<div className="space-y-6">
 			{items.map((r, idx) => {
-				const imageOnLeft = idx % 2 === 1
 				const hasImage = isHttpUrl(r.image)
+				const imageOnLeftLg = idx % 2 === 1 // alternate only on lg+
 
-				const imageBlock = (
-					<div className="relative w-full h-96 flex items-center justify-center">
-						{hasImage ? (
-							<Image
-								src={r.image!}
-								alt={r.name}
-								fill
-								sizes="(max-width: 1024px) 100vw, 33vw"
-								className="object-cover object-center border-4 border-background rounded-2xl shadow-lg"
-							/>
-						) : (
-							<div className="w-full h-full rounded-2xl border bg-muted/40 flex items-center justify-center text-sm text-muted-foreground">
-								No image
-							</div>
-						)}
+				const imageBlock = hasImage ? (
+					<div className="relative w-full aspect-4/3 lg:h-80 overflow-hidden rounded-2xl">
+						<Image
+							src={r.image!}
+							alt={r.name}
+							fill
+							sizes="(max-width: 1024px) 100vw, 33vw"
+							className="object-cover object-center"
+						/>
 					</div>
-				)
+				) : null
 
 				const textBlock = (
-					<div className="col-span-1 lg:col-span-2 space-y-4">
+					<div className="space-y-4">
 						{r.description ? <p>{r.description}</p> : null}
 						{r.requiredItems ? <p>{r.requiredItems}</p> : null}
 						{r.prep ? <p>{r.prep}</p> : null}
@@ -80,6 +74,7 @@ export function MemoryLaneResources({
 							<Link href={`/${locale}/reservation?resourceId=${r.id}`}>
 								<Button>Make A Reservation</Button>
 							</Link>
+
 							{isHttpUrl(r.link) ? (
 								<Link href={r.link!} target="_blank">
 									<Button>More Info</Button>
@@ -98,17 +93,31 @@ export function MemoryLaneResources({
 				return (
 					<Card key={r.id}>
 						<CardHeader className="text-xl font-bold">{r.name}</CardHeader>
-						<CardContent className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-							{imageOnLeft ? (
+
+						<CardContent className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start">
+							{hasImage ? (
 								<>
-									{imageBlock}
-									{textBlock}
+									{/* Mobile: image first.  Desktop (lg+): alternate via lg:order */}
+									<div
+										className={[
+											'order-1 lg:col-span-1',
+											imageOnLeftLg ? 'lg:order-1' : 'lg:order-2',
+										].join(' ')}
+									>
+										{imageBlock}
+									</div>
+
+									<div
+										className={[
+											'order-2 lg:col-span-2',
+											imageOnLeftLg ? 'lg:order-2' : 'lg:order-1',
+										].join(' ')}
+									>
+										{textBlock}
+									</div>
 								</>
 							) : (
-								<>
-									{textBlock}
-									{imageBlock}
-								</>
+								<div className="lg:col-span-3">{textBlock}</div>
 							)}
 						</CardContent>
 					</Card>

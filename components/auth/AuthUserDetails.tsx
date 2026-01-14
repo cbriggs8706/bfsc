@@ -10,6 +10,7 @@ import { LanguagesCard } from './LanguagesCard'
 import { PidCard } from './PidCard'
 import { AvatarCard } from './AvatarCard'
 import { fetchFaithTree } from '@/app/actions/get-faith-tree'
+import type { CountryCode } from 'libphonenumber-js'
 
 export interface UserDetailsData {
 	// kiosk_people
@@ -36,7 +37,11 @@ export interface UserDetailsData {
 	lastLogin?: string | Date
 }
 
-export default function UserDetails() {
+type Props = {
+	countryCode: CountryCode
+}
+
+export default function UserDetails({ countryCode }: Props) {
 	const [details, setDetails] = useState<UserDetailsData | null>(null)
 	const [faithTree, setFaithTree] = useState<Faith[]>([])
 	const hasAttemptedLinkRef = useRef(false)
@@ -121,6 +126,7 @@ export default function UserDetails() {
 					phone={details.phone ?? null}
 					passcode={details.passcode ?? null}
 					onUpdated={reloadDetails}
+					countryCode={countryCode}
 				/>
 			)}
 

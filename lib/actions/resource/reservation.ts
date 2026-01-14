@@ -11,8 +11,9 @@ import { z } from 'zod'
 
 import { getAvailability } from './availability'
 import { toLocalYMD, toHHMMUtc, toUtcDateTime } from '@/utils/time'
-import { normalizePhone } from '@/utils/phone'
+import { normalizePhoneToE164 } from '@/utils/phone'
 import { notifyReservationChanged } from '@/lib/notifications/reservation-notify'
+import { getCenterProfile } from '../center/center'
 
 /* ------------------------------------------------------------------ */
 /* Types */
@@ -162,8 +163,9 @@ export async function saveReservation(
 	}
 	const data = parsed.data
 	// console.log('data', data)
+	const center = await getCenterProfile()
 
-	const normalizedPhone = normalizePhone(data.phone)
+	const normalizedPhone = normalizePhoneToE164(data.phone, center.phoneCountry)
 
 	if (!normalizedPhone) {
 		return { ok: false, message: 'Invalid phone number' }

@@ -13,8 +13,9 @@ import { useForm, Controller } from 'react-hook-form'
 import { useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { updateKioskProfile } from '@/app/actions/update-kiosk-profile'
-import { normalizePhone } from '@/utils/phone'
+import { normalizePhoneToE164 } from '@/utils/phone'
 import { toast } from 'sonner'
+import type { CountryCode } from 'libphonenumber-js'
 
 interface Props {
 	open: boolean
@@ -23,6 +24,7 @@ interface Props {
 	initialPhone: string | null
 	initialPasscode: string | null
 	onSaved: () => void
+	countryCode: CountryCode
 }
 
 type FormValues = {
@@ -37,6 +39,7 @@ export function KioskAccessDialog({
 	initialPhone,
 	initialPasscode,
 	onSaved,
+	countryCode,
 }: Props) {
 	const t = useTranslations('auth.kiosk')
 	const [isPending, startTransition] = useTransition()
@@ -53,7 +56,9 @@ export function KioskAccessDialog({
 	}
 
 	const onSubmit = (values: FormValues) => {
-		const normalizedPhone = values.phone ? normalizePhone(values.phone) : null
+		const normalizedPhone = values.phone
+			? normalizePhoneToE164(values.phone, countryCode)
+			: null
 
 		if (values.phone && !normalizedPhone) {
 			toast.error(t('invalidPhone'))
