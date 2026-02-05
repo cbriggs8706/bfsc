@@ -27,6 +27,10 @@ export const kioskPeople = pgTable('kiosk_people', {
 		.array()
 		.notNull()
 		.default(sql`ARRAY[]::text[]`),
+	researchSpecialties: text('research_specialties')
+		.array()
+		.notNull()
+		.default(sql`ARRAY[]::text[]`),
 	pid: text('pid'),
 	faithId: uuid('faith_id').references(() => faiths.id, {
 		onDelete: 'set null',

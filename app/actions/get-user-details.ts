@@ -46,6 +46,7 @@ export async function getUserDetails(): Promise<UserDetailsData | null> {
 		kioskPersonId: kiosk?.id,
 		profileImageUrl: kiosk?.profileImageUrl ?? null,
 		languagesSpoken: kiosk?.languagesSpoken ?? [],
+		researchSpecialties: kiosk?.researchSpecialties ?? [],
 		pid: kiosk?.pid ?? null,
 		phone: kiosk?.phone ?? null,
 		passcode: kiosk?.passcode ?? null,

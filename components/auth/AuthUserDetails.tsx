@@ -9,6 +9,7 @@ import { KioskAccessCard } from './KioskAccessCard'
 import { LanguagesCard } from './LanguagesCard'
 import { PidCard } from './PidCard'
 import { AvatarCard } from './AvatarCard'
+import { SpecialtiesCard } from './SpecialtiesCard'
 import { fetchFaithTree } from '@/app/actions/get-faith-tree'
 import type { CountryCode } from 'libphonenumber-js'
 
@@ -17,6 +18,7 @@ export interface UserDetailsData {
 	kioskPersonId?: string
 	profileImageUrl?: string | null
 	languagesSpoken?: string[]
+	researchSpecialties?: string[]
 	pid?: string | null
 	phone?: string | null
 	passcode?: string | null
@@ -134,6 +136,13 @@ export default function UserDetails({ countryCode }: Props) {
 				<LanguagesCard
 					kioskPersonId={details.kioskPersonId}
 					languages={details.languagesSpoken ?? []}
+					onUpdated={reloadDetails}
+				/>
+			)}
+			{details?.kioskPersonId && (
+				<SpecialtiesCard
+					kioskPersonId={details.kioskPersonId}
+					specialties={details.researchSpecialties ?? []}
 					onUpdated={reloadDetails}
 				/>
 			)}

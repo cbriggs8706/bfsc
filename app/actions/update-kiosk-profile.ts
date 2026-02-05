@@ -16,6 +16,7 @@ interface UpdateKioskProfileInput {
 	passcode?: string | null
 	profileImageUrl?: string | null
 	languagesSpoken?: string[]
+	researchSpecialties?: string[]
 	pid?: string
 	faithId?: string | null
 	wardId?: string | null
@@ -45,6 +46,9 @@ export async function updateKioskProfile(
 			}),
 			...(input.languagesSpoken !== undefined && {
 				languagesSpoken: input.languagesSpoken,
+			}),
+			...(input.researchSpecialties !== undefined && {
+				researchSpecialties: input.researchSpecialties,
 			}),
 			...(normalizedPhone !== undefined && { phone: normalizedPhone }),
 			...(input.pid !== undefined && { pid: input.pid }),
