@@ -43,7 +43,7 @@ const schema = z
 		photographerName: z.string().optional(),
 		description: z.string().min(5, 'Required'),
 
-		isMinor: z.boolean().default(false),
+		isMinor: z.boolean(),
 		parentName: z.string().optional(),
 		parentPhone: z.string().optional(),
 		parentAddress: z.string().optional(),
@@ -53,7 +53,7 @@ const schema = z
 		grantorSignature: z.string().min(1, 'Required'),
 		grantorDate: z.string().min(1, 'Required'),
 
-		additionalGrantors: z.array(additionalGrantorSchema).default([]),
+		additionalGrantors: z.array(additionalGrantorSchema),
 
 		consentConfirmed: z.boolean().refine((v) => v, 'You must agree'),
 	})
