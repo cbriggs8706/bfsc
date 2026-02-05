@@ -4,6 +4,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import {
+	ReservationDialog,
+	type ReservationDialogData,
+} from '@/components/resource/ReservationDialog'
 
 type ResourceType = 'equipment' | 'room' | 'booth' | 'activity'
 
@@ -37,16 +41,22 @@ function isHttpUrl(v: string | null | undefined) {
 export function GroupActivities({
 	items,
 	locale,
+	reservationData,
+	canReserve,
+	loginHref,
 }: {
 	items: GroupActivity[]
 	locale: string
+	reservationData: ReservationDialogData
+	canReserve: boolean
+	loginHref: string
 }) {
 	if (!items.length) {
 		return <p className="text-sm text-muted-foreground">No resources found.</p>
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="grid gap-6 lg:grid-cols-3">
 			{items.map((r, idx) => {
 				const hasImage = isHttpUrl(r.image)
 				const imageOnLeftLg = idx % 2 === 1 // alternate only on lg+
@@ -71,9 +81,22 @@ export function GroupActivities({
 						{r.notes ? <p>{r.notes}</p> : null}
 
 						<div className="flex flex-wrap gap-2">
-							<Link href={`/${locale}/reservation?resourceId=${r.id}`}>
-								<Button>Make A Reservation</Button>
-							</Link>
+							<div className="flex flex-col items-start gap-1">
+								{canReserve ? (
+									<ReservationDialog
+										locale={locale}
+										resourceId={r.id}
+										data={reservationData}
+									/>
+								) : (
+									<Link href={loginHref}>
+										<Button>Make A Reservation</Button>
+									</Link>
+								)}
+								<span className="text-xs text-muted-foreground">
+									Requires login
+								</span>
+							</div>
 
 							{isHttpUrl(r.link) ? (
 								<Link href={r.link!} target="_blank">

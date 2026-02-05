@@ -5,6 +5,11 @@ import { Card, CardContent } from '@/components/ui/card'
 import { SocialMediaConsentDialog } from '@/components/forms/SocialMediaConsentDialog'
 import { readAllResources } from '@/lib/actions/resource/resource'
 import Link from 'next/link'
+import { getFaithTree } from '@/db/queries/faiths'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import type { Resource } from '@/types/resource'
 
 interface Props {
 	params: Promise<{ locale: string }>
@@ -12,14 +17,25 @@ interface Props {
 
 export default async function ClassesPage({ params }: Props) {
 	const { locale } = await params
+	const session = await getServerSession(authOptions)
 	const { items } = await readAllResources({
 		type: 'activity',
 		page: 1,
 		pageSize: 200,
 	})
+	const { items: reservationItems } = await readAllResources({
+		page: 1,
+		pageSize: 200,
+	})
+	const centerTime = await getCenterTimeConfig()
+	const faithTree = await getFaithTree()
 
 	// public page: only active
 	const active = items.filter((r) => r.isActive)
+	const reservationResources = reservationItems.map((r) => ({
+		...r,
+		type: r.type as Resource['type'],
+	}))
 
 	return (
 		<div className="p-4 space-y-6">
@@ -32,10 +48,20 @@ export default async function ClassesPage({ params }: Props) {
 				</p>
 			</div>
 
-			<GroupActivities items={active} locale={locale} />
+			<GroupActivities
+				items={active}
+				locale={locale}
+				reservationData={{
+					resources: reservationResources,
+					faithTree,
+					timeFormat: centerTime.timeFormat,
+				}}
+				canReserve={Boolean(session)}
+				loginHref={`/${locale}/login?redirect=/${locale}/groups`}
+			/>
 
 			{/* Scheduling Info */}
-			<Card>
+			{/* <Card>
 				<CardContent className="space-y-3">
 					<p>
 						Appointments are available during regular hours, evenings, Fridays,
@@ -46,7 +72,7 @@ export default async function ClassesPage({ params }: Props) {
 						<Button>View Calendar</Button>
 					</Link>
 				</CardContent>
-			</Card>
+			</Card> */}
 
 			<Card>
 				<CardContent className="space-y-3">
@@ -59,54 +85,55 @@ export default async function ClassesPage({ params }: Props) {
 				</CardContent>
 			</Card>
 
-			{/* Community Groups */}
-			<Card>
-				<CardContent className="space-y-3">
-					<h2 className="text-xl font-semibold">Community Groups</h2>
-					<p>
-						Community groups are welcome. We offer specialized classes to meet
-						your group’s needs.
-					</p>
-					<ul className="list-disc pl-5 text-base space-y-1">
-						<li>Minimum of 5 people</li>
-						<li>Can accommodate 40–80 people depending on the activity</li>
-					</ul>
-					<p className="text-base">
-						Please contact one of the Stake Assistants listed below or{' '}
-						<Link href="tel:+12084310457">
-							<Button className="ml-2">Melani (208) 431-0457</Button>
-						</Link>
-					</p>
-				</CardContent>
-			</Card>
+			<div className="grid gap-6 lg:grid-cols-2">
+				{/* Community Groups */}
+				<Card>
+					<CardContent className="space-y-3">
+						<h2 className="text-xl font-semibold">Community Groups</h2>
+						<p>
+							Community groups are welcome. We offer specialized classes to meet
+							your group’s needs.
+						</p>
+						<ul className="list-disc pl-5 text-base space-y-1">
+							<li>Minimum of 5 people</li>
+							<li>Can accommodate 40–80 people depending on the activity</li>
+						</ul>
+						<p className="text-base">
+							Please contact one of the Stake Assistants listed below or{' '}
+							<Link href="tel:+12084310457">
+								<Button className="ml-2">Melani (208) 431-0457</Button>
+							</Link>
+						</p>
+					</CardContent>
+				</Card>
 
-			{/* Youth Groups */}
-			<Card>
-				<CardContent className="space-y-4">
-					<h2 className="text-xl font-semibold">
-						Church of Jesus Christ of Latter-day Saints – Youth Groups
-					</h2>
-					<p>
-						Wednesday evenings are available for youth groups. Groups of around
-						20 or fewer are preferred for a more hands-on experience, with a
-						maximum of 40 youth.
-					</p>
-					<p className="text-base">
-						All youth reservations must be made at least one week in advance
-						through
-						<Link href="tel:+12082426217">
-							<Button className="ml-2">Trina (208) 242-6217</Button>
-						</Link>
-					</p>
-					<p className="text-base italic">
-						Each participant should bring their FamilySearch (or Church) login
-						name and password.
-					</p>
-				</CardContent>
-			</Card>
+				{/* Youth Groups */}
+				<Card>
+					<CardContent className="space-y-4">
+						<h2 className="text-xl font-semibold">
+							Church of Jesus Christ of Latter-day Saints – Youth Groups
+						</h2>
+						<p>
+							Wednesday evenings are available for youth groups. Groups of
+							around 20 or fewer are preferred for a more hands-on experience,
+							with a maximum of 40 youth.
+						</p>
+						<p className="text-base">
+							All youth reservations must be made at least one week in advance
+							through
+							<Link href="tel:+12082426217">
+								<Button className="ml-2">Trina (208) 242-6217</Button>
+							</Link>
+						</p>
+						<p className="text-base italic">
+							Each participant should bring their FamilySearch (or Church) login
+							name and password.
+						</p>
+					</CardContent>
+				</Card>
 
-			{/* Youth Options */}
-			<Card>
+				{/* Youth Options */}
+				{/* <Card>
 				<CardContent className="space-y-4">
 					<h3 className="text-lg font-semibold">Youth Activity Options</h3>
 					<ul className="space-y-2 text-base">
@@ -146,42 +173,42 @@ export default async function ClassesPage({ params }: Props) {
 						contact your Stake Assistants.
 					</p>
 				</CardContent>
-			</Card>
+			</Card> */}
 
-			{/* YSA Groups */}
-			<Card>
-				<CardContent className="space-y-3">
-					<h2 className="text-xl font-semibold">YSA Groups</h2>
-					<p>Monday nights are available primarily for YSA groups.</p>
-					<p className="text-base">
-						All YSA reservations are made through
-						<Link href="tel:+12084310457">
-							<Button className="ml-2">Melani (208) 431-0457</Button>
-						</Link>
-					</p>
-				</CardContent>
-			</Card>
+				{/* YSA Groups */}
+				<Card>
+					<CardContent className="space-y-3">
+						<h2 className="text-xl font-semibold">YSA Groups</h2>
+						<p>Monday nights are available primarily for YSA groups.</p>
+						<p className="text-base">
+							All YSA reservations are made through
+							<Link href="tel:+12084310457">
+								<Button className="ml-2">Melani (208) 431-0457</Button>
+							</Link>
+						</p>
+					</CardContent>
+				</Card>
 
-			{/* Other Church Groups */}
-			<Card>
-				<CardContent className="space-y-3">
-					<h2 className="text-xl font-semibold">Other Church Groups</h2>
-					<p>
-						For wards, stakes, and committees, please contact your Stake
-						Assistants to arrange staffing and accommodations.
-					</p>
-					<ul className="list-disc pl-5 text-base space-y-1">
-						<li>Indexing activities</li>
-						<li>Full Name Review</li>
-						<li>Get Involved App</li>
-						<li>Record Linking Lab</li>
-						<li>Worker & committee training</li>
-						<li>Facility tours</li>
-						<li>Memory digitizing devices</li>
-					</ul>
-				</CardContent>
-			</Card>
-
+				{/* Other Church Groups */}
+				<Card>
+					<CardContent className="space-y-3">
+						<h2 className="text-xl font-semibold">Other Church Groups</h2>
+						<p>
+							For wards, stakes, and committees, please contact your Stake
+							Assistants to arrange staffing and accommodations.
+						</p>
+						<ul className="list-disc pl-5 text-base space-y-1">
+							<li>Indexing activities</li>
+							<li>Full Name Review</li>
+							<li>Get Involved App</li>
+							<li>Record Linking Lab</li>
+							<li>Worker & committee training</li>
+							<li>Facility tours</li>
+							<li>Memory digitizing devices</li>
+						</ul>
+					</CardContent>
+				</Card>
+			</div>
 			{/* Stake Contacts */}
 			<Card>
 				<CardContent className="space-y-4">
@@ -259,12 +286,12 @@ export default async function ClassesPage({ params }: Props) {
 						<div className="flex flex-col gap-2">
 							<strong>Rupert West Stake</strong>
 
-							<Link href="tel:+12084316510">
+							{/* <Link href="tel:+12084316510">
 								<Button>Layne Rutschke – 208-431-6510</Button>
 							</Link>
 							<Link href="tel:+12084316514">
 								<Button>Janie Rutschke – 208-431-6514</Button>
-							</Link>
+							</Link> */}
 						</div>
 					</div>
 				</CardContent>

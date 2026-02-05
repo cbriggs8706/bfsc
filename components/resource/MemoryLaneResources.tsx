@@ -4,6 +4,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import {
+	ReservationDialog,
+	type ReservationDialogData,
+} from '@/components/resource/ReservationDialog'
 
 type ResourceType = 'equipment' | 'room' | 'booth' | 'activity'
 
@@ -37,9 +41,15 @@ function isHttpUrl(v: string | null | undefined) {
 export function MemoryLaneResources({
 	items,
 	locale,
+	reservationData,
+	canReserve,
+	loginHref,
 }: {
 	items: MemoryLaneResource[]
 	locale: string
+	reservationData: ReservationDialogData
+	canReserve: boolean
+	loginHref: string
 }) {
 	if (!items.length) {
 		return <p className="text-sm text-muted-foreground">No resources found.</p>
@@ -71,9 +81,17 @@ export function MemoryLaneResources({
 						{r.notes ? <p>{r.notes}</p> : null}
 
 						<div className="flex flex-wrap gap-2">
-							<Link href={`/${locale}/reservation?resourceId=${r.id}`}>
-								<Button>Make A Reservation</Button>
-							</Link>
+							{canReserve ? (
+								<ReservationDialog
+									locale={locale}
+									resourceId={r.id}
+									data={reservationData}
+								/>
+							) : (
+								<Link href={loginHref}>
+									<Button>Make A Reservation</Button>
+								</Link>
+							)}
 
 							{isHttpUrl(r.link) ? (
 								<Link href={r.link!} target="_blank">

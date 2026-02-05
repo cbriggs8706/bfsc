@@ -25,6 +25,13 @@ import { db, operatingHours, specialHours } from '@/db'
 import { eq } from 'drizzle-orm'
 import { getCenterProfile } from '@/lib/actions/center/center'
 import { formatPhoneInternational } from '@/utils/phone'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { readAllResources } from '@/lib/actions/resource/resource'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { getFaithTree } from '@/db/queries/faiths'
+import type { Resource } from '@/types/resource'
+import { ReservationDialog } from '@/components/resource/ReservationDialog'
 
 type Props = {
 	params: Promise<{ locale: NewsletterLocale }>
@@ -37,10 +44,18 @@ export default async function HomePage({ params, searchParams }: Props) {
 
 	const subscribed = sp.subscribed === '1'
 	const posts = await getPublicNewsletters(locale)
+	const session = await getServerSession(authOptions)
 
 	const center = await getCenterProfile()
 
 	const [latest, ...rest] = posts
+
+	const { items: reservationItems } = await readAllResources({
+		page: 1,
+		pageSize: 200,
+	})
+	const centerTime = await getCenterTimeConfig()
+	const faithTree = await getFaithTree()
 
 	const weekly = await db.select().from(operatingHours)
 	const specials = await db
@@ -105,6 +120,12 @@ export default async function HomePage({ params, searchParams }: Props) {
 			description: 'Read updates, highlights, and center news.',
 		},
 	]
+
+	const reservationResources = reservationItems.map((r) => ({
+		...r,
+		type: r.type as Resource['type'],
+	}))
+	const canReserve = Boolean(session)
 
 	return (
 		<div className="space-y-20">
@@ -199,11 +220,23 @@ export default async function HomePage({ params, searchParams }: Props) {
 									</p>{' '}
 									<div className="flex flex-col mt-10 text-center justify-center">
 										{/* TODO replace with group reservations */}
-										<Link href={`/${locale}/reservation`}>
-											<Button variant="default" size="lg">
-												Make a reservation
-											</Button>
-										</Link>
+										{canReserve ? (
+											<ReservationDialog
+												locale={locale}
+												data={{
+													resources: reservationResources,
+													faithTree,
+													timeFormat: centerTime.timeFormat,
+												}}
+												buttonLabel="Make a reservation"
+											/>
+										) : (
+											<Link href={`/${locale}/login?redirect=/${locale}`}>
+												<Button variant="default" size="lg">
+													Make a reservation
+												</Button>
+											</Link>
+										)}
 										<span className="text-xs">Requires login</span>
 									</div>
 								</CardContent>
