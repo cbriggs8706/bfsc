@@ -5,7 +5,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase-client'
 import type { TodayShift } from '@/types/shift-report'
-import { formatInTz, toLocalDateTimeInputValue, ymdInTz } from '@/utils/time'
+import {
+	formatInTz,
+	toLocalDateTime,
+	toLocalDateTimeInputValue,
+	ymdInTz,
+} from '@/utils/time'
+import { fromZonedTime } from 'date-fns-tz'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -51,23 +57,21 @@ type OutsideShift = {
 
 type Departing = { kind: 'worker'; id: string } | { kind: 'patron'; id: string }
 
-function parseTodayTime(todayStr: string, hhmm: string) {
-	// hhmm: "HH:mm"
-	const [hh, mm] = hhmm.split(':').map((n) => Number(n))
-	const d = new Date(`${todayStr}T00:00:00`)
-	d.setHours(hh, mm, 0, 0)
-	return d
+function toCenterUtcDate(todayStr: string, hhmm: string, timeZone: string) {
+	const local = toLocalDateTime(todayStr, hhmm)
+	return fromZonedTime(local, timeZone)
 }
 
 function isNowInShift(
 	todayStr: string,
 	now: Date,
 	start?: string | null,
-	end?: string | null
+	end?: string | null,
+	timeZone?: string
 ) {
-	if (!start || !end) return false
-	const s = parseTodayTime(todayStr, start)
-	const e = parseTodayTime(todayStr, end)
+	if (!start || !end || !timeZone) return false
+	const s = toCenterUtcDate(todayStr, start, timeZone)
+	const e = toCenterUtcDate(todayStr, end, timeZone)
 	// inclusive start, exclusive end
 	return now >= s && now < e
 }
@@ -183,11 +187,11 @@ export function CurrentShiftPanel({
 			key: `shift:${s.shiftId}`,
 			kind: 'regular' as const,
 			label: `${formatInTz(
-				new Date(`${todayStr}T${s.startTime}:00Z`),
+				toCenterUtcDate(todayStr, s.startTime!, centerTime.timeZone),
 				centerTime.timeZone,
 				centerTime.timeFormat
 			)} – ${formatInTz(
-				new Date(`${todayStr}T${s.endTime}:00Z`),
+				toCenterUtcDate(todayStr, s.endTime!, centerTime.timeZone),
 				centerTime.timeZone,
 				centerTime.timeFormat
 			)}`,
@@ -206,22 +210,26 @@ export function CurrentShiftPanel({
 		}
 
 		return [...regular, outside]
-	}, [shifts, offShift])
+	}, [shifts, offShift, todayStr, centerTime.timeZone, centerTime.timeFormat])
 
 	const currentKey = useMemo(() => {
-		const nowInCenter = new Date(
-			formatInTz(new Date(), centerTime.timeZone, "yyyy-MM-dd'T'HH:mm:ss")
-		)
+		const nowUtc = new Date()
 		// 1) find a regular shift that matches current time
 		const activeRegular = cards.find(
 			(c) =>
 				c.kind === 'regular' &&
-				isNowInShift(todayStr, nowInCenter, c.startTime, c.endTime)
+				isNowInShift(
+					todayStr,
+					nowUtc,
+					c.startTime,
+					c.endTime,
+					centerTime.timeZone
+				)
 		)
 
 		// 2) if none, outside
 		return activeRegular?.key ?? 'outside'
-	}, [cards, todayStr])
+	}, [cards, todayStr, centerTime.timeZone])
 
 	// Keep selected card synced to "current" unless user manually picked another
 	useEffect(() => {
