@@ -1,7 +1,5 @@
 // lib/email/send-reservation-notification-email.ts
-import { Resend } from 'resend'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { sendEmail } from './mailer'
 
 type SendReservationNotificationArgs = {
 	to: string[]
@@ -16,7 +14,7 @@ export async function sendReservationNotificationEmail({
 }: SendReservationNotificationArgs) {
 	if (to.length === 0) return
 
-	await resend.emails.send({
+	await sendEmail({
 		from: 'Burley FamilySearch Center <no-reply@burleyfamilysearchcenter.com>',
 		to,
 		subject,
