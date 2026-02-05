@@ -2,6 +2,7 @@
 import { GroupActivities } from '@/components/resource/GroupActivities'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { SocialMediaConsentDialog } from '@/components/forms/SocialMediaConsentDialog'
 import { readAllResources } from '@/lib/actions/resource/resource'
 import Link from 'next/link'
 
@@ -44,6 +45,17 @@ export default async function ClassesPage({ params }: Props) {
 					<Link href={`/${locale}/calendar`}>
 						<Button>View Calendar</Button>
 					</Link>
+				</CardContent>
+			</Card>
+
+			<Card>
+				<CardContent className="space-y-3">
+					<h2 className="text-xl font-semibold">Social Media Photo Consent</h2>
+					<p>
+						If your group grants permission for photos to be used on our social
+						media, please complete the release form below.
+					</p>
+					<SocialMediaConsentDialog />
 				</CardContent>
 			</Card>
 
