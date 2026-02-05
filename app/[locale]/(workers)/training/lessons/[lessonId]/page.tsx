@@ -1,6 +1,10 @@
 import { db } from '@/db'
 import { eq, and } from 'drizzle-orm'
-import { learningLessons, learningLessonCompletions } from '@/db'
+import {
+	learningCourses,
+	learningLessons,
+	learningLessonCompletions,
+} from '@/db'
 import { notFound } from 'next/navigation'
 import { UserLesson } from '@/types/training'
 import { mapLessonBlock } from '@/lib/training/block-mapper'
@@ -23,10 +27,25 @@ export default async function LessonPage({ params }: Props) {
 			blocks: {
 				orderBy: (t, { asc }) => asc(t.sortOrder),
 			},
+			unit: true,
 		},
 	})
 
 	if (!lesson) notFound()
+
+	const course = await db.query.learningCourses.findFirst({
+		where: eq(learningCourses.id, lesson.unit.courseId),
+		with: {
+			units: {
+				orderBy: (t, { asc }) => asc(t.sortOrder),
+				with: {
+					lessons: {
+						orderBy: (t, { asc }) => asc(t.sortOrder),
+					},
+				},
+			},
+		},
+	})
 
 	const completion = await db.query.learningLessonCompletions.findFirst({
 		where: and(
@@ -42,5 +61,22 @@ export default async function LessonPage({ params }: Props) {
 		blocks: lesson.blocks.map(mapLessonBlock),
 	}
 
-	return <LessonViewer lesson={userLesson} locale={locale} />
+	const orderedLessons = course?.units.flatMap((unit) => unit.lessons) ?? []
+	const currentIndex = orderedLessons.findIndex((l) => l.id === lesson.id)
+	const prevLessonId =
+		currentIndex > 0 ? orderedLessons[currentIndex - 1]?.id : null
+	const nextLessonId =
+		currentIndex >= 0 && currentIndex < orderedLessons.length - 1
+			? orderedLessons[currentIndex + 1]?.id
+			: null
+
+	return (
+		<LessonViewer
+			lesson={userLesson}
+			locale={locale}
+			courseId={course?.id ?? lesson.unit.courseId}
+			prevLessonId={prevLessonId}
+			nextLessonId={nextLessonId}
+		/>
+	)
 }

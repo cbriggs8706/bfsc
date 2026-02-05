@@ -20,7 +20,7 @@ export function UnitPanel({
 				</p>
 			</div>
 
-			<div className="grid gap-3 min-w-0">
+			<div className="grid gap-3 min-w-0 sm:grid-cols-2 xl:grid-cols-3">
 				{unit.lessons.map((lesson) => (
 					<LessonCard key={lesson.id} lesson={lesson} locale={locale} />
 				))}

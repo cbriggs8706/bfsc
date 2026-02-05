@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { CheckCircle2, Circle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import {
 	Accordion,
@@ -9,7 +10,6 @@ import {
 	AccordionTrigger,
 } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle2 } from 'lucide-react'
 import { UserCourse } from '@/types/training'
 
 export function UnitOutline({
@@ -31,7 +31,7 @@ export function UnitOutline({
 			</div>
 
 			{/* Mobile: accordion */}
-			<div className="mt-3 lg:hidden">
+			<div className="mt-3">
 				<Accordion
 					type="single"
 					collapsible
@@ -48,45 +48,46 @@ export function UnitOutline({
 										<Link
 											key={lesson.id}
 											href={`/${locale}/training/lessons/${lesson.id}`}
-											className="flex items-center justify-between rounded-md px-2 py-2 text-sm hover:bg-muted"
+											className="flex items-center justify-between gap-3 rounded-md px-2 py-2 text-sm hover:bg-muted"
 										>
-											<span className="truncate">{lesson.title}</span>
+											<span className="flex items-center gap-2 min-w-0">
+												{lesson.isCompleted ? (
+													<CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+												) : (
+													<Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+												)}
+												<span
+													className={`truncate ${
+														lesson.isCompleted
+															? 'line-through text-muted-foreground'
+															: ''
+													}`}
+												>
+													{lesson.title}
+												</span>
+											</span>
 											{lesson.isCompleted ? (
-												<CheckCircle2 className="h-4 w-4" />
-											) : null}
+												<span className="text-xs text-muted-foreground shrink-0">
+													Completed
+												</span>
+											) : (
+												<span className="text-xs font-medium text-foreground shrink-0">
+													Begin
+												</span>
+											)}
 										</Link>
 									))}
+
+									{unit.lessons.length === 0 ? (
+										<div className="px-2 py-2 text-sm text-muted-foreground">
+											No lessons yet.
+										</div>
+									) : null}
 								</div>
 							</AccordionContent>
 						</AccordionItem>
 					))}
 				</Accordion>
-			</div>
-
-			{/* Desktop: list */}
-			<div className="mt-3 hidden lg:block">
-				<div className="space-y-2">
-					{units.map((unit) => {
-						const completed = unit.lessons.filter((l) => l.isCompleted).length
-						const total = unit.lessons.length
-						const isActive = unit.id === activeUnitId
-
-						return (
-							<button
-								key={unit.id}
-								onClick={() => onPickUnit(unit.id)}
-								className={`w-full rounded-md border px-3 py-2 text-left transition ${
-									isActive ? 'bg-muted border-foreground/20' : 'hover:bg-muted'
-								}`}
-							>
-								<div className="font-medium">{unit.title}</div>
-								<div className="text-xs text-muted-foreground">
-									{completed}/{total} lessons completed
-								</div>
-							</button>
-						)
-					})}
-				</div>
 			</div>
 		</Card>
 	)
