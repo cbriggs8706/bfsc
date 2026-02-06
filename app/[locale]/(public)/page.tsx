@@ -175,7 +175,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 								aria-label="Call the Burley FamilySearch Center"
 							>
 								{/* TODO make this world friendly */}
-								<a href={`tel:+1${center.phoneNumber}`}>
+								<a href={`tel:${center.phoneNumber}`}>
 									{formatPhoneInternational(center.phoneNumber)}
 								</a>
 							</Button>
