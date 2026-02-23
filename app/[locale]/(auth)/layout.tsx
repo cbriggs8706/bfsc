@@ -13,6 +13,7 @@ import { db, operatingHours, specialHours } from '@/db'
 import { eq } from 'drizzle-orm'
 import FSHeader from '@/components/nav/FSHeader'
 import MobileFooter from '@/components/nav/MobileFooterMenu'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 
 export default async function Layout({
 	children,
@@ -26,6 +27,7 @@ export default async function Layout({
 		.select()
 		.from(specialHours)
 		.where(eq(specialHours.isClosed, true))
+	const centerTime = await getCenterTimeConfig()
 
 	return (
 		<SidebarProvider>
@@ -34,6 +36,7 @@ export default async function Layout({
 				role={session?.user?.role ?? 'Patron'}
 				weekly={weekly}
 				specials={specials}
+				centerTimeZone={centerTime.timeZone}
 			/>
 			<SidebarInset>
 				<FSHeader />

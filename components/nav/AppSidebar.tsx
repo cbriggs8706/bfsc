@@ -49,12 +49,14 @@ export function AppSidebar({
 	role,
 	weekly,
 	specials,
+	centerTimeZone,
 	...props
 }: {
 	session: Session | null
 	role: string
 	weekly: Weekly[]
 	specials: Specials[]
+	centerTimeZone: string
 } & React.ComponentProps<typeof Sidebar>) {
 	const { locale } = useParams()
 	const t = useTranslations()
@@ -121,6 +123,7 @@ export function AppSidebar({
 					specials={specials}
 					weekly={weekly}
 					locale={locale as string}
+					centerTimeZone={centerTimeZone}
 				/>
 				<SidebarLanguageSwitcher
 					locale={(locale as string) ?? 'en'}

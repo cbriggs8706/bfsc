@@ -78,6 +78,8 @@ type CalendarClass = {
 	descriptionOverride: string | null
 	isCanceled: boolean
 	presenters: string[]
+	kind: 'class' | 'reservation'
+	reservationStatus?: 'pending' | 'confirmed'
 }
 
 type CalendarView = 'month' | 'week' | 'day'
@@ -113,6 +115,11 @@ const EVENT_COLORS = [
 	'bg-sky-100 text-sky-900 border-sky-200',
 	'bg-stone-100 text-stone-900 border-stone-200',
 ]
+
+const RESERVATION_CONFIRMED_COLOR =
+	'bg-(--blue-accent-soft) text-(--accent-foreground) border-(--blue-accent)'
+const RESERVATION_PENDING_COLOR =
+	'bg-(--gray-accent-soft) text-(--gray-accent) border-(--gray-accent) border-dotted border-2'
 
 /* ============================
    COMPONENT
@@ -169,7 +176,9 @@ export default function CenterCalendar({
 		const map = new Map<string, string>()
 
 		// 1. Collect unique series (use title for now)
-		const uniqueSeries = Array.from(new Set(classes.map((c) => c.title)))
+		const uniqueSeries = Array.from(
+			new Set(classes.filter((c) => c.kind === 'class').map((c) => c.title))
+		)
 
 		// 2. Assign colors in order, cycling only after exhaustion
 		uniqueSeries.forEach((title, index) => {
@@ -179,6 +188,16 @@ export default function CenterCalendar({
 
 		return map
 	}, [classes])
+
+	function getEventColorClasses(event: CalendarClass) {
+		if (event.kind === 'reservation') {
+			return event.reservationStatus === 'pending'
+				? RESERVATION_PENDING_COLOR
+				: RESERVATION_CONFIRMED_COLOR
+		}
+
+		return classColorMap.get(event.title) ?? EVENT_COLORS[0]
+	}
 
 	/* ============================
 	   DAY INFO
@@ -291,7 +310,7 @@ export default function CenterCalendar({
 
 		return (
 			<div className="mt-4 space-y-2">
-				<h3 className="font-semibold">Classes</h3>
+				<h3 className="font-semibold">Events</h3>
 				<ul className="space-y-2">
 					{dayClasses.map((c) => {
 						const time = toAmPm(
@@ -303,7 +322,7 @@ export default function CenterCalendar({
 								key={c.id}
 								className={cn(
 									'border rounded px-1 text-[11px] truncate',
-									classColorMap.get(c.title) ?? EVENT_COLORS[0],
+									getEventColorClasses(c),
 									c.isCanceled && 'line-through opacity-70'
 								)}
 							>
@@ -312,7 +331,11 @@ export default function CenterCalendar({
 								</div>
 
 								<div className="text-base ">
-									Location: {c.location}
+									{c.kind === 'reservation' ? 'Resource' : 'Location'}:{' '}
+									{c.location}
+									{c.kind === 'reservation' &&
+										c.reservationStatus === 'pending' &&
+										' (Pending)'}
 									{c.isCanceled && ' (Canceled)'}
 								</div>
 
@@ -532,7 +555,7 @@ export default function CenterCalendar({
 												key={c.id}
 												className={cn(
 													'border rounded px-1 text-[11px] truncate',
-													classColorMap.get(c.title) ?? EVENT_COLORS[0],
+													getEventColorClasses(c),
 													c.isCanceled && 'line-through opacity-70'
 												)}
 												title={`${time} — ${c.title}`}
@@ -769,7 +792,7 @@ export default function CenterCalendar({
 													}}
 													className={cn(
 														'absolute left-1 right-1 rounded border px-2 py-1 text-left text-[11px] overflow-hidden',
-														classColorMap.get(c.title) ?? EVENT_COLORS[0],
+														getEventColorClasses(c),
 														c.isCanceled && 'line-through opacity-70'
 													)}
 													style={{ top, height }}
@@ -881,7 +904,7 @@ export default function CenterCalendar({
 									}}
 									className={cn(
 										'absolute rounded border px-3 py-2 text-left text-[12px] overflow-hidden',
-										classColorMap.get(c.title) ?? EVENT_COLORS[0],
+										getEventColorClasses(c),
 										c.isCanceled && 'line-through opacity-70'
 									)}
 									style={{
@@ -894,7 +917,8 @@ export default function CenterCalendar({
 								>
 									<div className="font-medium truncate">{c.title}</div>
 									<div className="text-[11px] opacity-80 truncate">
-										{time} • {c.location}
+										{time} • {c.kind === 'reservation' ? 'Resource' : 'Location'}:{' '}
+										{c.location}
 									</div>
 								</button>
 							)

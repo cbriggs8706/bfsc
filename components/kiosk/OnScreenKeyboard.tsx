@@ -11,9 +11,19 @@ type Props = {
 	onKey: (char: string) => void
 	onBackspace: () => void
 	onClear: () => void
+	onSpace: () => void
+	onContinue: () => void
+	canContinue: boolean
 }
 
-export function OnScreenKeyboard({ onKey, onBackspace, onClear }: Props) {
+export function OnScreenKeyboard({
+	onKey,
+	onBackspace,
+	onClear,
+	onSpace,
+	onContinue,
+	canContinue,
+}: Props) {
 	return (
 		<div className="select-none space-y-3">
 			{/* Main keyboard */}
@@ -48,21 +58,37 @@ export function OnScreenKeyboard({ onKey, onBackspace, onClear }: Props) {
 			</div>
 
 			{/* Controls */}
-			<div className="grid grid-cols-2 gap-2">
+			<div className="grid grid-cols-5 gap-2">
 				<KioskButton
 					variant="outline"
-					className="h-12 sm:h-14 text-lg"
+					className="col-span-2 h-12 sm:h-14 text-base sm:text-lg font-semibold"
+					onClick={onSpace}
+				>
+					Space
+				</KioskButton>
+
+				<KioskButton
+					variant="destructive"
+					className="h-12 sm:h-14 text-base sm:text-lg"
+					onClick={onClear}
+				>
+					Clear
+				</KioskButton>
+
+				<KioskButton
+					variant="outline"
+					className="h-12 sm:h-14 text-base sm:text-lg"
 					onClick={onBackspace}
 				>
 					⌫ Backspace
 				</KioskButton>
 
 				<KioskButton
-					variant="destructive"
-					className="h-12 sm:h-14 text-lg"
-					onClick={onClear}
+					className="h-12 sm:h-14 text-base sm:text-lg font-bold tracking-wide shadow-md"
+					onClick={onContinue}
+					disabled={!canContinue}
 				>
-					Clear
+					Continue
 				</KioskButton>
 			</div>
 		</div>

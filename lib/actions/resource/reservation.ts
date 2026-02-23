@@ -10,10 +10,11 @@ import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 
 import { getAvailability } from './availability'
-import { toLocalYMD, toHHMMUtc, toUtcDateTime } from '@/utils/time'
+import { toHHMMInTz, toUtcDateTimeInTz, ymdInTz } from '@/utils/time'
 import { normalizePhoneToE164 } from '@/utils/phone'
 import { notifyReservationChanged } from '@/lib/notifications/reservation-notify'
 import { getCenterProfile } from '../center/center'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 
 /* ------------------------------------------------------------------ */
 /* Types */
@@ -122,14 +123,15 @@ export async function readReservationForForm(id: string) {
 
 	if (!row) return null
 
+	const centerTime = await getCenterTimeConfig()
 	const start = new Date(row.startTime)
 	return {
 		id: row.id,
 		resourceId: row.resourceId,
 		locale: row.locale,
 		phone: row.phone,
-		date: toLocalYMD(start),
-		startTime: toHHMMUtc(start),
+		date: ymdInTz(start, centerTime.timeZone),
+		startTime: toHHMMInTz(start, centerTime.timeZone),
 		attendeeCount: String(row.attendeeCount ?? 1),
 		assistanceLevel: row.assistanceLevel as AssistanceLevel,
 		isClosedDayRequest: row.isClosedDayRequest ?? false,
@@ -164,6 +166,7 @@ export async function saveReservation(
 	const data = parsed.data
 	// console.log('data', data)
 	const center = await getCenterProfile()
+	const centerTime = await getCenterTimeConfig()
 
 	const normalizedPhone = normalizePhoneToE164(data.phone, center.phoneCountry)
 
@@ -203,8 +206,8 @@ export async function saveReservation(
 	}
 
 	// Compute actual Date bounds from slot
-	const start = toUtcDateTime(data.date, slot.startTime)
-	const end = toUtcDateTime(data.date, slot.endTime)
+	const start = toUtcDateTimeInTz(data.date, slot.startTime, centerTime.timeZone)
+	const end = toUtcDateTimeInTz(data.date, slot.endTime, centerTime.timeZone)
 	start.setSeconds(0, 0)
 	end.setSeconds(0, 0)
 	// console.log('data2', data)

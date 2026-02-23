@@ -7,25 +7,22 @@ import { KioskButton } from './KioskButton'
 
 type Props = {
 	name: string
-	onGuest: () => void
-	onCreateProfile: () => void
+	onContinue: () => void
 }
 
-export function NotFoundStep({ name, onGuest, onCreateProfile }: Props) {
+export function NotFoundStep({ name, onContinue }: Props) {
 	return (
 		<div className="space-y-4">
 			<p className="text-lg text-center">
-				Welcome! Would you like to save your name for faster sign-in next time?
+				We could not find that name. Continue to choose your visit purpose and we
+				will save your name for faster check-in next time.
 			</p>
 
 			<Label>Name</Label>
 			<KioskInput value={name} disabled={true} />
 
-			<KioskButton variant="secondary" onClick={onGuest}>
-				No, this is a one time visit
-			</KioskButton>
-			<KioskButton onClick={onCreateProfile}>
-				Yes, create an account
+			<KioskButton onClick={onContinue}>
+				Continue
 			</KioskButton>
 		</div>
 	)

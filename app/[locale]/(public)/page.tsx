@@ -201,6 +201,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 											specials={specials}
 											weekly={weekly}
 											locale={locale as string}
+											centerTimeZone={centerTime.timeZone}
 										/>
 									</div>
 								</CardContent>

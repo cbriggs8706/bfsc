@@ -10,9 +10,10 @@ import {
 } from '@/db/schema'
 import { eq, and, gte, lte, asc } from 'drizzle-orm'
 import { fromZonedTime, toZonedTime } from 'date-fns-tz'
-import { startOfDay, endOfDay, parseISO, format } from 'date-fns'
+import { startOfDay, endOfDay, parseISO } from 'date-fns'
 import { TodayShift } from '@/types/shift-report'
 import { ReservationStatus } from '@/types/resource'
+import { formatInTz } from '@/utils/time'
 
 //CORRECTED TIMEZONES
 
@@ -194,8 +195,8 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 				.map((r) => ({
 					id: r.id,
 					resourceName: r.resourceName,
-					startTime: format(r.startTime, 'HH:mm'),
-					endTime: format(r.endTime, 'HH:mm'),
+					startTime: formatInTz(r.startTime, timeZone, 'HH:mm'),
+					endTime: formatInTz(r.endTime, timeZone, 'HH:mm'),
 					status: toReservationStatus(r.status),
 					patronName: r.patronName ?? r.patronEmail,
 				})),
@@ -233,8 +234,8 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 							.map((r) => ({
 								id: r.id,
 								resourceName: r.resourceName,
-								startTime: format(r.startTime, 'HH:mm'),
-								endTime: format(r.endTime, 'HH:mm'),
+								startTime: formatInTz(r.startTime, timeZone, 'HH:mm'),
+								endTime: formatInTz(r.endTime, timeZone, 'HH:mm'),
 								status: toReservationStatus(r.status),
 								patronName: r.patronName ?? r.patronEmail,
 							})),

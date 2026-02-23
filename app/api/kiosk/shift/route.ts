@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { kioskShiftLogs, kioskPeople } from '@/db/schema/tables/kiosk'
 import { and, eq, isNull } from 'drizzle-orm'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { toUtcDateTimeInTz, ymdInTz } from '@/utils/time'
 
 type ShiftRequest = {
 	personId: string
@@ -35,19 +37,12 @@ export async function POST(req: Request) {
 	const userId = person.userId
 
 	// 2️⃣ Build expected departure datetime (today + HH:MM)
-	const now = new Date()
-	const [hourStr, minuteStr] = body.expectedDepartureAt.split(':')
-	const hours = Number(hourStr)
-	const minutes = Number(minuteStr)
-
-	const expectedDepartureDate = new Date(
-		now.getFullYear(),
-		now.getMonth(),
-		now.getDate(),
-		hours,
-		minutes,
-		0,
-		0
+	const centerTime = await getCenterTimeConfig()
+	const todayCenterYmd = ymdInTz(new Date(), centerTime.timeZone)
+	const expectedDepartureDate = toUtcDateTimeInTz(
+		todayCenterYmd,
+		body.expectedDepartureAt,
+		centerTime.timeZone
 	)
 
 	// 3️⃣ TRANSACTION: close existing shift, then open new one

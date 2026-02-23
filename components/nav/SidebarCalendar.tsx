@@ -23,6 +23,7 @@ import {
 	getCenterStatus,
 } from '@/lib/calendar/day-info'
 import { Button } from '../ui/button'
+import { toZonedTime } from 'date-fns-tz'
 
 const DAY_HEADERS = ['S', 'M', 'T', 'W', 'R', 'F', 'Sa']
 
@@ -30,13 +31,15 @@ export function SidebarCalendar({
 	specials,
 	weekly,
 	locale,
+	centerTimeZone,
 }: {
 	specials: Special[]
 	weekly: Weekly[]
 	locale: string
+	centerTimeZone: string
 }) {
 	const router = useRouter()
-	const today = new Date()
+	const today = toZonedTime(new Date(), centerTimeZone)
 
 	const [expanded, setExpanded] = useState(false)
 	const [viewDate, setViewDate] = useState(startOfMonth(today))
@@ -55,8 +58,8 @@ export function SidebarCalendar({
 	// 	[specials, weekly]
 	// )
 	const statusLine = useMemo(
-		() => getCenterStatus(new Date(), specials, weekly),
-		[specials, weekly]
+		() => getCenterStatus(toZonedTime(new Date(), centerTimeZone), specials, weekly),
+		[specials, weekly, centerTimeZone]
 	)
 
 	/* ============================

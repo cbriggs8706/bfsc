@@ -11,7 +11,12 @@ import {
 } from '@/db/schema/tables/shifts'
 import type { AvailabilityResponse, TimeSlot } from '@/types/resource'
 import { addMinutes } from 'date-fns'
-import { toHHMMUtc, toUtcDateTime, weekdayFromYYYYMMDD } from '@/utils/time'
+import {
+	toHHMMInTz,
+	toUtcDateTimeInTz,
+	weekdayFromYYYYMMDD,
+} from '@/utils/time'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
 // import { inArray } from 'drizzle-orm'
 
 type Args = {
@@ -28,6 +33,7 @@ export async function getAvailability({
 	stepMinutes = 15,
 }: Args): Promise<AvailabilityResponse> {
 	noStore()
+	const centerTime = await getCenterTimeConfig()
 
 	if (!resourceId) throw new Error('Missing resourceId')
 	if (!date) throw new Error('Missing date')
@@ -140,10 +146,14 @@ export async function getAvailability({
 	 * ------------------------------------------- */
 
 	const openDt =
-		hasRegularShifts && opensAt ? toUtcDateTime(date, opensAt) : null
+		hasRegularShifts && opensAt
+			? toUtcDateTimeInTz(date, opensAt, centerTime.timeZone)
+			: null
 
 	const closeDt =
-		hasRegularShifts && closesAt ? toUtcDateTime(date, closesAt) : null
+		hasRegularShifts && closesAt
+			? toUtcDateTimeInTz(date, closesAt, centerTime.timeZone)
+			: null
 
 	/* ---------------------------------------------
 	 * 4) Fetch overlapping reservations
@@ -183,8 +193,8 @@ export async function getAvailability({
 	const slots: TimeSlot[] = []
 
 	for (const shift of shifts) {
-		const rawStart = toUtcDateTime(date, shift.startTime)
-		const rawEnd = toUtcDateTime(date, shift.endTime)
+		const rawStart = toUtcDateTimeInTz(date, shift.startTime, centerTime.timeZone)
+		const rawEnd = toUtcDateTimeInTz(date, shift.endTime, centerTime.timeZone)
 
 		const shiftStart =
 			shift.type === 'appointment'
@@ -221,8 +231,8 @@ export async function getAvailability({
 			}
 
 			slots.push({
-				startTime: toHHMMUtc(cursor),
-				endTime: toHHMMUtc(end),
+				startTime: toHHMMInTz(cursor, centerTime.timeZone),
+				endTime: toHHMMInTz(end, centerTime.timeZone),
 				isAvailable,
 				reason,
 				shiftType: shift.type,

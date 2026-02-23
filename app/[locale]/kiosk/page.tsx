@@ -6,13 +6,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import type { IdentifyResponse } from '@/app/api/kiosk/identify/route'
 import { PersonSummary, OnShiftWorker, Purpose } from '@/types/kiosk'
 import { IdentifyStep } from '@/components/kiosk/IdentifyStep'
-import { NewPersonStep } from '@/components/kiosk/NewPersonStep'
 import { ShiftStep } from '@/components/kiosk/ShiftStep'
 import { WorkersStep } from '@/components/kiosk/WorkersStep'
 import { VisitStep } from '@/components/kiosk/VisitStep'
 import { RoleChoiceStep } from '@/components/kiosk/RoleChoiceStep'
 import { CheckoutStep } from '@/components/kiosk/CheckoutStep'
-import { NotFoundStep } from '@/components/kiosk/NotFoundStep'
 import { Announcement } from '@/db'
 import { CertificateSummary } from '@/types/training'
 import { OnScreenKeyboard } from '@/components/kiosk/OnScreenKeyboard'
@@ -20,14 +18,10 @@ import { OnScreenKeyboard } from '@/components/kiosk/OnScreenKeyboard'
 export default function KioskPage() {
 	const [step, setStep] = useState<
 		| 'identify'
-		| 'choosePerson'
-		| 'notFound'
-		| 'newPerson'
 		| 'roleChoice'
 		| 'visit'
 		| 'shift'
 		| 'workers'
-		| 'actionChoice'
 		| 'checkout'
 	>('identify')
 
@@ -52,7 +46,6 @@ export default function KioskPage() {
 	}
 
 	const [input, setInput] = useState('')
-	const [matches, setMatches] = useState<PersonSummary[]>([])
 	const [selectedPerson, setSelectedPerson] = useState<PersonSummary | null>(
 		null
 	)
@@ -67,52 +60,11 @@ export default function KioskPage() {
 	const [timeSlots] = useState<string[]>(() => generateTimeSlots())
 	const [onShiftWorkers, setOnShiftWorkers] = useState<OnShiftWorker[]>([])
 
-	// New person form
 	const [newName, setNewName] = useState('')
-	const [newEmail, setNewEmail] = useState('')
-	const [newPhone, setNewPhone] = useState('')
-	const [faiths, setFaiths] = useState<{ id: string; name: string }[]>([])
-	const [wards, setWards] = useState<
-		{
-			stakeId: string
-			stakeName: string
-			wards: { id: string; name: string }[]
-		}[]
-	>([])
-	const [callings, setCallings] = useState<{ id: string; name: string }[]>([])
-	const [faithId, setFaithId] = useState('')
-	const [wardId, setWardId] = useState('')
-	const [selectedCallingIds, setSelectedCallingIds] = useState<string[]>([])
 	const [announcements, setAnnouncements] = useState<Announcement[]>([])
 	const [certificatesByUser, setCertificatesByUser] = useState<
 		Record<string, CertificateSummary[]>
 	>({})
-
-	// ──────────────────────────────
-	// LOAD WARDS
-	// ──────────────────────────────
-	// Load faiths once
-	useEffect(() => {
-		fetch('/api/faiths')
-			.then((r) => r.json())
-			.then((d) => setFaiths(d.faiths))
-	}, [])
-
-	// Load wards when faith changes
-	useEffect(() => {
-		if (!faithId) return
-
-		fetch(`/api/faiths/wards?faithId=${faithId}`)
-			.then((r) => r.json())
-			.then((d) => setWards(d.wards))
-	}, [faithId])
-
-	// Load callings once
-	useEffect(() => {
-		fetch('/api/faiths/callings')
-			.then((r) => r.json())
-			.then((d) => setCallings(d.callings))
-	}, [])
 
 	// ──────────────────────────────
 	// LIVE SEARCH
@@ -129,6 +81,7 @@ export default function KioskPage() {
 	const handleInputChange = (value: string) => {
 		setInput(value)
 		setSelectedPerson(null)
+		setServerMessage(null)
 
 		if (/^\d{6}$/.test(value)) {
 			setSuggestions([])
@@ -187,26 +140,25 @@ export default function KioskPage() {
 		}
 
 		const data: IdentifyResponse = await res.json()
-		// console.log('IDENTIFY RESPONSE', data)
 
 		if (data.status === 'notFound') {
+			if (/^\d{6}$/.test(input.trim())) {
+				setServerMessage('Code not found. Try your name instead.')
+				return
+			}
 			setNewName(data.suggestedName ?? input.trim())
-			setStep('notFound')
+			await loadPurposes()
+			setStep('visit')
 			return
 		}
 
 		if (data.status === 'multipleMatches') {
-			setMatches(data.people)
-			setStep('choosePerson')
+			setSuggestions(data.people)
+			setServerMessage('Multiple matches found. Please tap your name.')
+			setStep('identify')
 			return
 		}
 
-		// foundSingle
-		// const person = data.person
-		// setSelectedPerson(person)
-		// setSuggestions([])
-
-		// foundSingle — ALWAYS use the server result
 		const foundPerson = data.person
 
 		setSelectedPerson(foundPerson)
@@ -220,42 +172,25 @@ export default function KioskPage() {
 		}
 	}
 
-	// New but don't think it's working
-	// 	setSelectedPerson(data.person)
-	// 	data.person.isWorker
-	// 		? setStep('roleChoice')
-	// 		: (await loadPurposes(), setStep('visit'))
-	// }
+	// ──────────────────────────────
+	// CREATE PERSON (guest)
+	// ──────────────────────────────
+	const createGuestPerson = async (): Promise<PersonSummary | null> => {
+		if (!newName.trim()) return null
 
-	// ──────────────────────────────
-	// CREATE PERSON (guest or profile)
-	// ──────────────────────────────
-	const createPerson = async (wantsPasscode: boolean) => {
 		const res = await fetch('/api/kiosk/people', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				fullName: newName,
-				email: wantsPasscode ? newEmail : null,
-				phone: wantsPasscode ? newPhone : null,
-
-				faithId: wantsPasscode ? faithId : undefined,
-				wardId: wantsPasscode ? wardId : undefined,
-				callingIds: wantsPasscode ? selectedCallingIds : undefined,
-
-				wantsPasscode,
+				wantsPasscode: false,
 			}),
 		})
 
+		if (!res.ok) return null
+
 		const data = await res.json()
-		setSelectedPerson(data.person)
-
-		if (data.passcode) {
-			setServerMessage(`Your new fast check-in code is ${data.passcode}`)
-		}
-
-		await loadPurposes()
-		setStep('visit')
+		return data.person as PersonSummary
 	}
 
 	// ──────────────────────────────
@@ -263,14 +198,26 @@ export default function KioskPage() {
 	// ──────────────────────────────
 
 	const handleSubmitVisit = async (purposeId: number) => {
-		if (!selectedPerson) return
+		let person = selectedPerson
+
+		if (!person && newName.trim()) {
+			person = await createGuestPerson()
+			if (person) {
+				setSelectedPerson(person)
+			}
+		}
+
+		if (!person) {
+			setServerMessage('Please identify yourself first.')
+			return
+		}
 
 		const res = await fetch('/api/kiosk/visit', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				personId: selectedPerson.id,
-				userId: selectedPerson.userId,
+				personId: person.id,
+				userId: person.userId,
 				purposeId,
 				mailingListOptIn: mailingOptIn,
 			}),
@@ -317,14 +264,10 @@ export default function KioskPage() {
 		setStep('identify')
 		setInput('')
 		setSuggestions([])
-		setMatches([])
 		setSelectedPerson(null)
 		setMailingOptIn(false)
 		setExpectedDeparture('')
 		setNewName('')
-		setNewEmail('')
-		// setWantsPasscode(true)
-		setNewPhone('')
 		setServerMessage(null)
 	}
 
@@ -389,7 +332,6 @@ export default function KioskPage() {
 							suggestions={suggestions}
 							searching={searching}
 							onInputChange={handleInputChange}
-							// onContinue={handleIdentify}
 							onSelectSuggestion={(p) => {
 								setSelectedPerson(p)
 								setInput(p.fullName)
@@ -405,6 +347,9 @@ export default function KioskPage() {
 								onKey={(char) => handleInputChange(input + char)}
 								onBackspace={() => handleInputChange(input.slice(0, -1))}
 								onClear={() => handleInputChange('')}
+								onSpace={() => handleInputChange(`${input} `)}
+								onContinue={() => handleIdentify()}
+								canContinue={input.trim().length >= 2}
 							/>
 						)}
 					</CardContent>
@@ -422,37 +367,17 @@ export default function KioskPage() {
 						/>
 					)} */}
 
-					{step === 'notFound' && (
-						<NotFoundStep
-							name={newName}
-							onGuest={() => createPerson(false)}
-							onCreateProfile={() => setStep('newPerson')}
-						/>
-					)}
-
-					{step === 'newPerson' && (
-						<NewPersonStep
-							name={newName}
-							email={newEmail}
-							phone={newPhone}
-							faithId={faithId}
-							wardId={wardId}
-							selectedCallingIds={selectedCallingIds}
-							faiths={faiths}
-							wards={wards}
-							callings={callings}
-							setFaithId={setFaithId}
-							setWardId={setWardId}
-							setSelectedCallingIds={setSelectedCallingIds}
-							setEmail={setNewEmail}
-							setPhone={setNewPhone}
-							onSubmit={() => createPerson(true)}
-						/>
-					)}
-
-					{step === 'visit' && selectedPerson && (
+					{step === 'visit' && (
 						<VisitStep
-							person={selectedPerson}
+							person={
+								selectedPerson ?? {
+									id: '',
+									fullName: newName,
+									userId: null,
+									isWorker: false,
+									hasPasscode: false,
+								}
+							}
 							purposes={purposes}
 							onSubmit={handleSubmitVisit}
 						/>
@@ -500,15 +425,9 @@ export default function KioskPage() {
 					)}
 
 					{serverMessage && (
-						<>
-							<p className="text-center text-xl text-muted-foreground">
-								{serverMessage}.
-							</p>
-							<p className="text-center text-md text-muted-foreground">
-								You&apos;ll be able to view this code later when you login and
-								access your dashboard.
-							</p>
-						</>
+						<p className="text-center text-xl text-muted-foreground">
+							{serverMessage}
+						</p>
 					)}
 				</CardContent>
 			</Card>

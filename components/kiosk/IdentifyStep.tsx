@@ -1,7 +1,6 @@
 // components/kiosk/IdentifyStep.tsx
 'use client'
 
-import { Label } from '@/components/ui/label'
 import { PersonSummary } from '@/types/kiosk'
 import { KioskInput } from './KioskInput'
 import { KioskButton } from './KioskButton'
@@ -11,7 +10,6 @@ type Props = {
 	suggestions: PersonSummary[]
 	searching: boolean
 	onInputChange: (value: string) => void
-	// onContinue: () => void
 	onSelectSuggestion: (p: PersonSummary) => void
 }
 
@@ -20,7 +18,6 @@ export function IdentifyStep({
 	suggestions,
 	searching,
 	onInputChange,
-	// onContinue,
 	onSelectSuggestion,
 }: Props) {
 	return (
@@ -42,8 +39,10 @@ export function IdentifyStep({
 					)}
 
 					{!searching && suggestions.length === 0 && (
-						<p className="text-2xl px-2 text-center mt-12">
-							Start typing your name or 6-digit code
+						<p className="text-2xl px-2 text-center mt-10">
+							{input.trim().length < 2
+								? 'Start typing your name or 6-digit code'
+								: 'No record found yet. Finish typing your full name, then tap Continue.'}
 						</p>
 					)}
 
@@ -59,8 +58,6 @@ export function IdentifyStep({
 					))}
 				</div>
 			</div>
-
-			{/* <KioskButton onClick={onContinue}>Continue</KioskButton> */}
 		</div>
 	)
 }

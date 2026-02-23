@@ -3,6 +3,7 @@
 import { CenterTimeConfig } from '@/lib/time/center-time'
 import { TimeFormat } from '@/types/shifts'
 import { format, parse } from 'date-fns'
+import { fromZonedTime } from 'date-fns-tz'
 
 //toAmPm works but should be replaced
 export function toAmPm(time: string | null): string {
@@ -229,6 +230,18 @@ export function toUtcDateTime(date: string, time: string) {
 	const [hh, mm] = time.split(':').map(Number)
 
 	return new Date(Date.UTC(y, m - 1, d, hh, mm, 0, 0))
+}
+
+export function toUtcDateTimeInTz(date: string, time: string, timeZone: string) {
+	// Interprets date/time as wall-clock in timeZone, then returns UTC Date.
+	const [y, m, d] = date.split('-').map(Number)
+	const [hh, mm] = time.split(':').map(Number)
+	const local = new Date(y, m - 1, d, hh, mm, 0, 0)
+	return fromZonedTime(local, timeZone)
+}
+
+export function toHHMMInTz(d: Date, timeZone: string) {
+	return formatInTz(d, timeZone, 'HH:mm')
 }
 
 export function weekdayFromYYYYMMDD(date: string) {

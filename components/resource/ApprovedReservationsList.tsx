@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
 type Props = {
 	items: ReservationListItem[]
+	timeZone?: string
 }
 
 const ASSISTANCE_LABELS: Record<
@@ -17,7 +18,7 @@ const ASSISTANCE_LABELS: Record<
 	full: 'Assistance entire time',
 }
 
-export function ConfirmedReservationsList({ items }: Props) {
+export function ConfirmedReservationsList({ items, timeZone }: Props) {
 	if (items.length === 0) {
 		return (
 			<p className="text-sm text-muted-foreground">
@@ -35,8 +36,13 @@ export function ConfirmedReservationsList({ items }: Props) {
 					<CardHeader>
 						<div className="font-medium">{r.resourceName}</div>
 						<div className="text-sm text-muted-foreground">
-							{new Date(r.startTime).toLocaleString()} –{' '}
-							{new Date(r.endTime).toLocaleTimeString()}
+							{new Date(r.startTime).toLocaleString(undefined, {
+								timeZone,
+							})}{' '}
+							–{' '}
+							{new Date(r.endTime).toLocaleTimeString(undefined, {
+								timeZone,
+							})}
 						</div>
 					</CardHeader>
 

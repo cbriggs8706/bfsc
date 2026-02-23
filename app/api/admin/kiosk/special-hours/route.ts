@@ -2,14 +2,15 @@ import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { specialHours } from '@/db'
 import { asc } from 'drizzle-orm'
+import { parseLocalYMD, toYYYYMMDD } from '@/utils/time'
 
 function dateRange(start: string, end: string): string[] {
 	const result: string[] = []
-	const cur = new Date(start)
-	const endDate = new Date(end)
+	const cur = parseLocalYMD(start)
+	const endDate = parseLocalYMD(end)
 
 	while (cur <= endDate) {
-		result.push(cur.toISOString().split('T')[0])
+		result.push(toYYYYMMDD(cur))
 		cur.setDate(cur.getDate() + 1)
 	}
 	return result

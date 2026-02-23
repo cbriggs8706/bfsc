@@ -2,12 +2,27 @@ import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { operatingHours, specialHours } from '@/db'
 import { eq } from 'drizzle-orm'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { ymdInTz } from '@/utils/time'
 
 export async function GET() {
-	// Current date info
-	const today = new Date()
-	const weekday = today.getDay() // 0 = Sunday, 1 = Monday ...
-	const todayDateString = today.toISOString().split('T')[0] // "YYYY-MM-DD"
+	const centerTime = await getCenterTimeConfig()
+	const now = new Date()
+	const todayDateString = ymdInTz(now, centerTime.timeZone)
+	const weekdayShort = new Intl.DateTimeFormat('en-US', {
+		timeZone: centerTime.timeZone,
+		weekday: 'short',
+	}).format(now)
+	const weekdayMap: Record<string, number> = {
+		Sun: 0,
+		Mon: 1,
+		Tue: 2,
+		Wed: 3,
+		Thu: 4,
+		Fri: 5,
+		Sat: 6,
+	}
+	const weekday = weekdayMap[weekdayShort] ?? 0
 
 	// ───────────────────────────────────────────
 	// 1. SPECIAL HOURS OVERRIDE CHECK

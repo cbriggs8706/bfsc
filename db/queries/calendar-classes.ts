@@ -1,7 +1,8 @@
 // db/queries/calendar-classes.ts
 import 'server-only'
 import { db } from '@/db'
-import { and, gte, lte, eq } from 'drizzle-orm'
+import { and, gte, lte, eq, inArray } from 'drizzle-orm'
+import { fromZonedTime } from 'date-fns-tz'
 
 import {
 	classSeries,
@@ -9,9 +10,10 @@ import {
 	classSeriesPresenter,
 } from '@/db/schema/tables/classes'
 import { user } from '@/db/schema/tables/auth'
+import { reservations, resources } from '@/db/schema/tables/resources'
 import { ymdInTz } from '@/utils/time'
 
-export type CalendarClass = {
+type ClassCalendarEvent = {
 	id: string
 	date: string // yyyy-mm-dd LOCAL
 	startsAtIso: string
@@ -21,13 +23,45 @@ export type CalendarClass = {
 	descriptionOverride: string | null
 	isCanceled: boolean
 	presenters: string[]
+	kind: 'class'
 }
 
-export async function listCalendarClasses(
+type ReservationCalendarEvent = {
+	id: string
+	date: string // yyyy-mm-dd LOCAL
+	startsAtIso: string
+	title: string
+	location: string
+	description: string | null
+	descriptionOverride: string | null
+	isCanceled: boolean
+	presenters: string[]
+	kind: 'reservation'
+	reservationStatus: 'pending' | 'confirmed'
+}
+
+export type CalendarEvent = ClassCalendarEvent | ReservationCalendarEvent
+
+export async function listCalendarEvents(
 	rangeStart: Date,
 	rangeEnd: Date,
 	centerTimeZone: string
-): Promise<CalendarClass[]> {
+): Promise<CalendarEvent[]> {
+	const startYmd = ymdInTz(rangeStart, centerTimeZone)
+	const endYmd = ymdInTz(rangeEnd, centerTimeZone)
+
+	const [startYear, startMonth, startDay] = startYmd.split('-').map(Number)
+	const [endYear, endMonth, endDay] = endYmd.split('-').map(Number)
+
+	const rangeStartUtc = fromZonedTime(
+		new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0),
+		centerTimeZone
+	)
+	const rangeEndUtc = fromZonedTime(
+		new Date(endYear, endMonth - 1, endDay, 23, 59, 59, 999),
+		centerTimeZone
+	)
+
 	const rows = await db
 		.select({
 			sessionId: classSession.id,
@@ -52,13 +86,13 @@ export async function listCalendarClasses(
 		.where(
 			and(
 				eq(classSeries.status, 'published'),
-				gte(classSession.startsAt, rangeStart),
-				lte(classSession.startsAt, rangeEnd)
+				gte(classSession.startsAt, rangeStartUtc),
+				lte(classSession.startsAt, rangeEndUtc)
 			)
 		)
 
 	// --- Aggregate presenters per session ---
-	const bySession = new Map<string, CalendarClass>()
+	const bySession = new Map<string, ClassCalendarEvent>()
 
 	for (const r of rows) {
 		let entry = bySession.get(r.sessionId)
@@ -77,6 +111,7 @@ export async function listCalendarClasses(
 				location: r.locationOverride || r.seriesLocation,
 				isCanceled: r.status === 'canceled',
 				presenters: [],
+				kind: 'class',
 			}
 
 			bySession.set(r.sessionId, entry)
@@ -87,5 +122,44 @@ export async function listCalendarClasses(
 		}
 	}
 
-	return Array.from(bySession.values())
+	const reservationRows = await db
+		.select({
+			id: reservations.id,
+			startTime: reservations.startTime,
+			resourceName: resources.name,
+			status: reservations.status,
+		})
+		.from(reservations)
+		.innerJoin(resources, eq(reservations.resourceId, resources.id))
+		.where(
+			and(
+				gte(reservations.startTime, rangeStartUtc),
+				lte(reservations.startTime, rangeEndUtc),
+				inArray(reservations.status, ['pending', 'confirmed'])
+			)
+		)
+
+	const reservationEvents: ReservationCalendarEvent[] = reservationRows.map(
+		(r) => {
+			const dt = new Date(r.startTime)
+			return {
+				id: `reservation:${r.id}`,
+				date: ymdInTz(dt, centerTimeZone),
+				startsAtIso: dt.toISOString(),
+				// Pending reservations intentionally avoid patron identity.
+				title: `Reserved: ${r.resourceName}`,
+				location: r.resourceName,
+				description: null,
+				descriptionOverride: null,
+				isCanceled: false,
+				presenters: [],
+				kind: 'reservation',
+				reservationStatus: r.status as 'pending' | 'confirmed',
+			}
+		}
+	)
+
+	return [...Array.from(bySession.values()), ...reservationEvents].sort((a, b) =>
+		a.startsAtIso.localeCompare(b.startsAtIso)
+	)
 }

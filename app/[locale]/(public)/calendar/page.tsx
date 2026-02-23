@@ -1,9 +1,9 @@
 // app/[locale]/(public)/calendar/page.tsx
 import CenterCalendar from '@/components/custom/CenterCalendar'
 import { db, operatingHours, specialHours } from '@/db'
-import { toLocalYMD } from '@/utils/time'
+import { toLocalYMD, ymdInTz } from '@/utils/time'
 import { and, gte, lte } from 'drizzle-orm'
-import { listCalendarClasses } from '@/db/queries/calendar-classes'
+import { listCalendarEvents } from '@/db/queries/calendar-classes'
 import { getTranslations } from 'next-intl/server'
 import { getCenterTimeConfig } from '@/lib/time/center-time'
 
@@ -15,14 +15,15 @@ export default async function Page({ params }: Props) {
 	const { locale } = await params
 
 	const t = await getTranslations({ locale, namespace: 'common' })
+	const centerTime = await getCenterTimeConfig()
 
-	const today = new Date()
-	const year = today.getFullYear()
-	const month = today.getMonth()
+	const [year, month] = ymdInTz(new Date(), centerTime.timeZone)
+		.split('-')
+		.map(Number)
 
 	// Load a wider range so month navigation works without refetching
-	const rangeStart = new Date(year, month - 3, 1)
-	const rangeEnd = new Date(year, month + 4, 0)
+	const rangeStart = new Date(year, month - 1 - 3, 1)
+	const rangeEnd = new Date(year, month - 1 + 4, 0)
 
 	const firstStr = toLocalYMD(rangeStart)
 	const lastStr = toLocalYMD(rangeEnd)
@@ -51,8 +52,7 @@ export default async function Page({ params }: Props) {
 		isClosed: w.isClosed,
 	}))
 
-	const centerTime = await getCenterTimeConfig()
-	const classes = await listCalendarClasses(
+	const classes = await listCalendarEvents(
 		rangeStart,
 		rangeEnd,
 		centerTime.timeZone
@@ -73,7 +73,7 @@ export default async function Page({ params }: Props) {
 				classes={classes}
 				centerTime={centerTime}
 				initialYear={year}
-				initialMonth={month}
+				initialMonth={month - 1}
 				locale={locale}
 			/>
 		</div>
