@@ -33,15 +33,15 @@ export function AvatarCard({
 					</Button>
 				</CardHeader>
 
-				<CardContent className="flex items-center gap-4 text-sm md:text-base">
-					<Avatar className="h-16 w-16">
+				<CardContent className="flex flex-col items-center gap-4 text-center text-sm md:text-base">
+					<Avatar className="h-40 w-40 md:h-52 md:w-52">
 						<AvatarImage src={profileImageUrl ?? undefined} />
-						<AvatarFallback>
+						<AvatarFallback className="text-4xl md:text-5xl">
 							{name?.charAt(0)?.toUpperCase() ?? 'U'}
 						</AvatarFallback>
 					</Avatar>
 
-					<div className="text-muted-foreground">{t('hint')}</div>
+					<div className="max-w-[24ch] text-muted-foreground">{t('hint')}</div>
 				</CardContent>
 			</Card>
 

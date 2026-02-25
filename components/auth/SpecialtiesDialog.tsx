@@ -22,16 +22,35 @@ export const SPECIALTY_OPTIONS: {
 	{
 		category: 'Research Regions',
 		specialties: [
-			'Danish research',
-			'Norwegian research',
-			'Swedish research',
-			'English research',
-			'German research',
-			'Italian research',
-			'Spanish research',
+			'North American research',
+			'Central American research',
+			'South American research',
+			'Caribbean research',
+			'European research',
+			'African research',
+			'Asian research',
+			'Middle Eastern research',
+			'Oceania and Pacific Islands research',
+			'Scandinavian research',
+			'British Isles research',
+			'German-speaking Europe research',
+			'Mediterranean Europe research',
 			'Native American research',
 			'Germany, Netherlands, and French Canadian research',
 			'England research (FindMyPast)',
+		],
+	},
+	{
+		category: 'Skills',
+		specialties: [
+			'Audio Digitization',
+			'Video Digitization',
+			'Photos Digitization',
+			'Documents Digitization',
+			'Organization & Storage',
+			'Document Transcription',
+			'File Formats, Conversion & Compression',
+			'Personal History Writing',
 		],
 	},
 	{
@@ -45,6 +64,86 @@ export const SPECIALTY_OPTIONS: {
 			'Indexing and name review',
 			'Indexing',
 			'Using Audacity (audio editing)',
+		],
+	},
+	{
+		category: 'Genealogical Resources',
+		specialties: [
+			'MyHeritage',
+			'Findmypast',
+			'American Ancestors',
+			'Geneanet',
+			'Filae',
+			'Storied',
+		],
+	},
+	{
+		category: 'Tree Management Apps',
+		specialties: [
+			'Ancestral Quest',
+			'Familienbuch',
+			'Legacy Family Tree',
+			'MacFamily Tree',
+			'RootsFinder',
+			'The MagiKey',
+		],
+	},
+	{
+		category: 'Others',
+		specialties: [
+			'Adavia',
+			'Ancestor Games',
+			'BeenVerified',
+			'Citizens By Descent',
+			'Connected Mytown',
+			'dearest forever',
+			'Eternal Reminder',
+			'Evidentia',
+			'FamGEN',
+			'Family Chart Masters',
+			'Family Sage',
+			'Family Tree Chart',
+			'Family Tree Art',
+			'Family Tree Validator',
+			'GEDmatch',
+			'GenealogyWallCharts',
+			'Geneopardy!',
+			'GenerationStory',
+			'Goldie May',
+			'Introduction to Genealogy',
+			'Kindex',
+			'Legacy Tree Genealogist',
+			'Lexmark',
+			'LifeWeaver',
+			'Map My Cousins',
+			'Memories Book',
+			'MemoryWeb',
+			'MyCanvas',
+			'MyFamilyArchive',
+			'Mylio',
+			'Nouri',
+			'One Page Genealogy',
+			'PATRONOMIA',
+			'Pedigree Pie',
+			'Pemanent.org',
+			'Puzzilla',
+			'Relate 360',
+			'Record Quest',
+			'Related Faces',
+			'Relative Finder',
+			'WWP Relative RInder',
+			'Rooted History',
+			'Roots and Reels',
+			'RootsMapper',
+			'Take A Name',
+			'The Family History Guide',
+			'ThisIsFamily',
+			'Traditions of the Ancestors',
+			'Tree-Me',
+			'TreeFind',
+			'Virtual Pedigree',
+			'WikiTree',
+			'Your Legacy Story',
 		],
 	},
 	{
@@ -97,15 +196,13 @@ export function SpecialtiesDialog({
 
 	const allOptions = useMemo(
 		() => SPECIALTY_OPTIONS.flatMap((group) => group.specialties),
-		[]
+		[],
 	)
 
 	const defaultSelected = useMemo(
 		() =>
-			initialSpecialties.filter((specialty) =>
-				allOptions.includes(specialty)
-			),
-		[allOptions, initialSpecialties]
+			initialSpecialties.filter((specialty) => allOptions.includes(specialty)),
+		[allOptions, initialSpecialties],
 	)
 
 	const defaultCustom = useMemo(
@@ -113,7 +210,7 @@ export function SpecialtiesDialog({
 			initialSpecialties
 				.filter((specialty) => !allOptions.includes(specialty))
 				.join('\n'),
-		[allOptions, initialSpecialties]
+		[allOptions, initialSpecialties],
 	)
 
 	const { control, handleSubmit } = useForm<FormValues>({
@@ -182,13 +279,10 @@ export function SpecialtiesDialog({
 															checked={field.value.includes(specialty)}
 															onChange={(e) => {
 																if (e.target.checked) {
-																	field.onChange([
-																		...field.value,
-																		specialty,
-																	])
+																	field.onChange([...field.value, specialty])
 																} else {
 																	field.onChange(
-																		field.value.filter((s) => s !== specialty)
+																		field.value.filter((s) => s !== specialty),
 																	)
 																}
 															}}

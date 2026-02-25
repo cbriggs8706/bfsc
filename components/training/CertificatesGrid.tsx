@@ -17,6 +17,7 @@ import {
 	MissingCertificate,
 } from '@/db/queries/training'
 import { CourseBadgeIcon } from './CourseBadgeIcon'
+import { cn } from '@/lib/utils'
 
 /* ======================================================
  * Types
@@ -25,13 +26,22 @@ import { CourseBadgeIcon } from './CourseBadgeIcon'
 type Props = {
 	certificates: DashboardCertificateItem[]
 	locale: string
+	className?: string
+	cardClassName?: string
+	preferSingleRow?: boolean
 }
 
 /* ======================================================
  * Component
  * ==================================================== */
 
-export function CertificatesGrid({ certificates, locale }: Props) {
+export function CertificatesGrid({
+	certificates,
+	locale,
+	className,
+	cardClassName,
+	preferSingleRow = false,
+}: Props) {
 	const [activeCert, setActiveCert] = useState<EarnedCertificate | null>(null)
 
 	const earned = certificates.filter(
@@ -44,9 +54,9 @@ export function CertificatesGrid({ certificates, locale }: Props) {
 
 	if (certificates.length === 0) {
 		return (
-			<div className="space-y-3">
+			<div className={cn('space-y-3', className)}>
 				<h2 className="text-2xl font-semibold">My Certificates</h2>
-				<div className="border bg-card rounded-xl p-8 space-y-4">
+				<div className={cn('border bg-card rounded-xl p-8 space-y-4', cardClassName)}>
 					<p className="text-sm text-muted-foreground">
 						You haven’t earned any certificates yet.
 					</p>
@@ -59,11 +69,18 @@ export function CertificatesGrid({ certificates, locale }: Props) {
 	}
 
 	return (
-		<div className="space-y-3">
+		<div className={cn('space-y-3', className)}>
 			<h2 className="text-2xl font-semibold">My Certificates</h2>
 
-			<div className="border bg-card rounded-xl p-4">
-				<div className="flex flex-wrap items-start justify-center gap-4">
+			<div className={cn('border bg-card rounded-xl p-6', cardClassName)}>
+				<div
+					className={cn(
+						'grid gap-5',
+						preferSingleRow
+							? 'grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8'
+							: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
+					)}
+				>
 					{/* =====================
 					 * Earned Certificates
 					 * =================== */}
@@ -71,17 +88,20 @@ export function CertificatesGrid({ certificates, locale }: Props) {
 						<button
 							key={cert.id}
 							onClick={() => setActiveCert(cert)}
-							className="group focus:outline-none"
+							className="group focus:outline-none justify-self-center"
 						>
-							<div className="flex flex-col items-center gap-1 w-20">
+							<div className="flex w-28 flex-col items-center gap-2">
 								<CourseBadgeIcon
 									iconName={cert.badgeIconName}
 									svgUrl={cert.badgeImageUrl}
 									label={cert.title}
+									size="lg"
 									className="transition-transform group-hover:scale-105"
 								/>
 
-								<span className="text-[9px] text-center">{cert.title}</span>
+								<span className="line-clamp-2 text-center text-sm font-medium leading-tight">
+									{cert.title}
+								</span>
 
 								<CertificateBadge status={cert.status} />
 							</div>
@@ -95,17 +115,22 @@ export function CertificatesGrid({ certificates, locale }: Props) {
 						<Link
 							key={course.courseId}
 							href={`/${locale}/training/courses/${course.courseId}`}
-							className="group"
+							className="group justify-self-center"
 						>
-							<div className="flex flex-col items-center gap-1 w-20">
+							<div className="flex w-28 flex-col items-center gap-2">
 								<CourseBadgeIcon
 									iconName={course.badgeIconName}
 									svgUrl={course.badgeImageUrl}
 									label={course.title}
+									size="lg"
 									className="opacity-55"
 								/>
 
-								<span className="text-[9px] text-muted-foreground text-center">
+								<span className="line-clamp-2 text-center text-sm font-medium leading-tight text-muted-foreground">
+									{course.title}
+								</span>
+
+								<span className="text-center text-xs text-muted-foreground">
 									Not earned yet
 								</span>
 							</div>

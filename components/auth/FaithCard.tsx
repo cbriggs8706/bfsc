@@ -26,9 +26,16 @@ export function FaithCard({
 	const [open, setOpen] = useState(false)
 
 	const selectedFaith = faithTree.find((f) => f.id === faithId)
-	const wardName =
-		selectedFaith?.stakes.flatMap((s) => s.wards).find((w) => w.id === wardId)
-			?.name ?? '—'
+	const selectedStake = selectedFaith?.stakes.find((s) =>
+		s.wards.some((w) => w.id === wardId)
+	)
+	const wardName = selectedStake?.wards.find((w) => w.id === wardId)?.name ?? '—'
+	const wardWithStake =
+		wardName === '—'
+			? wardName
+			: selectedStake?.name
+				? `${wardName} (${selectedStake.name})`
+				: wardName
 
 	return (
 		<>
@@ -47,7 +54,7 @@ export function FaithCard({
 					</div>
 
 					<div>
-						<span className="font-medium">{t('ward')}:</span> {wardName}
+						<span className="font-medium">{t('ward')}:</span> {wardWithStake}
 					</div>
 				</CardContent>
 			</Card>

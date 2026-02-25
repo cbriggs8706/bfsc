@@ -44,12 +44,12 @@ function safeRedirect(path: string, locale: string) {
 		const decoded = decodeURIComponent(path)
 
 		if (!decoded.startsWith(`/${locale}`)) {
-			return `/${locale}`
+			return `/${locale}/dashboard`
 		}
 
 		return decoded
 	} catch {
-		return `/${locale}`
+		return `/${locale}/dashboard`
 	}
 }
 
@@ -91,7 +91,7 @@ export function LoginForm({ redirectTo }: Props) {
 			// } else {
 			// 	router.push(`/${locale}`)
 			// }
-			router.replace(res?.url ?? `/${locale}`)
+			router.replace(res?.url ?? `/${locale}/dashboard`)
 		} catch {
 			toast.error(t('networkError') || 'Network error. Please try again.')
 		}

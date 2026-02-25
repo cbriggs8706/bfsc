@@ -2,7 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase-client'
 import type { TodayShift } from '@/types/shift-report'
 import {
@@ -259,16 +259,16 @@ export function CurrentShiftPanel({
 
 	if (!hasAny) {
 		return (
-			<Card>
-				<CardHeader>
-					<CardTitle>{title}</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<p className="text-base">
-						No worker or patron activity recorded today.
-					</p>
-				</CardContent>
-			</Card>
+			<div className="space-y-3">
+				<h2 className="text-2xl font-semibold">{title}</h2>
+				<Card>
+					<CardContent className="pt-6">
+						<p className="text-base">
+							No worker or patron activity recorded today.
+						</p>
+					</CardContent>
+				</Card>
+			</div>
 		)
 	}
 
