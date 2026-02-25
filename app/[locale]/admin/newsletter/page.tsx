@@ -4,13 +4,31 @@ import { db, newsletterTranslations } from '@/db'
 import { newsletterPosts } from '@/db'
 import { Button } from '@/components/ui/button'
 import { stripHtml } from '@/utils/strip-html'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, sql } from 'drizzle-orm'
 import Image from 'next/image'
 import { getNewsletterEmailList } from '@/db/queries/newsletters'
 import { Label } from '@/components/ui/label'
 import { CopyEmailList } from '@/components/newsletters/CopyEmailList'
+import { requirePermission } from '@/lib/permissions/require-permission'
+import { can } from '@/lib/permissions/can'
 
-export default async function AdminNewsletterListPage() {
+export default async function AdminNewsletterListPage({
+	params,
+}: {
+	params: Promise<{ locale: string }>
+}) {
+	const { locale } = await params
+	const viewer = await requirePermission(
+		locale,
+		'newsletters.view',
+		`/${locale}/admin/newsletter`
+	)
+	const [canCreate, canUpdate, canDelete] = await Promise.all([
+		can(viewer.id, viewer.role ?? 'Patron', 'newsletters.create'),
+		can(viewer.id, viewer.role ?? 'Patron', 'newsletters.update'),
+		can(viewer.id, viewer.role ?? 'Patron', 'newsletters.delete'),
+	])
+
 	const posts = await db
 		.select({
 			id: newsletterPosts.id,
@@ -30,7 +48,11 @@ export default async function AdminNewsletterListPage() {
 			eq(newsletterTranslations.postId, newsletterPosts.id)
 		)
 		.where(eq(newsletterTranslations.locale, 'en'))
-		.orderBy(desc(newsletterPosts.createdAt))
+		.orderBy(
+			desc(
+				sql`COALESCE(${newsletterPosts.publishedAt}, ${newsletterPosts.createdAt})`
+			)
+		)
 
 	// const emailString = await getNewsletterEmailList()
 	const emailString = (await getNewsletterEmailList()).join(', ')
@@ -41,9 +63,13 @@ export default async function AdminNewsletterListPage() {
 				<div className="flex justify-between items-center">
 					<h1 className="text-3xl font-bold">Newsletters</h1>
 
-					<Button asChild>
-						<Link href="./newsletter/create">New Newsletter</Link>
-					</Button>
+					{canCreate ? (
+						<Button asChild>
+							<Link href={`/${locale}/admin/newsletter/create`}>
+								New Newsletter
+							</Link>
+						</Button>
+					) : null}
 				</div>
 				<p className="text-sm text-muted-foreground">
 					Create, edit or delete newsletters.
@@ -92,8 +118,8 @@ export default async function AdminNewsletterListPage() {
 							</div>
 						</div>
 
-						{/* ACTIONS */}
-						<div className="flex gap-2 md:justify-end">
+							{/* ACTIONS */}
+							<div className="flex gap-2 md:justify-end">
 							{/* <Button
 								asChild
 								size="sm"
@@ -102,23 +128,31 @@ export default async function AdminNewsletterListPage() {
 							>
 								<Link href={`./newsletter/read/${post.id}`}>Read</Link>
 							</Button> */}
-							<Button
-								asChild
-								size="sm"
-								variant="outline"
-								className="flex-1 md:flex-none"
-							>
-								<Link href={`./newsletter/update/${post.id}`}>Edit</Link>
-							</Button>
-							<Button
-								asChild
-								size="sm"
-								variant="destructive"
-								className="flex-1 md:flex-none"
-							>
-								<Link href={`./newsletter/delete/${post.id}`}>Delete</Link>
-							</Button>
-						</div>
+								{canUpdate ? (
+									<Button
+										asChild
+										size="sm"
+										variant="outline"
+										className="flex-1 md:flex-none"
+									>
+										<Link href={`/${locale}/admin/newsletter/update/${post.id}`}>
+											Edit
+										</Link>
+									</Button>
+								) : null}
+								{canDelete ? (
+									<Button
+										asChild
+										size="sm"
+										variant="destructive"
+										className="flex-1 md:flex-none"
+									>
+										<Link href={`/${locale}/admin/newsletter/delete/${post.id}`}>
+											Delete
+										</Link>
+									</Button>
+								) : null}
+							</div>
 					</div>
 				))}
 			</div>

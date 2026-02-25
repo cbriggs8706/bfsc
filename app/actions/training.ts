@@ -14,6 +14,7 @@ import {
 } from '@/db'
 import { LessonBlockInput, LessonBlockTypeMap } from '@/types/training'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { isCourseBadgeIconName } from '@/lib/training/course-badge'
 
 /* ============================================================
    ADMIN: COURSES
@@ -174,12 +175,17 @@ export async function createLessonBlock<
 	sortOrder?: number
 	data: LessonBlockTypeMap[T]
 }) {
-	await db.insert(learningLessonBlocks).values({
-		lessonId: input.lessonId,
-		type: input.type,
-		sortOrder: input.sortOrder ?? 0,
-		data: input.data,
-	})
+	const [created] = await db
+		.insert(learningLessonBlocks)
+		.values({
+			lessonId: input.lessonId,
+			type: input.type,
+			sortOrder: input.sortOrder ?? 0,
+			data: input.data,
+		})
+		.returning({ id: learningLessonBlocks.id })
+
+	return created
 }
 
 export async function updateLessonBlock(
@@ -322,12 +328,16 @@ export async function uploadCourseBadge(courseId: string, formData: FormData) {
 		throw new Error('No file uploaded')
 	}
 
-	// Optional: basic validation
-	if (!file.type.startsWith('image/')) {
-		throw new Error('File must be an image')
+	// Only SVGs are supported for custom badge uploads.
+	const lowerName = file.name.toLowerCase()
+	const isSvg =
+		file.type === 'image/svg+xml' ||
+		lowerName.endsWith('.svg') ||
+		file.type === 'application/svg+xml'
+	if (!isSvg) {
+		throw new Error('File must be an SVG')
 	}
 
-	const ext = file.name.split('.').pop() || 'png'
 	const safeName = sanitizeFilename(file.name)
 	const path = `${courseId}/${Date.now()}-${safeName}` // stored inside bucket
 
@@ -346,8 +356,40 @@ export async function uploadCourseBadge(courseId: string, formData: FormData) {
 	// Save *path* in DB (bucket is implicit)
 	await db
 		.update(learningCourses)
-		.set({ badgeImagePath: path, updatedAt: new Date() })
+		.set({
+			badgeImagePath: path,
+			badgeIconName: null,
+			updatedAt: new Date(),
+		})
 		.where(eq(learningCourses.id, courseId))
 
 	return { badgeImagePath: path }
+}
+
+export async function setCourseBadgeIcon(courseId: string, iconName: string) {
+	if (!isCourseBadgeIconName(iconName)) {
+		throw new Error('Invalid icon')
+	}
+
+	await db
+		.update(learningCourses)
+		.set({
+			badgeIconName: iconName,
+			badgeImagePath: null,
+			updatedAt: new Date(),
+		})
+		.where(eq(learningCourses.id, courseId))
+
+	return { badgeIconName: iconName }
+}
+
+export async function clearCourseBadge(courseId: string) {
+	await db
+		.update(learningCourses)
+		.set({
+			badgeIconName: null,
+			badgeImagePath: null,
+			updatedAt: new Date(),
+		})
+		.where(eq(learningCourses.id, courseId))
 }

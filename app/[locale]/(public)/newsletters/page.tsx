@@ -1,6 +1,6 @@
 // app/[locale]/(public)/newsletters/page.tsx
 import { NewsletterCard } from '@/components/newsletters/NewsletterCard'
-import { Button } from '@/components/ui/button'
+import { NewsletterFilters } from '@/components/newsletters/NewsletterFilters'
 import { getPublicNewsletters } from '@/db/queries/newsletters'
 import { NewsletterLocale } from '@/types/newsletters'
 
@@ -9,14 +9,9 @@ type Props = {
 	searchParams?: Promise<{
 		q?: string
 		tag?: string
+		year?: string
+		month?: string
 	}>
-}
-
-function formatMonthYear(date: Date): string {
-	return date.toLocaleDateString(undefined, {
-		year: 'numeric',
-		month: 'long',
-	})
 }
 
 export default async function NewsletterListPage({
@@ -26,42 +21,51 @@ export default async function NewsletterListPage({
 	const { locale } = await params
 	const sp = (await searchParams) ?? {}
 
-	const q = sp.q?.toLowerCase()
-	// const tag = sp.tag
+	const qRaw = sp.q?.trim() ?? ''
+	const q = qRaw.toLowerCase()
+	const year = sp.year?.trim() ?? ''
+	const month = sp.month?.trim() ?? ''
 
 	// Fetch all published newsletters (already filtered by status)
 	let posts = await getPublicNewsletters(locale)
+	const years = Array.from(
+		new Set(
+			posts
+				.map((p) => p.publishedAt?.getFullYear())
+				.filter((v): v is number => typeof v === 'number')
+		)
+	).sort((a, b) => b - a)
+	const months = Array.from({ length: 12 }, (_, i) => {
+		const value = String(i + 1)
+		const label = new Date(2000, i, 1).toLocaleDateString(undefined, {
+			month: 'long',
+		})
+		return { value, label }
+	})
 
 	// ----------------------------
-	// Search (title + excerpt)
+	// Filters (search + year + month)
 	// ----------------------------
-	if (q) {
-		posts = posts.filter(
-			(p) =>
+	posts = posts.filter((p) => {
+		if (q) {
+			const matchedText =
 				p.title.toLowerCase().includes(q) ||
 				(p.excerpt ?? '').toLowerCase().includes(q)
-		)
-	}
+			if (!matchedText) return false
+		}
 
-	// ----------------------------
-	// Featured vs regular
-	// ----------------------------
-	const featured = posts.filter((p) => p.featured)
-	const regular = posts.filter((p) => !p.featured)
+		if (year) {
+			const y = Number(year)
+			if (!p.publishedAt || p.publishedAt.getFullYear() !== y) return false
+		}
 
-	// ----------------------------
-	// Month grouping (regular posts)
-	// ----------------------------
-	const grouped = regular.reduce<Record<string, typeof regular>>(
-		(acc, post) => {
-			if (!post.publishedAt) return acc
-			const key = formatMonthYear(post.publishedAt)
-			acc[key] = acc[key] || []
-			acc[key].push(post)
-			return acc
-		},
-		{}
-	)
+		if (month) {
+			const m = Number(month)
+			if (!p.publishedAt || p.publishedAt.getMonth() + 1 !== m) return false
+		}
+
+		return true
+	})
 
 	return (
 		<div className="p-4 space-y-4">
@@ -74,43 +78,25 @@ export default async function NewsletterListPage({
 			{/* ----------------------------
 			    Search
 			----------------------------- */}
-			<form className="flex gap-2 max-w-2xl">
-				<input
-					type="text"
-					name="q"
-					defaultValue={q}
-					placeholder="Search newsletters"
-					className="flex-1 border rounded px-3 py-2 bg-card"
-				/>
-				<Button variant="default" className="border rounded px-4 py-2">
-					Search
-				</Button>
-			</form>
+			<NewsletterFilters
+				key={`${qRaw}|${year}|${month}`}
+				q={qRaw}
+				year={year}
+				month={month}
+				years={years}
+				months={months}
+				locale={locale}
+			/>
 
 			{/* ----------------------------
-			    Featured
+			    Archive (chronological)
 			----------------------------- */}
-			{featured.length > 0 && (
-				<section className="space-y-4">
-					<h2 className="text-xl font-semibold">Featured</h2>
-					{featured.map((post) => (
+			<section>
+				<div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+					{posts.map((post) => (
 						<NewsletterCard key={post.id} {...post} locale={locale} />
 					))}
-				</section>
-			)}
-
-			{/* ----------------------------
-			    Monthly archive
-			----------------------------- */}
-			<section className="space-y-10">
-				{Object.entries(grouped).map(([month, posts]) => (
-					<div key={month} className="space-y-4">
-						<h2 className="text-xl font-semibold">{month}</h2>
-						{posts.map((post) => (
-							<NewsletterCard key={post.id} {...post} locale={locale} />
-						))}
-					</div>
-				))}
+				</div>
 			</section>
 
 			{/* ----------------------------

@@ -1,14 +1,16 @@
 // app/[locale]/admin/newsletter/delete/[id]/page.tsx
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { NewsletterForm } from '@/components/newsletters/NewsletterForm'
 import { getNewsletterForForm } from '@/db/queries/newsletters'
 import { deleteNewsletter } from '@/app/actions/newsletter'
+import { requirePermission } from '@/lib/permissions/require-permission'
 export default async function DeleteNewsletterPage({
 	params,
 }: {
 	params: Promise<{ locale: string; id: string }>
 }) {
 	const { locale, id } = await params
+	await requirePermission(locale, 'newsletters.delete', `/${locale}/admin/newsletter`)
 	const data = await getNewsletterForForm(id)
 	if (!data) notFound()
 

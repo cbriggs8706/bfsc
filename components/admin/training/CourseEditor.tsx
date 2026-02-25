@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { CourseBadgeUploader } from './CourseBadgeUploader'
-import { getCourseBadgeUrlFromPath } from '@/lib/storage/courseBadges.client'
 import { UnitsOutline } from './UnitsOutline'
 import { LessonBlocksEditor } from './LessonBlocksEditor'
 
@@ -22,7 +21,6 @@ type Props = {
 
 export function CourseEditor({ course, locale }: Props) {
 	const router = useRouter()
-	const badgeUrl = getCourseBadgeUrlFromPath(course.badgeImagePath)
 
 	// One stable shape. No unions. No "any".
 	const [selection, setSelection] = useState({
@@ -109,10 +107,11 @@ export function CourseEditor({ course, locale }: Props) {
 							</div>
 
 							<div className="space-y-1">
-								<Label>Badge image</Label>
+								<Label>Badge</Label>
 								<CourseBadgeUploader
 									courseId={course.id}
-									initialUrl={badgeUrl}
+									initialIconName={course.badgeIconName}
+									initialPath={course.badgeImagePath}
 								/>
 							</div>
 						</div>

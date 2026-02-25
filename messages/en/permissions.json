@@ -16,6 +16,8 @@
 		"newsletters": {
 			"view": "View newsletters",
 			"create": "Create newsletters",
+			"update": "Update newsletters",
+			"delete": "Delete newsletters",
 			"publish": "Publish newsletters"
 		},
 		"shifts": {
@@ -87,6 +89,8 @@
 		"newsletters": {
 			"view": "View existing newsletters",
 			"create": "Create newsletter drafts",
+			"update": "Edit newsletter content and metadata",
+			"delete": "Remove newsletters",
 			"publish": "Send newsletters to subscribers"
 		},
 		"shifts": {

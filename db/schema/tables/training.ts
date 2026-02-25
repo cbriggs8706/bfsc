@@ -31,6 +31,7 @@ export const learningCourses = pgTable(
 
 		// Optional image for the course card (supabase path/url)
 		badgeImagePath: text('badge_image_path'),
+		badgeIconName: text('badge_icon_name'),
 
 		sortOrder: integer('sort_order').notNull().default(0),
 

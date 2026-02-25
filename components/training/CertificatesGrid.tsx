@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 
 import { CertificateBadge } from './CertificateBadge'
 import { Button } from '@/components/ui/button'
@@ -17,6 +16,7 @@ import {
 	EarnedCertificate,
 	MissingCertificate,
 } from '@/db/queries/training'
+import { CourseBadgeIcon } from './CourseBadgeIcon'
 
 /* ======================================================
  * Types
@@ -74,19 +74,12 @@ export function CertificatesGrid({ certificates, locale }: Props) {
 							className="group focus:outline-none"
 						>
 							<div className="flex flex-col items-center gap-1 w-20">
-								{cert.badgeImageUrl ? (
-									<Image
-										src={cert.badgeImageUrl}
-										alt={cert.title}
-										width={56}
-										height={56}
-										className="rounded-md transition-transform group-hover:scale-105"
-									/>
-								) : (
-									<div className="w-14 h-14 rounded-md bg-muted flex items-center justify-center text-xs">
-										CERT
-									</div>
-								)}
+								<CourseBadgeIcon
+									iconName={cert.badgeIconName}
+									svgUrl={cert.badgeImageUrl}
+									label={cert.title}
+									className="transition-transform group-hover:scale-105"
+								/>
 
 								<span className="text-[9px] text-center">{cert.title}</span>
 
@@ -105,11 +98,12 @@ export function CertificatesGrid({ certificates, locale }: Props) {
 							className="group"
 						>
 							<div className="flex flex-col items-center gap-1 w-20">
-								<div className="w-20 h-20 rounded-md border border-dashed border-muted-foreground bg-background flex items-center justify-center">
-									<span className="text-xs text-muted-foreground text-wrap text-center">
-										{course.title}
-									</span>
-								</div>
+								<CourseBadgeIcon
+									iconName={course.badgeIconName}
+									svgUrl={course.badgeImageUrl}
+									label={course.title}
+									className="opacity-55"
+								/>
 
 								<span className="text-[9px] text-muted-foreground text-center">
 									Not earned yet

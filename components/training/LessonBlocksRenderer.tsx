@@ -26,12 +26,21 @@ export function LessonBlocksRenderer({ blocks }: Props) {
 }
 
 function TextBlock({ block }: { block: LessonBlock<'text'> }) {
+	const rawContent = block.data.bodyMarkdown ?? ''
+	const hasHtmlMarkup = /<\/?[a-z][\s\S]*>/i.test(rawContent)
+	const contentHtml = hasHtmlMarkup
+		? rawContent
+		: escapeHtml(rawContent).replace(/\n/g, '<br />')
+
 	return (
 		<div>
 			{block.data.title && (
 				<h3 className="font-semibold mb-1">{block.data.title}</h3>
 			)}
-			<p className="whitespace-pre-wrap">{block.data.bodyMarkdown}</p>
+			<div
+				className="prose prose-sm max-w-none break-words"
+				dangerouslySetInnerHTML={{ __html: contentHtml }}
+			/>
 		</div>
 	)
 }
@@ -70,4 +79,13 @@ function LinkBlock({ block }: { block: LessonBlock<'link'> }) {
 			{block.data.label ?? block.data.url}
 		</a>
 	)
+}
+
+function escapeHtml(value: string): string {
+	return value
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#39;')
 }

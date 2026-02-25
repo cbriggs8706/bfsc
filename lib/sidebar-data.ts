@@ -9,7 +9,6 @@ import {
 	Lectern,
 	Ticket,
 	AtSign,
-	Book,
 	Users2,
 	BadgeQuestionMark,
 	MapIcon,
@@ -81,11 +80,6 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				url: `/${locale}/newsletters`,
 				icon: Newspaper,
 				items: [],
-			},
-			{
-				title: t('sidebar.worker.library'),
-				url: `/${locale}/library`,
-				icon: Book,
 			},
 			{
 				title: t('sidebar.admin.reservations'),
@@ -199,10 +193,6 @@ export function buildSidebarData(t: TFunction, locale: string) {
 					{
 						title: t('sidebar.admin.defineCallings'),
 						url: `/${locale}/admin/center/faiths/callings`,
-					},
-					{
-						title: t('sidebar.admin.addBookEquip'),
-						url: `/${locale}/library/create`,
 					},
 					{
 						title: t('sidebar.admin.resources'),

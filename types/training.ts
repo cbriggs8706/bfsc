@@ -152,6 +152,7 @@ export type AdminCourse = {
 	title: string
 	slug: string
 	badgeImagePath?: string | null
+	badgeIconName?: string | null
 	sortOrder: number
 	description?: string | null
 	units: AdminUnit[]
@@ -184,6 +185,8 @@ export type UserCourse = {
 	id: string
 	title: string
 	description?: string | null
+	badgeImageUrl?: string | null
+	badgeIconName?: string | null
 	units: UserUnit[]
 	sortOrder: number
 	completedLessonCount: number

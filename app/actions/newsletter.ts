@@ -12,6 +12,18 @@ import {
 } from '@/db/schema/tables/newsletters'
 import { getCurrentUser } from '@/lib/auth'
 import { NewsletterLocale } from '@/types/newsletters'
+import { can } from '@/lib/permissions/can'
+
+function slugify(value: string): string {
+	return value
+		.toLowerCase()
+		.trim()
+		.normalize('NFKD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.slice(0, 120)
+}
 
 /**
  * Canonical server action for:
@@ -34,11 +46,26 @@ export async function saveNewsletter(formData: FormData): Promise<void> {
 	// ----------------------------
 	const id = formData.get('id') as string | null
 	const locale = formData.get('locale') as string
-	const slug = formData.get('slug') as string
+	const slugRaw = (formData.get('slug') as string) || ''
 	const coverImageUrl = (formData.get('coverImageUrl') as string) || null
 
 	const intent =
 		(formData.get('intent') as 'draft' | 'publish' | 'unpublish') ?? 'draft'
+
+	const isUpdate = Boolean(id)
+	const canCreate = await can(user.id, user.role, 'newsletters.create')
+	const canUpdate = await can(user.id, user.role, 'newsletters.update')
+	const canPublish = await can(user.id, user.role, 'newsletters.publish')
+
+	if (!isUpdate && !canCreate) {
+		throw new Error('Unauthorized')
+	}
+	if (isUpdate && !canUpdate) {
+		throw new Error('Unauthorized')
+	}
+	if ((intent === 'publish' || intent === 'unpublish') && !canPublish) {
+		throw new Error('Unauthorized')
+	}
 
 	const status = intent === 'publish' ? 'published' : 'draft'
 
@@ -72,6 +99,7 @@ export async function saveNewsletter(formData: FormData): Promise<void> {
 			content: formData.get('translations.pt.content') as string,
 		},
 	}
+	const slug = slugify(translations.en.title) || slugify(slugRaw) || `newsletter-${Date.now()}`
 
 	// ----------------------------
 	// Parse tags & categories
@@ -182,6 +210,12 @@ export async function deleteNewsletter(
 	id: string,
 	locale: string
 ): Promise<void> {
+	const user = await getCurrentUser()
+	if (!user) throw new Error('Unauthorized')
+	if (!(await can(user.id, user.role, 'newsletters.delete'))) {
+		throw new Error('Unauthorized')
+	}
+
 	await db.delete(newsletterPosts).where(eq(newsletterPosts.id, id))
 	redirect(`/${locale}/admin/newsletter`)
 }

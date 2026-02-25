@@ -17,6 +17,8 @@
 		"newsletters": {
 			"view": "Ver boletins",
 			"create": "Criar boletins",
+			"update": "Atualizar boletins",
+			"delete": "Excluir boletins",
 			"publish": "Publicar boletins"
 		},
 
@@ -103,6 +105,8 @@
 		"newsletters": {
 			"view": "Visualizar boletins existentes",
 			"create": "Criar rascunhos de boletins",
+			"update": "Editar conteudo e metadados de boletins",
+			"delete": "Remover boletins",
 			"publish": "Enviar boletins aos assinantes"
 		},
 

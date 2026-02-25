@@ -8,6 +8,7 @@ import { LibraryPagination } from '@/components/library/LibraryPagination'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { notFound } from 'next/navigation'
 
 interface Props {
 	params: Promise<{ locale: string }>
@@ -20,6 +21,9 @@ interface Props {
 }
 
 export default async function LibraryPage({ params, searchParams }: Props) {
+	const showLibrary = process.env.NEXT_PUBLIC_SHOW_LIBRARY === 'true'
+	if (!showLibrary) notFound()
+
 	const { locale } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
 

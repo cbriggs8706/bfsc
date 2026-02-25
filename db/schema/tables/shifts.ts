@@ -283,6 +283,8 @@ export const center = pgTable(
 			.notNull()
 			.default('en'),
 
+		heroImageUrl: text('hero_image_url'),
+
 		// Optional year (e.g., 1998)
 		established: integer('established'),
 

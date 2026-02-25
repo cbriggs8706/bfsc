@@ -2,6 +2,8 @@
 import { saveNewsletter } from '@/app/actions/newsletter'
 import { NewsletterForm } from '@/components/newsletters/NewsletterForm'
 import { EMPTY_NEWSLETTER_FORM } from '@/types/newsletters'
+import { requirePermission } from '@/lib/permissions/require-permission'
+import { can } from '@/lib/permissions/can'
 
 export default async function CreateNewsletterPage({
 	params,
@@ -9,6 +11,16 @@ export default async function CreateNewsletterPage({
 	params: Promise<{ locale: string }>
 }) {
 	const { locale } = await params
+	const user = await requirePermission(
+		locale,
+		'newsletters.create',
+		`/${locale}/admin/newsletter`
+	)
+	const allowPublish = await can(
+		user.id,
+		user.role ?? 'Patron',
+		'newsletters.publish'
+	)
 
 	return (
 		<div className="space-y-6">
@@ -21,6 +33,7 @@ export default async function CreateNewsletterPage({
 				value={EMPTY_NEWSLETTER_FORM}
 				locale={locale}
 				action={saveNewsletter}
+				allowPublish={allowPublish}
 			/>
 		</div>
 	)

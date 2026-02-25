@@ -47,6 +47,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 	const session = await getServerSession(authOptions)
 
 	const center = await getCenterProfile()
+	const heroImageSrc = center.heroImageUrl || '/900px-Idahoburleyfhc.jpg'
 
 	const [latest, ...rest] = posts
 
@@ -149,7 +150,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 					{/* Building Image */}
 					<div className="relative w-full aspect-video rounded-xl overflow-hidden">
 						<Image
-							src="/900px-Idahoburleyfhc.jpg"
+							src={heroImageSrc}
 							alt="Burley FamilySearch Center building"
 							fill
 							className="object-cover"

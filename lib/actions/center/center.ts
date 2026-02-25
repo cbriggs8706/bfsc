@@ -19,6 +19,7 @@ type CenterProfile = {
 	phoneNumber: string
 	phoneCountry: CountryCode
 	primaryLanguage: string
+	heroImageUrl: string | null
 	established: number | null
 }
 
@@ -32,6 +33,7 @@ const DEFAULT_CENTER: CenterProfile = {
 	phoneNumber: '',
 	phoneCountry: 'US',
 	primaryLanguage: 'en',
+	heroImageUrl: null,
 	established: null,
 }
 
@@ -52,6 +54,7 @@ export async function getCenterProfile(): Promise<CenterProfile> {
 		phoneNumber: row.phoneNumber ?? '',
 		phoneCountry: toCountryCode(row.phoneCountry, 'US'),
 		primaryLanguage: row.primaryLanguage ?? 'en',
+		heroImageUrl: row.heroImageUrl ?? null,
 		established: row.established ?? null,
 	}
 }
@@ -82,6 +85,7 @@ export async function upsertCenterProfile(input: CenterProfile) {
 
 		// revalidate your admin page (and anything else that reads center)
 		revalidatePath('/admin/center')
+		revalidatePath('/', 'layout')
 
 		return { ok: true as const }
 	} catch (err: unknown) {

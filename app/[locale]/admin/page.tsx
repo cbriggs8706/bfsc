@@ -50,9 +50,6 @@ export default async function AdminUsersPage({
 					<Link href={`/${locale}/admin/newsletter`}>
 						<Button variant="default">Newsletter</Button>
 					</Link>
-					<Link href={`/${locale}/library/create`}>
-						<Button variant="default">Add Books for Checkout</Button>
-					</Link>
 					<Link href={`/${locale}/admin/center/resources`}>
 						<Button variant="default">Resources & Activities</Button>
 					</Link>

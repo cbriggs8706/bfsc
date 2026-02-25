@@ -1,14 +1,24 @@
 'use client'
 
-import { useEffect, useMemo, useTransition } from 'react'
+import Image from 'next/image'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
+import Cropper, { type Area } from 'react-easy-crop'
 
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog'
 import {
 	Select,
 	SelectContent,
@@ -19,6 +29,52 @@ import {
 
 import { upsertCenterProfile } from '@/lib/actions/center/center'
 import { normalizePhoneToE164, toCountryCode } from '@/utils/phone'
+import { uploadCenterHeroImage } from '@/utils/upload-center-hero-image'
+
+const HERO_ASPECT_RATIO = 16 / 9
+const HERO_EXPORT_WIDTH = 1920
+const HERO_EXPORT_HEIGHT = 1080
+
+async function buildCroppedHeroFile(
+	imageSrc: string,
+	cropArea: Area,
+	fileName: string
+): Promise<File> {
+	const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+		const img = new window.Image()
+		img.onload = () => resolve(img)
+		img.onerror = () => reject(new Error('Unable to load selected image'))
+		img.src = imageSrc
+	})
+
+	const canvas = document.createElement('canvas')
+	canvas.width = HERO_EXPORT_WIDTH
+	canvas.height = HERO_EXPORT_HEIGHT
+
+	const ctx = canvas.getContext('2d')
+	if (!ctx) throw new Error('Failed to create image canvas')
+
+	ctx.drawImage(
+		image,
+		cropArea.x,
+		cropArea.y,
+		cropArea.width,
+		cropArea.height,
+		0,
+		0,
+		HERO_EXPORT_WIDTH,
+		HERO_EXPORT_HEIGHT
+	)
+
+	const blob = await new Promise<Blob | null>((resolve) =>
+		canvas.toBlob(resolve, 'image/jpeg', 0.92)
+	)
+	if (!blob) throw new Error('Failed to export cropped image')
+
+	return new File([blob], fileName.replace(/\.[^.]+$/, '.jpg'), {
+		type: 'image/jpeg',
+	})
+}
 
 const CenterProfileSchema = z.object({
 	name: z.string().min(2, 'Name is required'),
@@ -40,6 +96,8 @@ const CenterProfileSchema = z.object({
 
 	// ✅ REQUIRED string, with default provided via useForm defaultValues
 	primaryLanguage: z.string().min(2).default('en'),
+
+	heroImageUrl: z.string().url('Must be a valid image URL').nullable(),
 
 	// ✅ allow empty input => null
 	established: z
@@ -67,12 +125,20 @@ type Props = {
 		phoneNumber: string
 		phoneCountry: string
 		primaryLanguage: string
+		heroImageUrl: string | null
 		established: number | null
 	}
 }
 
 export function CenterProfileForm({ initialCenter }: Props) {
 	const [isPending, startTransition] = useTransition()
+	const [uploadingHeroImage, setUploadingHeroImage] = useState(false)
+	const [cropDialogOpen, setCropDialogOpen] = useState(false)
+	const [cropSourceImage, setCropSourceImage] = useState<string | null>(null)
+	const [cropSourceName, setCropSourceName] = useState<string>('hero.jpg')
+	const [crop, setCrop] = useState({ x: 0, y: 0 })
+	const [zoom, setZoom] = useState(1)
+	const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
 
 	const defaultValues = useMemo<CenterProfileFormValues>(
 		() => ({
@@ -85,6 +151,7 @@ export function CenterProfileForm({ initialCenter }: Props) {
 			phoneNumber: initialCenter.phoneNumber ?? '',
 			phoneCountry: (initialCenter.phoneCountry ?? 'US').toUpperCase(),
 			primaryLanguage: initialCenter.primaryLanguage ?? 'en',
+			heroImageUrl: initialCenter.heroImageUrl ?? null,
 			established: initialCenter.established ?? null,
 		}),
 		[initialCenter]
@@ -149,6 +216,67 @@ export function CenterProfileForm({ initialCenter }: Props) {
 			control,
 			name: 'primaryLanguage',
 		}) ?? 'en'
+
+	const heroImageUrl = useWatch({
+		control,
+		name: 'heroImageUrl',
+	})
+
+	const handleHeroImageUpload = async (
+		e: React.ChangeEvent<HTMLInputElement>
+	) => {
+		const file = e.target.files?.[0]
+		if (!file) return
+
+		if (cropSourceImage?.startsWith('blob:')) {
+			URL.revokeObjectURL(cropSourceImage)
+		}
+
+		setCrop({ x: 0, y: 0 })
+		setZoom(1)
+		setCroppedAreaPixels(null)
+		setCropSourceName(file.name)
+		setCropSourceImage(URL.createObjectURL(file))
+		setCropDialogOpen(true)
+		e.target.value = ''
+	}
+
+	const uploadCroppedHeroImage = async () => {
+		if (!cropSourceImage || !croppedAreaPixels) {
+			toast.error('Select a crop area first')
+			return
+		}
+
+		setUploadingHeroImage(true)
+		try {
+			const croppedFile = await buildCroppedHeroFile(
+				cropSourceImage,
+				croppedAreaPixels,
+				cropSourceName
+			)
+			const url = await uploadCenterHeroImage(croppedFile)
+			setValue('heroImageUrl', url, { shouldDirty: true, shouldValidate: true })
+			toast.success('Hero image uploaded')
+			setCropDialogOpen(false)
+			if (cropSourceImage.startsWith('blob:')) {
+				URL.revokeObjectURL(cropSourceImage)
+			}
+			setCropSourceImage(null)
+		} catch (err) {
+			console.error(err)
+			toast.error('Hero image upload failed')
+		} finally {
+			setUploadingHeroImage(false)
+		}
+	}
+
+	useEffect(() => {
+		return () => {
+			if (cropSourceImage?.startsWith('blob:')) {
+				URL.revokeObjectURL(cropSourceImage)
+			}
+		}
+	}, [cropSourceImage])
 
 	return (
 		<Card>
@@ -243,6 +371,55 @@ export function CenterProfileForm({ initialCenter }: Props) {
 							)}
 						</div>
 
+						<div className="space-y-2 md:col-span-2">
+							<label className="text-sm font-medium">
+								Homepage Hero Image
+							</label>
+							<Input
+								type="file"
+								accept="image/*"
+								disabled={uploadingHeroImage}
+								onChange={handleHeroImageUpload}
+							/>
+							<p className="text-xs text-muted-foreground">
+								Uploaded to Supabase bucket <code>center</code>.
+							</p>
+							{heroImageUrl ? (
+								<div className="space-y-2">
+									<div className="relative w-full max-w-xl aspect-video overflow-hidden rounded-md border">
+										<Image
+											src={heroImageUrl}
+											alt="Homepage hero preview"
+											fill
+											className="object-cover"
+										/>
+									</div>
+									<Button
+										type="button"
+										variant="secondary"
+										size="sm"
+										onClick={() =>
+											setValue('heroImageUrl', null, {
+												shouldDirty: true,
+												shouldValidate: true,
+											})
+										}
+									>
+										Use default hero image
+									</Button>
+								</div>
+							) : (
+								<p className="text-sm text-muted-foreground">
+									Using the default built-in hero image.
+								</p>
+							)}
+							{errors.heroImageUrl && (
+								<p className="text-xs text-destructive">
+									{errors.heroImageUrl.message}
+								</p>
+							)}
+						</div>
+
 						<div className="grid gap-4 md:grid-cols-3">
 							<div className="space-y-1">
 								<label className="text-sm font-medium">Country</label>
@@ -314,11 +491,86 @@ export function CenterProfileForm({ initialCenter }: Props) {
 				</CardContent>
 
 				<CardFooter className="p-4 pt-0 flex justify-end">
-					<Button type="submit" disabled={isPending}>
+					<Button type="submit" disabled={isPending || uploadingHeroImage}>
 						{isPending ? 'Saving…' : 'Save'}
 					</Button>
 				</CardFooter>
 			</form>
+
+			<Dialog
+				open={cropDialogOpen}
+				onOpenChange={(open) => {
+					if (uploadingHeroImage) return
+					setCropDialogOpen(open)
+					if (!open && cropSourceImage?.startsWith('blob:')) {
+						URL.revokeObjectURL(cropSourceImage)
+						setCropSourceImage(null)
+					}
+				}}
+			>
+				<DialogContent className="max-w-3xl" showCloseButton={!uploadingHeroImage}>
+					<DialogHeader>
+						<DialogTitle>Crop Hero Image</DialogTitle>
+						<DialogDescription>
+							Choose the framing for the homepage hero image (16:9).
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="space-y-3">
+						<div className="relative h-[45vh] min-h-[280px] w-full overflow-hidden rounded-md border">
+							{cropSourceImage ? (
+								<Cropper
+									image={cropSourceImage}
+									crop={crop}
+									zoom={zoom}
+									aspect={HERO_ASPECT_RATIO}
+									onCropChange={setCrop}
+									onZoomChange={setZoom}
+									onCropComplete={(_, areaPixels) =>
+										setCroppedAreaPixels(areaPixels)
+									}
+								/>
+							) : null}
+						</div>
+						<div className="space-y-1">
+							<label className="text-sm font-medium">Zoom</label>
+							<Input
+								type="range"
+								min={1}
+								max={3}
+								step={0.05}
+								value={zoom}
+								onChange={(e) => setZoom(Number(e.target.value))}
+								disabled={uploadingHeroImage}
+							/>
+						</div>
+					</div>
+
+					<DialogFooter>
+						<Button
+							type="button"
+							variant="secondary"
+							disabled={uploadingHeroImage}
+							onClick={() => {
+								setCropDialogOpen(false)
+								if (cropSourceImage?.startsWith('blob:')) {
+									URL.revokeObjectURL(cropSourceImage)
+								}
+								setCropSourceImage(null)
+							}}
+						>
+							Cancel
+						</Button>
+						<Button
+							type="button"
+							disabled={uploadingHeroImage || !croppedAreaPixels}
+							onClick={uploadCroppedHeroImage}
+						>
+							{uploadingHeroImage ? 'Uploading…' : 'Crop and Upload'}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</Card>
 	)
 }

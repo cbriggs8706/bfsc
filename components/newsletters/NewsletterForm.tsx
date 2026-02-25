@@ -12,7 +12,7 @@ import {
 	NewsletterFormMode,
 } from '@/types/newsletters'
 import Image from 'next/image'
-import { uploadNewsletterCover } from '@/utils/upload-newsletter-cover'
+import { uploadNewsletterImage } from '@/utils/upload-newsletter-image'
 import { Textarea } from '../ui/textarea'
 
 type Props = {
@@ -20,19 +20,39 @@ type Props = {
 	value: NewsletterFormData
 	locale: string
 	action?: (formData: FormData) => Promise<void>
+	allowPublish?: boolean
 }
 
-export function NewsletterForm({ mode, value, locale, action }: Props) {
+function slugify(value: string): string {
+	return value
+		.toLowerCase()
+		.trim()
+		.normalize('NFKD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.slice(0, 120)
+}
+
+export function NewsletterForm({
+	mode,
+	value,
+	locale,
+	action,
+	allowPublish = true,
+}: Props) {
 	const isReadOnly = mode === 'read'
 	const [form, setForm] = useState<NewsletterFormData>(value)
 	const [uploading, setUploading] = useState(false)
 	const [uploadError, setUploadError] = useState<string | null>(null)
+	const derivedSlug =
+		slugify(form.translations.en.title) || slugify(form.slug) || 'newsletter'
 
 	return (
 		<form action={action} className="space-y-6">
 			{/* Hidden fields */}
 			<input type="hidden" name="id" value={form.id ?? ''} />
-			<input type="hidden" name="slug" value={form.slug} />
+			<input type="hidden" name="slug" value={derivedSlug} />
 			<input type="hidden" name="locale" value={locale} />
 			<input
 				type="hidden"
@@ -88,7 +108,7 @@ export function NewsletterForm({ mode, value, locale, action }: Props) {
 							setUploadError(null)
 
 							try {
-								const url = await uploadNewsletterCover(file)
+								const url = await uploadNewsletterImage(file, 'cover')
 								setForm((f) => ({ ...f, coverImageUrl: url }))
 							} catch (err) {
 								setUploadError('Failed to upload image')
@@ -101,14 +121,28 @@ export function NewsletterForm({ mode, value, locale, action }: Props) {
 					/>
 
 					{form.coverImageUrl && (
-						<div className="relative w-full max-w-md aspect-video border rounded overflow-hidden">
-							<Image
-								src={form.coverImageUrl}
-								alt="Cover preview"
-								fill
-								className="object-cover"
-								sizes="(max-width: 768px) 100vw, 640px"
-							/>
+						<div className="space-y-2">
+							<div className="relative w-full max-w-md aspect-video border rounded overflow-hidden">
+								<Image
+									src={form.coverImageUrl}
+									alt="Cover preview"
+									fill
+									className="object-cover"
+									sizes="(max-width: 768px) 100vw, 640px"
+								/>
+							</div>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() =>
+									setForm((f) => ({
+										...f,
+										coverImageUrl: null,
+									}))
+								}
+							>
+								Remove cover image
+							</Button>
 						</div>
 					)}
 
@@ -120,12 +154,7 @@ export function NewsletterForm({ mode, value, locale, action }: Props) {
 			)}
 
 			{/* Slug */}
-			<Input
-				value={form.slug}
-				disabled={isReadOnly}
-				placeholder="slug"
-				onChange={(e) => setForm({ ...form, slug: e.target.value })}
-			/>
+			<Input value={derivedSlug} disabled placeholder="slug (auto-generated)" />
 
 			{/* Translations */}
 			<Tabs defaultValue="en">
@@ -184,27 +213,24 @@ export function NewsletterForm({ mode, value, locale, action }: Props) {
 							init={{
 								height: 500,
 								menubar: false,
-
-								/* Force semantic HTML */
 								forced_root_block: 'p',
-								force_p_newlines: true,
-								remove_trailing_brs: true,
-
-								/* 🔥 THIS IS KEY */
 								inline_styles: false,
-								paste_as_text: false,
-								paste_webkit_styles: 'none',
-								paste_remove_styles: true,
-								paste_remove_spans: false,
-
-								/* Prevent divs */
 								block_formats:
 									'Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Heading 5=h5; Heading 6=h6',
-
-								plugins: ['lists', 'link', 'code', 'blockquote', 'paste'],
-
+								plugins: ['lists', 'link', 'image', 'code', 'blockquote', 'paste'],
 								toolbar:
-									'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | blockquote | code',
+									'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | blockquote | link image | code',
+								automatic_uploads: true,
+								images_file_types: 'jpg,jpeg,png,gif,webp',
+								images_upload_handler: async (blobInfo) => {
+									const blob = blobInfo.blob()
+									const file = new File(
+										[blob],
+										blobInfo.filename() || 'newsletter-image.png',
+										{ type: blob.type || 'image/png' }
+									)
+									return uploadNewsletterImage(file, 'content')
+								},
 							}}
 						/>
 						<Textarea
@@ -271,21 +297,23 @@ export function NewsletterForm({ mode, value, locale, action }: Props) {
 								Save Draft
 							</Button>
 
-							<Button
-								type="submit"
-								formAction={
-									action &&
-									((fd: FormData) => {
-										fd.set('intent', 'publish')
-										if (!fd.get('publishedAt')) {
-											fd.set('publishedAt', new Date().toISOString())
-										}
-										return action(fd)
-									})
-								}
-							>
-								Publish
-							</Button>
+							{allowPublish ? (
+								<Button
+									type="submit"
+									formAction={
+										action &&
+										((fd: FormData) => {
+											fd.set('intent', 'publish')
+											if (!fd.get('publishedAt')) {
+												fd.set('publishedAt', new Date().toISOString())
+											}
+											return action(fd)
+										})
+									}
+								>
+									Publish
+								</Button>
+							) : null}
 						</>
 					)}
 

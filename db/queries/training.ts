@@ -31,6 +31,7 @@ export type CertificateStatus =
 export type UserCertificateWithStatus = UserCertificate & {
 	status: CertificateStatus
 	badgeImageUrl?: string | null
+	badgeIconName?: string | null
 }
 
 export type DashboardCertificateItem =
@@ -43,7 +44,8 @@ export type DashboardCertificateItem =
 			level: number | null
 			contentVersion: number
 			badgeImageUrl?: string | null
-	  }
+			badgeIconName?: string | null
+	}
 
 export type EarnedCertificate = {
 	kind: 'earned'
@@ -59,6 +61,7 @@ export type EarnedCertificate = {
 	verifyUrl: string | null
 	status: CertificateStatus
 	badgeImageUrl?: string | null
+	badgeIconName?: string | null
 }
 
 export type MissingCertificate = {
@@ -69,6 +72,7 @@ export type MissingCertificate = {
 	level: number | null
 	contentVersion: number
 	badgeImageUrl?: string | null
+	badgeIconName?: string | null
 }
 
 export async function getUserCertificates(
@@ -95,6 +99,7 @@ export async function getUserCertificates(
 			currentCourseVersion: learningCourses.contentVersion,
 			isPublished: learningCourses.isPublished,
 			badgeImagePath: learningCourses.badgeImagePath,
+			badgeIconName: learningCourses.badgeIconName,
 		})
 		.from(userCertificates)
 		.leftJoin(
@@ -146,6 +151,7 @@ export async function getUserCertificates(
 			verifyUrl: row.verifyUrl,
 			status,
 			badgeImageUrl: getCourseBadgeUrl(row.badgeImagePath),
+			badgeIconName: row.badgeIconName,
 		}
 	})
 }
@@ -193,6 +199,7 @@ export async function getUserCertificatesWithMissing(
 				level: learningCourses.level,
 				contentVersion: learningCourses.contentVersion,
 				badgeImagePath: learningCourses.badgeImagePath,
+				badgeIconName: learningCourses.badgeIconName,
 			})
 			.from(learningCourses)
 			.where(eq(learningCourses.isPublished, true)),
@@ -232,6 +239,7 @@ export async function getUserCertificatesWithMissing(
 			level: course.level,
 			contentVersion: course.contentVersion,
 			badgeImageUrl: getCourseBadgeUrl(course.badgeImagePath),
+			badgeIconName: course.badgeIconName,
 		}))
 
 	return [...earned, ...missing]
@@ -294,6 +302,8 @@ export async function getPublishedCoursesWithProgress(
 			id: course.id,
 			title: course.title,
 			description: course.description,
+			badgeImageUrl: getCourseBadgeUrl(course.badgeImagePath),
+			badgeIconName: course.badgeIconName,
 			sortOrder: course.sortOrder,
 			contentVersion: course.contentVersion,
 			units,
@@ -366,6 +376,8 @@ export async function getPublishedCourseForUser(
 		id: course.id,
 		title: course.title,
 		description: course.description,
+		badgeImageUrl: getCourseBadgeUrl(course.badgeImagePath),
+		badgeIconName: course.badgeIconName,
 		sortOrder: course.sortOrder,
 		contentVersion: course.contentVersion,
 		units,

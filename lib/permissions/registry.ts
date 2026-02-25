@@ -4,6 +4,8 @@ export type PermissionKey =
 	| 'users.edit'
 	| 'users.create'
 	| 'newsletters.create'
+	| 'newsletters.update'
+	| 'newsletters.delete'
 	| 'newsletters.publish'
 	| 'newsletters.view'
 	| 'shifts.assign'
@@ -54,6 +56,8 @@ export const PERMISSIONS: PermissionDef[] = [
 	{ key: 'users.edit', category: 'users' },
 	{ key: 'users.create', category: 'users' },
 	{ key: 'newsletters.create', category: 'communication' },
+	{ key: 'newsletters.update', category: 'communication' },
+	{ key: 'newsletters.delete', category: 'communication' },
 	{ key: 'newsletters.publish', category: 'communication' },
 	{ key: 'newsletters.view', category: 'communication' },
 	{ key: 'shifts.assign', category: 'center' },

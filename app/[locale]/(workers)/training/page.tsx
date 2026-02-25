@@ -8,6 +8,7 @@ import { UserCourse } from '@/types/training'
 import { redirect } from 'next/navigation'
 import { CourseCatalog } from '@/components/training/CourseCatalog'
 import { getTranslations } from 'next-intl/server'
+import { getCourseBadgeUrl } from '@/lib/storage/courseBadges.server'
 
 type Props = {
 	params: Promise<{ locale: string }>
@@ -53,6 +54,8 @@ export default async function TrainingCatalogPage({ params }: Props) {
 			id: course.id,
 			title: course.title,
 			description: course.description,
+			badgeImageUrl: getCourseBadgeUrl(course.badgeImagePath),
+			badgeIconName: course.badgeIconName,
 			sortOrder: course.sortOrder,
 			contentVersion: course.contentVersion,
 			units: course.units.map((unit) => ({

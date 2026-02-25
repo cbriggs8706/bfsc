@@ -8,6 +8,7 @@ import { notFound } from 'next/navigation'
 import { UserCourse } from '@/types/training'
 import { mapLessonBlock } from '@/lib/training/block-mapper'
 import { CourseViewer } from '@/components/training/CourseViewer'
+import { getCourseBadgeUrl } from '@/lib/storage/courseBadges.server'
 
 type Props = {
 	params: { locale: string; courseId: string }
@@ -54,6 +55,8 @@ export default async function CoursePage({ params }: Props) {
 		id: course.id,
 		title: course.title,
 		description: course.description,
+		badgeImageUrl: getCourseBadgeUrl(course.badgeImagePath),
+		badgeIconName: course.badgeIconName,
 		sortOrder: course.sortOrder,
 		contentVersion: course.contentVersion,
 		completedLessonCount: completedCount,
