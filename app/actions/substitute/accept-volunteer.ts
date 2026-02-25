@@ -1,14 +1,15 @@
 // app/actions/substitute/accept-volunteer.ts
 'use server'
 
-import { db, notifications } from '@/db'
+import { db } from '@/db'
 import {
 	shiftSubRequests,
 	shiftSubVolunteers,
 } from '@/db/schema/tables/substitutes'
+import { shiftExceptions } from '@/db/schema/tables/shifts'
 import { getCurrentUser } from '@/lib/auth'
 import { eq, and } from 'drizzle-orm'
-import { NotificationType } from '@/types/substitutes'
+import { notifySubstituteEvent } from '@/lib/substitutes/notifications'
 
 export async function acceptVolunteer(
 	requestId: string,
@@ -17,7 +18,7 @@ export async function acceptVolunteer(
 	const user = await getCurrentUser()
 	if (!user) throw new Error('Unauthorized')
 
-	await db.transaction(async (tx) => {
+	const acceptedShift = await db.transaction(async (tx) => {
 		const request = await tx
 			.select()
 			.from(shiftSubRequests)
@@ -52,15 +53,48 @@ export async function acceptVolunteer(
 				status: 'accepted',
 				acceptedByUserId: volunteerUserId,
 				acceptedAt: new Date(),
+				updatedAt: new Date(),
 			})
 			.where(eq(shiftSubRequests.id, requestId))
 
-		// Notify volunteer
-		await tx.insert(notifications).values({
+		// Ensure this date reflects the accepted substitute assignment.
+		await tx
+			.delete(shiftExceptions)
+			.where(
+				and(
+					eq(shiftExceptions.shiftId, request.shiftId),
+					eq(shiftExceptions.date, request.date),
+					eq(shiftExceptions.overrideType, 'replace'),
+					eq(shiftExceptions.status, 'auto-approved'),
+					eq(shiftExceptions.requestedBy, request.requestedByUserId)
+				)
+			)
+
+		await tx.insert(shiftExceptions).values({
+			shiftId: request.shiftId,
+			date: request.date,
+			overrideType: 'replace',
 			userId: volunteerUserId,
-			type: 'sub_request_accepted' satisfies NotificationType,
-			message: 'Your volunteer offer was accepted.',
+			requestedBy: request.requestedByUserId,
+			approvedBy: user.id,
+			status: 'auto-approved',
+			notes: `Auto-applied from accepted substitute request ${request.id}`,
 		})
+
+		return {
+			requestId: request.id,
+			date: request.date,
+			startTime: request.startTime,
+			endTime: request.endTime,
+		}
+	})
+
+	await notifySubstituteEvent(volunteerUserId, {
+		type: 'accepted',
+		requestId: acceptedShift.requestId,
+		date: acceptedShift.date,
+		startTime: acceptedShift.startTime,
+		endTime: acceptedShift.endTime,
 	})
 
 	return { success: true }

@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import type { AvailabilityValue } from '@/types/substitutes'
 import { toAmPm } from '@/utils/time'
 import { clearAvailability } from '@/app/actions/substitute/clear-availability'
+import { useTranslations } from 'next-intl'
 
 //CORRECTED TIMEZONES
 
@@ -44,34 +45,27 @@ type Props = {
 	shifts: Shift[]
 	recurrences: Recurrence[]
 	availability: AvailabilityRow[]
+	locale: string
 }
-
-const WEEKDAYS = [
-	'Sunday',
-	'Monday',
-	'Tuesday',
-	'Wednesday',
-	'Thursday',
-	'Friday',
-	'Saturday',
-]
 
 type AvailabilityOption = {
 	label: string
 	value: AvailabilityValue
 }
 
-const OPTIONS: AvailabilityOption[] = [
-	{ label: 'Usually', value: 'usually' },
-	{ label: 'Maybe', value: 'maybe' },
-	{ label: 'Not available', value: null },
-]
-
 export function AvailabilityDashboardClient({
 	shifts,
 	recurrences,
 	availability,
+	locale,
 }: Props) {
+	const t = useTranslations('substitutes')
+	const weekdayFormatter = new Intl.DateTimeFormat(locale, { weekday: 'long' })
+	const options: AvailabilityOption[] = [
+		{ label: t('availability.usually'), value: 'usually' },
+		{ label: t('availability.maybe'), value: 'maybe' },
+		{ label: t('availability.notAvailable'), value: null },
+	]
 	/* --------------------------------------------
 	 * Local optimistic state
 	 * ------------------------------------------ */
@@ -103,7 +97,10 @@ export function AvailabilityDashboardClient({
 				map.set(cardKey, {
 					shiftId: shift.id,
 					weekday: shift.weekday,
-					timeLabel: `${toAmPm(shift.startTime)}–${toAmPm(shift.endTime)}`,
+					timeLabel: `${toAmPm(shift.startTime, locale)}–${toAmPm(
+						shift.endTime,
+						locale
+					)}`,
 					recurrences: [],
 				})
 			}
@@ -122,7 +119,7 @@ export function AvailabilityDashboardClient({
 			},
 			{}
 		)
-	}, [shifts, recurrences])
+	}, [shifts, recurrences, locale])
 
 	/* --------------------------------------------
 	 * Change handler (optimistic)
@@ -168,7 +165,7 @@ export function AvailabilityDashboardClient({
 				.map(([weekday, cards]) => (
 					<div key={weekday} className="flex flex-col">
 						<h2 className="text-md font-semibold">
-							{WEEKDAYS[Number(weekday)]}
+							{weekdayFormatter.format(new Date(2024, 0, 7 + Number(weekday)))}
 						</h2>
 						{cards.map((card) => (
 							<Card key={card.shiftId}>
@@ -190,7 +187,7 @@ export function AvailabilityDashboardClient({
 													</div>
 
 													<div className="inline-flex rounded-lg border overflow-hidden">
-														{OPTIONS.map((opt) => {
+														{options.map((opt) => {
 															const active = value === opt.value
 
 															return (

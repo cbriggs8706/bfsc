@@ -259,12 +259,14 @@ export default function WorkerShiftsDashboard({
 				{Object.entries(byMonth)
 					.sort(([a], [b]) => a.localeCompare(b))
 					.map(([monthKey, shifts]) => {
-						const monthLabel = formatYmdMonth(monthKey)
+						const localizedMonthLabel = formatYmdMonth(monthKey, locale)
 
 						return (
 							<Card key={monthKey}>
 								<CardHeader className="pb-2">
-									<CardTitle className="text-base">{monthLabel}</CardTitle>
+									<CardTitle className="text-base">
+										{localizedMonthLabel}
+									</CardTitle>
 								</CardHeader>
 
 								<CardContent className="space-y-2">
@@ -281,16 +283,19 @@ export default function WorkerShiftsDashboard({
 													{/* Left: shift info */}
 													<div className="min-w-0 space-y-1">
 														<div className="font-medium leading-tight">
-															{formatYmdShort(shift.date)}
+															{formatYmdShort(shift.date, locale)}
 														</div>
 
 														<div className="text-sm text-muted-foreground">
-															{toAmPm(shift.startTime)}–{toAmPm(shift.endTime)}
+															{toAmPm(shift.startTime, locale)}–
+															{toAmPm(shift.endTime, locale)}
 														</div>
 
 														{shift.isException && (
 															<div className="text-xs text-muted-foreground">
-																Exception applied ({shift.exceptionType})
+																{t('exceptionApplied', {
+																	type: shift.exceptionType ?? 'unknown',
+																})}
 															</div>
 														)}
 													</div>

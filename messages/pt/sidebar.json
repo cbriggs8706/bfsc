@@ -1,123 +1,124 @@
 {
-	"main": {
-		"home": "Início",
-		"dashboard": "Painel",
-		"dash": "Painel",
-		"groups": "Grupos",
-		"projects": "Projetos",
-		"digitization": "Digitalização",
-		"calendar": "Calendário",
-		"freeForever": "Descobrir · Reunir · Conectar",
-		"language": "Idioma",
-		"chooseLanguage": "Escolher idioma",
-		"bfsc": "FamilySearch de Burley",
-		"groupVisits": "Visitas em grupo",
-		"researchSpecialists": "Especialistas em pesquisa",
-		"trainingGuide": "Guia de treinamento",
-		"consultantHelps": "Ajuda de consultores",
-		"communityProjects": "Projetos comunitários",
-		"memoryLane": "Caminho das memórias",
-		"activities": "Atividades",
-		"newsletters": "Boletins informativos",
-		"news": "Notícias"
-	},
-	"groups": {
-		"schedule": "Agendar uma visita"
-	},
-	"projects": {
-		"cassiaphotos": "Fotos do Museu de Cassia",
-		"cassianegatives": "Negativos do Museu de Cassia",
-		"findagrave": "Find A Grave",
-		"mccemeteries": "Cemitérios de Mini-Cassia",
-		"censuses": "Censos",
-		"mvwwii": "Jornal da Segunda Guerra Mundial do Magic Valley",
-		"naturalization": "Naturalização",
-		"numident": "Numident",
-		"obituaries": "Obituários",
-		"oral": "Histórias orais"
-	},
-	"digitization": {
-		"verbs": "Verbos",
-		"scramble": "Embaralhar frases",
-		"builder": "Construtor de frases",
-		"memorizer": "Memorizador"
-	},
-	"calendar": {
-		"expo": "Expo",
-		"memorylane": "Caminho das memórias",
-		"classes": "Horário de aulas",
-		"niqqud": "Niqqud"
-	},
-	"secondary": {
-		"leaderboard": "Classificação",
-		"calendar": "Calendário",
-		"help": "Ajuda",
-		"feedback": "Feedback"
-	},
-	"input": {
-		"specialists": "Especialistas em pesquisa",
-		"stories": "Histórias",
-		"scriptures": "Escrituras",
-		"prayers": "Orações",
-		"comprehensible": "Entrada compreensível"
-	},
-	"lesson": {
-		"scripts": "Roteiros de aula",
-		"lessonContent": "Conteúdo da aula"
-	},
-	"teacher": {
-		"title": "Professor",
-		"myCourses": "Meus cursos criados",
-		"createCourse": "Criar um curso"
-	},
-	"user": {
-		"account": "Conta",
-		"notifications": "Notificações",
-		"logout": "Sair",
-		"login": "Entrar",
-		"register": "Criar uma conta",
-		"dashboard": "Painel"
-	},
-	"admin": {
-		"title": "Administrador",
-		"userManagement": "Gerenciamento de usuários",
-		"users": "Usuários",
-		"centerDefinitions": "Definições do centro",
-		"scheduleClosures": "Agendar fechamentos",
-		"shiftScheduler": "Agendador de turnos",
-		"announcements": "Anúncios",
-		"newsletter": "Boletim informativo",
-		"addBookEquip": "Adicionar livro / equipamento",
-		"reservations": "Reservas",
-		"resources": "Recursos",
-		"rolePermissions": "Permissões de funções",
-		"userPermissions": "Permissões de usuários",
-		"training": "Treinamento"
-	},
-	"worker": {
-		"title": "Funcionário",
-		"shiftReport": "Relatório de turno",
-		"teachClass": "Dar uma aula",
-		"library": "Biblioteca",
-		"training": "Treinamento",
-		"shifts": "Turnos",
-		"assignments": "Atribuições",
-		"substitutes": "Substitutos",
-		"availability": "Minha disponibilidade"
-	},
-	"patron": {
-		"title": "Usuário"
-	},
-	"cases": {
-		"title": "Casos",
-		"dashboard": "Painel",
-		"open": "Novo",
-		"investigating": "Em investigação",
-		"myInvestigating": "Minhas investigações",
-		"waiting": "Em pausa",
-		"solved": "Resolvido",
-		"archived": "Arquivado",
-		"watching": "Observando",
-		"mentions": "Menções"
-	}
+  "main": {
+    "home": "Início",
+    "dashboard": "Painel",
+    "dash": "Painel",
+    "groups": "Grupos",
+    "projects": "Projetos",
+    "digitization": "Digitalização",
+    "calendar": "Calendário",
+    "freeForever": "Descobrir · Reunir · Conectar",
+    "language": "Idioma",
+    "chooseLanguage": "Escolher idioma",
+    "bfsc": "FamilySearch de Burley",
+    "groupVisits": "Visitas em grupo",
+    "researchSpecialists": "Especialistas em pesquisa",
+    "trainingGuide": "Guia de treinamento",
+    "consultantHelps": "Ajuda de consultores",
+    "communityProjects": "Projetos comunitários",
+    "memoryLane": "Caminho das memórias",
+    "activities": "Atividades",
+    "newsletters": "Boletins informativos",
+    "news": "Notícias"
+  },
+  "groups": {
+    "schedule": "Agendar uma visita"
+  },
+  "projects": {
+    "cassiaphotos": "Fotos do Museu de Cassia",
+    "cassianegatives": "Negativos do Museu de Cassia",
+    "findagrave": "Find A Grave",
+    "mccemeteries": "Cemitérios de Mini-Cassia",
+    "censuses": "Censos",
+    "mvwwii": "Jornal da Segunda Guerra Mundial do Magic Valley",
+    "naturalization": "Naturalização",
+    "numident": "Numident",
+    "obituaries": "Obituários",
+    "oral": "Histórias orais"
+  },
+  "digitization": {
+    "verbs": "Verbos",
+    "scramble": "Embaralhar frases",
+    "builder": "Construtor de frases",
+    "memorizer": "Memorizador"
+  },
+  "calendar": {
+    "expo": "Expo",
+    "memorylane": "Caminho das memórias",
+    "classes": "Horário de aulas",
+    "niqqud": "Niqqud"
+  },
+  "secondary": {
+    "leaderboard": "Classificação",
+    "calendar": "Calendário",
+    "help": "Ajuda",
+    "feedback": "Feedback"
+  },
+  "input": {
+    "specialists": "Especialistas em pesquisa",
+    "stories": "Histórias",
+    "scriptures": "Escrituras",
+    "prayers": "Orações",
+    "comprehensible": "Entrada compreensível"
+  },
+  "lesson": {
+    "scripts": "Roteiros de aula",
+    "lessonContent": "Conteúdo da aula"
+  },
+  "teacher": {
+    "title": "Professor",
+    "myCourses": "Meus cursos criados",
+    "createCourse": "Criar um curso"
+  },
+  "user": {
+    "account": "Conta",
+    "notifications": "Notificações",
+    "logout": "Sair",
+    "login": "Entrar",
+    "register": "Criar uma conta",
+    "dashboard": "Painel"
+  },
+  "admin": {
+    "title": "Administrador",
+    "userManagement": "Gerenciamento de usuários",
+    "users": "Usuários",
+    "centerDefinitions": "Definições do centro",
+    "scheduleClosures": "Agendar fechamentos",
+    "shiftScheduler": "Agendador de turnos",
+    "announcements": "Anúncios",
+    "newsletter": "Boletim informativo",
+    "addBookEquip": "Adicionar livro / equipamento",
+    "reservations": "Reservas",
+    "resources": "Recursos",
+    "rolePermissions": "Permissões de funções",
+    "userPermissions": "Permissões de usuários",
+    "training": "Treinamento",
+    "groupScheduler": "Agendador de grupos"
+  },
+  "worker": {
+    "title": "Funcionário",
+    "shiftReport": "Relatório de turno",
+    "teachClass": "Dar uma aula",
+    "library": "Biblioteca",
+    "training": "Treinamento",
+    "shifts": "Turnos",
+    "assignments": "Atribuições",
+    "substitutes": "Substitutos",
+    "availability": "Minha disponibilidade"
+  },
+  "patron": {
+    "title": "Usuário"
+  },
+  "cases": {
+    "title": "Casos",
+    "dashboard": "Painel",
+    "open": "Novo",
+    "investigating": "Em investigação",
+    "myInvestigating": "Minhas investigações",
+    "waiting": "Em pausa",
+    "solved": "Resolvido",
+    "archived": "Arquivado",
+    "watching": "Observando",
+    "mentions": "Menções"
+  }
 }

@@ -5,13 +5,13 @@ import { db, kioskPeople } from '@/db'
 import { shiftSubRequests } from '@/db/schema/tables/substitutes'
 import { getCurrentUser } from '@/lib/auth'
 import { eq } from 'drizzle-orm'
-import { notify } from '@/db/queries/notifications'
+import { notifySubstituteEvent } from '@/lib/substitutes/notifications'
 
 export async function declineNominatedSub(requestId: string) {
 	const user = await getCurrentUser()
 	if (!user) throw new Error('Unauthorized')
 
-	await db.transaction(async (tx) => {
+	const requesterNotification = await db.transaction(async (tx) => {
 		const request = await tx
 			.select()
 			.from(shiftSubRequests)
@@ -50,14 +50,22 @@ export async function declineNominatedSub(requestId: string) {
 				updatedAt: new Date(),
 			})
 			.where(eq(shiftSubRequests.id, requestId))
-
-		/* -----------------------------
-		 * Notify requester
-		 * --------------------------- */
-		await notify(tx, {
+		return {
 			userId: request.requestedByUserId,
-			type: 'sub_request_cancelled',
-			message: `${workerName} declined your substitute request.`,
-		})
+			actorName: workerName,
+			requestId: request.id,
+			date: request.date,
+			startTime: request.startTime,
+			endTime: request.endTime,
+		}
+	})
+
+	await notifySubstituteEvent(requesterNotification.userId, {
+		type: 'declined',
+		requestId: requesterNotification.requestId,
+		actorName: requesterNotification.actorName,
+		date: requesterNotification.date,
+		startTime: requesterNotification.startTime,
+		endTime: requesterNotification.endTime,
 	})
 }

@@ -1,130 +1,131 @@
 {
-	"main": {
-		"home": "Home",
-		"dashboard": "Dashboard",
-		"dash": "Dash",
-		"groups": "Groups",
-		"projects": "Projects",
-		"digitization": "Digitization",
-		"calendar": "Calendar",
-		"freeForever": "Discover Gather Connect",
-		"language": "Language",
-		"chooseLanguage": "Choose Language",
-		"bfsc": "Burley FamilySearch",
-		"groupVisits": "Group Visits",
-		"researchSpecialists": "Research Specialists",
-		"trainingGuide": "Training Guide",
-		"consultantHelps": "Consultant Helps",
-		"communityProjects": "Community Projects",
-		"memoryLane": "Memory Lane",
-		"activities": "Activities",
-		"newsletters": "Newsletters",
-		"news": "News"
-	},
-	"groups": {
-		"schedule": "Schedule a visit"
-	},
-	"projects": {
-		"cassiaphotos": "Cassia Museum Photos",
-		"cassianegatives": "Cassia Museum Negatives",
-		"findagrave": "FindAGrave",
-		"mccemeteries": "MiniCassia Cemeteries",
-		"censuses": "Censuses",
-		"mvwwii": "Magic Valley WWII Newspaper",
-		"naturalization": "Naturalization",
-		"numident": "Numident",
-		"obituaries": "Obituaries",
-		"oral": "Oral Histories"
-	},
-	"digitization": {
-		"verbs": "Verbs",
-		"scramble": "Sentence Scramble",
-		"builder": "Sentence Builder",
-		"memorizer": "Memorizer"
-	},
-	"calendar": {
-		"expo": "Expo",
-		"memorylane": "Memory Lane",
-		"classes": "Class Schedule",
-		"niqqud": "Niqqud"
-	},
-	"secondary": {
-		"leaderboard": "Leaderboard",
-		"calendar": "Calendar",
-		"help": "Help",
-		"feedback": "Feedback"
-	},
-	"input": {
-		"specialists": "Research Specialists",
-		"stories": "Stories",
-		"scriptures": "Scriptures",
-		"prayers": "Prayers",
-		"comprehensible": "Comprehensible Input"
-	},
-	"lesson": {
-		"scripts": "Lesson Scripts",
-		"lessonContent": "Lesson Content"
-	},
-	"teacher": {
-		"title": "Teacher",
-		"myCourses": "My Created Courses",
-		"createCourse": "Create a Course"
-	},
-	"user": {
-		"account": "Account",
-		"notifications": "Notifications",
-		"logout": "Log out",
-		"login": "Log in",
-		"register": "Create an Account",
-		"dashboard": "Dashboard"
-	},
-	"admin": {
-		"title": "Admin",
-		"userManagement": "User Management",
-		"users": "Users",
-		"centerDefinitions": "Center Definitions",
-		"scheduleClosures": "Schedule Closures",
-		"shiftScheduler": "Shift Scheduler",
-		"announcements": "Announcements",
-		"newsletter": "Newsletter",
-		"addBookEquip": "Add Book / Equipment",
-		"reservations": "Reservations",
-		"resources": "Resources",
-		"rolePermissions": "Role Permissions",
-		"userPermissions": "User Permissions",
-		"defineHours": "Define Hours",
-		"defineShifts": "Define Shifts",
-		"definePurposes": "Define Purposes",
-		"defineCaseTypes": "Define Case Types",
-		"defineFaiths": "Define Faiths",
-		"defineCallings": "Define Callings",
-		"training": "Training",
-		"projects": "Projects"
-	},
-	"worker": {
-		"title": "Worker",
-		"shiftReport": "Shift Report",
-		"teachClass": "Teach A Class",
-		"library": "Library",
-		"training": "Training",
-		"shifts": "Shifts",
-		"assignments": "Assignments",
-		"substitutes": "Substitutes",
-		"availability": "My Availability"
-	},
-	"patron": {
-		"title": "Patron"
-	},
-	"cases": {
-		"title": "Cases",
-		"dashboard": "Dashboard",
-		"open": "New",
-		"investigating": "Under Invest.",
-		"myInvestigating": "My Invest.",
-		"waiting": "Paused",
-		"solved": "Solved",
-		"archived": "Archived",
-		"watching": "Watching",
-		"mentions": "Mentions"
-	}
+  "main": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "dash": "Dash",
+    "groups": "Groups",
+    "projects": "Projects",
+    "digitization": "Digitization",
+    "calendar": "Calendar",
+    "freeForever": "Discover Gather Connect",
+    "language": "Language",
+    "chooseLanguage": "Choose Language",
+    "bfsc": "Burley FamilySearch",
+    "groupVisits": "Group Visits",
+    "researchSpecialists": "Research Specialists",
+    "trainingGuide": "Training Guide",
+    "consultantHelps": "Consultant Helps",
+    "communityProjects": "Community Projects",
+    "memoryLane": "Memory Lane",
+    "activities": "Activities",
+    "newsletters": "Newsletters",
+    "news": "News"
+  },
+  "groups": {
+    "schedule": "Schedule a visit"
+  },
+  "projects": {
+    "cassiaphotos": "Cassia Museum Photos",
+    "cassianegatives": "Cassia Museum Negatives",
+    "findagrave": "FindAGrave",
+    "mccemeteries": "MiniCassia Cemeteries",
+    "censuses": "Censuses",
+    "mvwwii": "Magic Valley WWII Newspaper",
+    "naturalization": "Naturalization",
+    "numident": "Numident",
+    "obituaries": "Obituaries",
+    "oral": "Oral Histories"
+  },
+  "digitization": {
+    "verbs": "Verbs",
+    "scramble": "Sentence Scramble",
+    "builder": "Sentence Builder",
+    "memorizer": "Memorizer"
+  },
+  "calendar": {
+    "expo": "Expo",
+    "memorylane": "Memory Lane",
+    "classes": "Class Schedule",
+    "niqqud": "Niqqud"
+  },
+  "secondary": {
+    "leaderboard": "Leaderboard",
+    "calendar": "Calendar",
+    "help": "Help",
+    "feedback": "Feedback"
+  },
+  "input": {
+    "specialists": "Research Specialists",
+    "stories": "Stories",
+    "scriptures": "Scriptures",
+    "prayers": "Prayers",
+    "comprehensible": "Comprehensible Input"
+  },
+  "lesson": {
+    "scripts": "Lesson Scripts",
+    "lessonContent": "Lesson Content"
+  },
+  "teacher": {
+    "title": "Teacher",
+    "myCourses": "My Created Courses",
+    "createCourse": "Create a Course"
+  },
+  "user": {
+    "account": "Account",
+    "notifications": "Notifications",
+    "logout": "Log out",
+    "login": "Log in",
+    "register": "Create an Account",
+    "dashboard": "Dashboard"
+  },
+  "admin": {
+    "title": "Admin",
+    "userManagement": "User Management",
+    "users": "Users",
+    "centerDefinitions": "Center Definitions",
+    "scheduleClosures": "Schedule Closures",
+    "shiftScheduler": "Shift Scheduler",
+    "announcements": "Announcements",
+    "newsletter": "Newsletter",
+    "addBookEquip": "Add Book / Equipment",
+    "reservations": "Reservations",
+    "resources": "Resources",
+    "rolePermissions": "Role Permissions",
+    "userPermissions": "User Permissions",
+    "defineHours": "Define Hours",
+    "defineShifts": "Define Shifts",
+    "definePurposes": "Define Purposes",
+    "defineCaseTypes": "Define Case Types",
+    "defineFaiths": "Define Faiths",
+    "defineCallings": "Define Callings",
+    "training": "Training",
+    "projects": "Projects",
+    "groupScheduler": "Group Scheduler"
+  },
+  "worker": {
+    "title": "Worker",
+    "shiftReport": "Shift Report",
+    "teachClass": "Teach A Class",
+    "library": "Library",
+    "training": "Training",
+    "shifts": "Shifts",
+    "assignments": "Assignments",
+    "substitutes": "Substitutes",
+    "availability": "My Availability"
+  },
+  "patron": {
+    "title": "Patron"
+  },
+  "cases": {
+    "title": "Cases",
+    "dashboard": "Dashboard",
+    "open": "New",
+    "investigating": "Under Invest.",
+    "myInvestigating": "My Invest.",
+    "waiting": "Paused",
+    "solved": "Solved",
+    "archived": "Archived",
+    "watching": "Watching",
+    "mentions": "Mentions"
+  }
 }

@@ -8,6 +8,8 @@
 		"start": "next start",
 		"lint": "eslint",
 		"test:e2e": "playwright test",
+		"test:e2e:substitutes": "playwright test tests/e2e/substitutes.spec.ts",
+		"test:dev:substitutes": "tsx --test tests/dev/substitutes-pipeline.test.ts",
 		"db:push": "drizzle-kit push --config drizzle.config.ts",
 		"db:generate": "drizzle-kit generate --config drizzle.config.ts",
 		"import:newsletters:blogspot:dry": "node utils/import-blogspot-newsletters.mjs",

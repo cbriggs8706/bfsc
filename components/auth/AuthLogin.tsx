@@ -99,7 +99,7 @@ export function LoginForm({ redirectTo }: Props) {
 
 	return (
 		<div className="min-h-screen flex items-center justify-center">
-			<Card className="relative w-full max-w-sm border rounded-xl shadow-lg/5 dark:shadow-xl bg-linear-to-b from-muted/50 dark:from-transparent to-card overflow-hidden px-8 py-8">
+			<Card className="relative w-full max-w-sm lg:max-w-md border rounded-xl shadow-lg/5 dark:shadow-xl bg-linear-to-b from-muted/50 dark:from-transparent to-card overflow-hidden px-8 py-8 lg:px-10">
 				{/* Subtle grid + mask pattern background */}
 				<div
 					className="absolute inset-0 z-0 -top-px -left-px"
@@ -130,15 +130,19 @@ export function LoginForm({ redirectTo }: Props) {
 						{t('title')}
 					</CardTitle>
 					<CardDescription>{t('description')}</CardDescription>
+					<p className="mt-2 max-w-xs text-center text-sm text-muted-foreground leading-relaxed">
+						{t('benefits')}
+					</p>
 				</CardHeader>
 
 				<CardContent className="relative z-10 mt-4">
 					<Button
 						type="button"
-						className="w-full gap-3 mb-6"
+						size="lg"
+						className="mb-8 h-14 w-full gap-4 rounded-lg text-lg font-semibold shadow-md hover:shadow-lg"
 						onClick={() => signIn('google', { callbackUrl: safeRedirectTo })}
 					>
-						<GoogleLogo />
+						<GoogleLogo size={24} />
 						{t('googleButton')}
 					</Button>
 

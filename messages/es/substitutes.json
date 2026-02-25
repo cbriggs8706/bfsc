@@ -27,6 +27,7 @@
 		"expired": "Expirada"
 	},
 	"statusAcceptedBy": "Aceptada por {name}",
+	"needsSubstitute": "Necesita un sustituto",
 	"askedToCover": "{name} preguntó si podías cubrir este turno.",
 	"youVolunteered": "Te ofreciste para cubrir este turno. Aún no ha sido aceptado por quien lo solicitó.",
 	"waitingForRequester": "Esperando que el solicitante acepte tu oferta.",
@@ -37,8 +38,10 @@
 		"title": "Disponibilidad",
 		"usually": "Normalmente disponible para este turno",
 		"maybe": "Quizás disponible para este turno",
+		"notAvailable": "No disponible",
 		"define": "Define tu disponibilidad para sustituciones."
 	},
+	"volunteerInfo": "Al hacer clic en voluntariarse, agregas tu nombre a una lista de trabajadores dispuestos a cubrir este turno. Quien lo solicitó aceptará tu oferta para confirmarla. Mientras tanto, el estado seguirá abierto.",
 	"youCreatedRequest": "Tú creaste esta solicitud de sustitución",
 	"confirm": "Confirmar",
 	"decline": "Rechazar",

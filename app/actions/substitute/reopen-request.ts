@@ -5,6 +5,7 @@ import { db } from '@/db'
 import { shiftSubRequests } from '@/db/schema/tables/substitutes'
 import { eq } from 'drizzle-orm'
 import { getCurrentUser } from '@/lib/auth'
+import { canReopenSubRequest } from '@/lib/substitutes/pipeline'
 
 export async function reopenSubRequest(requestId: string) {
 	const user = await getCurrentUser()
@@ -30,7 +31,7 @@ export async function reopenSubRequest(requestId: string) {
 		}
 
 		// 🔒 Only terminal states can be reopened
-		if (request.status !== 'cancelled' && request.status !== 'expired') {
+		if (!canReopenSubRequest(request.status)) {
 			throw new Error('Request cannot be reopened')
 		}
 

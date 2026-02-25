@@ -110,14 +110,15 @@ export function SubstituteRequest({
 									{request.requestedBy.name}
 								</p>
 								<p className="text-base text-muted-foreground">
-									Needs a substitute
+									{t('needsSubstitute')}
 								</p>
 
 								<p className="text-base font-semibold mt-1">
 									{t('shiftOn', {
-										date: formatYmdLong(request.date),
-										time: `${toAmPm(request.startTime)}–${toAmPm(
-											request.endTime
+										date: formatYmdLong(request.date, locale),
+										time: `${toAmPm(request.startTime, locale)}–${toAmPm(
+											request.endTime,
+											locale
 										)}`,
 									})}
 								</p>
@@ -245,10 +246,7 @@ export function SubstituteRequest({
 					) : (
 						<div className="border rounded p-4 space-y-4 bg-(--blue-accent-soft) border-(--blue-accent)">
 							<p>
-								By clicking volunteer, you are adding your name to a list of
-								workers who are willing to cover this shift. The requester will
-								then accept your offer to confirm. The status will remain open
-								in the meantime.
+								{t('volunteerInfo')}
 							</p>
 							<Button
 								type="button"

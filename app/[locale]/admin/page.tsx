@@ -59,6 +59,9 @@ export default async function AdminUsersPage({
 					<Link href={`/${locale}/admin/training`}>
 						<Button variant="default">Training Modules</Button>
 					</Link>
+					<Link href={`/${locale}/admin/groups/scheduler`}>
+						<Button variant="default">Group Scheduler</Button>
+					</Link>
 				</CardContent>
 			</Card>
 		</div>

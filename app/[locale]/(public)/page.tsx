@@ -293,8 +293,8 @@ export default async function HomePage({ params, searchParams }: Props) {
 			   HERO — Latest Newsletter
 			============================= */}
 			{latest && (
-				<section className="relative">
-					<div className="relative w-full h-[60vh] overflow-hidden rounded-xl">
+				<section className="overflow-hidden rounded-xl border bg-card">
+					<div className="relative w-full h-[46vh] min-h-[280px]">
 						{latest.coverImageUrl && (
 							<Image
 								src={latest.coverImageUrl}
@@ -304,27 +304,20 @@ export default async function HomePage({ params, searchParams }: Props) {
 								priority
 							/>
 						)}
-						<div className="absolute inset-0 bg-black/50" />
 					</div>
 
-					<div className="absolute inset-0 flex items-end">
-						<div className="max-w-3xl p-6 md:p-10 text-white space-y-4">
-							<div className="text-sm opacity-90">Latest Newsletter</div>
+					<div className="max-w-3xl p-6 md:p-10 space-y-4">
+						<div className="text-sm text-muted-foreground">Latest Newsletter</div>
 
-							<h1 className="text-3xl md:text-5xl font-bold leading-tight">
-								{latest.title}
-							</h1>
+						<h1 className="text-3xl md:text-5xl font-bold leading-tight">
+							{latest.title}
+						</h1>
 
-							{latest.excerpt && (
-								<p className="text-lg text-white/90">{latest.excerpt}</p>
-							)}
+						{latest.excerpt && <p className="text-lg text-muted-foreground">{latest.excerpt}</p>}
 
-							<Button asChild size="lg">
-								<Link href={`/${locale}/newsletters/${latest.slug}`}>
-									Read Now
-								</Link>
-							</Button>
-						</div>
+						<Button asChild size="lg">
+							<Link href={`/${locale}/newsletters/${latest.slug}`}>Read Now</Link>
+						</Button>
 					</div>
 				</section>
 			)}

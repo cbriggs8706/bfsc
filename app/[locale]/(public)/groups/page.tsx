@@ -10,6 +10,7 @@ import { getCenterTimeConfig } from '@/lib/time/center-time'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import type { Resource } from '@/types/resource'
+import { getPublicStakeAssistantContacts } from '@/db/queries/group-scheduling'
 
 interface Props {
 	params: Promise<{ locale: string }>
@@ -29,6 +30,7 @@ export default async function ClassesPage({ params }: Props) {
 	})
 	const centerTime = await getCenterTimeConfig()
 	const faithTree = await getFaithTree()
+	const publicStakeContacts = await getPublicStakeAssistantContacts()
 
 	// public page: only active
 	const active = items.filter((r) => r.isActive)
@@ -213,87 +215,50 @@ export default async function ClassesPage({ params }: Props) {
 			<Card>
 				<CardContent className="space-y-4">
 					<h2 className="text-xl font-semibold">Stake Assistants</h2>
-					<div className="grid gap-3 text-base md:grid-cols-2">
-						<div className="flex flex-col gap-2">
-							<strong>Burley Stake</strong>
-
-							<Link href="tel:+12084316510">
-								<Button>Jamie Palmer – 208-431-6580</Button>
-							</Link>
+					{publicStakeContacts.length === 0 ? (
+						<p className="text-sm text-muted-foreground">
+							No public stake assistant contacts are configured yet.
+						</p>
+					) : (
+						<div className="grid gap-3 text-base md:grid-cols-2">
+							{Object.entries(
+								publicStakeContacts.reduce<Record<string, typeof publicStakeContacts>>(
+									(acc, contact) => {
+										const key = contact.stakeName
+										if (!acc[key]) acc[key] = []
+										acc[key].push(contact)
+										return acc
+									},
+									{}
+								)
+							).map(([stakeName, contacts]) => (
+								<div key={stakeName} className="flex flex-col gap-2">
+									<strong>{stakeName}</strong>
+									{contacts.map((contact) => {
+										const digits = (contact.phone ?? '').replace(/\D/g, '')
+										return (
+											<div key={contact.id} className="flex flex-col gap-2">
+												{contact.phone ? (
+													<Link href={`tel:${digits.startsWith('1') ? '+' : '+1'}${digits}`}>
+														<Button>
+															{contact.name} - {contact.phone}
+														</Button>
+													</Link>
+												) : null}
+												{contact.email ? (
+													<Link href={`mailto:${contact.email}`}>
+														<Button variant="outline">
+															Email: {contact.email}
+														</Button>
+													</Link>
+												) : null}
+											</div>
+										)
+									})}
+								</div>
+							))}
 						</div>
-
-						<div className="flex flex-col gap-2">
-							<strong>Burley Central Stake</strong>
-
-							<Link href="tel:+12083123949">
-								<Button>Lonnie Downs – 208-312-3949</Button>
-							</Link>
-							<Link href="tel:+12083125130">
-								<Button>Gay Downs – 208-312-5130</Button>
-							</Link>
-						</div>
-
-						<div className="flex flex-col gap-2">
-							<strong>Burley West Stake</strong>
-
-							<Link href="tel:+18437299622">
-								<Button>Brad Harrop – 843-729-9622</Button>
-							</Link>
-							<Link href="tel:+18437296247">
-								<Button>Tookie Harrop – 843-729-6247</Button>
-							</Link>
-						</div>
-
-						<div className="flex flex-col gap-2">
-							<strong>Declo Stake</strong>
-
-							<Link href="tel:+12084312086">
-								<Button>Celia Turner – 208-431-2086</Button>
-							</Link>
-						</div>
-
-						<div className="flex flex-col gap-2">
-							<strong>Oakley Stake</strong>
-
-							<Link href="tel:+12086704400">
-								<Button>Sharon Bowers – 208-670-4400</Button>
-							</Link>
-							<Link href="tel:+12086788204">
-								<Button>Carla Carson – 208-678-8204</Button>
-							</Link>
-						</div>
-
-						<div className="flex flex-col gap-2">
-							<strong>Paul Stake</strong>
-
-							<Link href="tel:+12083000297">
-								<Button>Arlen Morgan – 208-300-0297</Button>
-							</Link>
-							<Link href="tel:+12083000522">
-								<Button>Lois Morgan – 208-300-0522</Button>
-							</Link>
-						</div>
-						<div className="flex flex-col gap-2">
-							<strong>Rupert Stake</strong>
-
-							<Link href="tel:+12084316642">
-								<Button>Jolene Hunsaker – 208-431-6642</Button>
-							</Link>
-							<Link href="tel:+12084311864">
-								<Button>Charlotte Reedy – 208-431-1864</Button>
-							</Link>
-						</div>
-						<div className="flex flex-col gap-2">
-							<strong>Rupert West Stake</strong>
-
-							{/* <Link href="tel:+12084316510">
-								<Button>Layne Rutschke – 208-431-6510</Button>
-							</Link>
-							<Link href="tel:+12084316514">
-								<Button>Janie Rutschke – 208-431-6514</Button>
-							</Link> */}
-						</div>
-					</div>
+					)}
 				</CardContent>
 			</Card>
 		</div>

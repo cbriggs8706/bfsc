@@ -89,8 +89,8 @@ export function SubstituteCalendarClient({
 							>
 								<div>
 									<div className="font-medium">
-										{formatYmdShort(r.date)} · {toAmPm(r.startTime)}–
-										{toAmPm(r.endTime)}
+										{formatYmdShort(r.date, locale)} ·{' '}
+										{toAmPm(r.startTime, locale)}–{toAmPm(r.endTime, locale)}
 									</div>
 
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -133,8 +133,8 @@ export function SubstituteCalendarClient({
 							>
 								<div>
 									<div className="font-medium">
-										{formatYmdShort(r.date)} · {toAmPm(r.startTime)}–
-										{toAmPm(r.endTime)}
+										{formatYmdShort(r.date, locale)} ·{' '}
+										{toAmPm(r.startTime, locale)}–{toAmPm(r.endTime, locale)}
 									</div>
 
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -178,8 +178,8 @@ export function SubstituteCalendarClient({
 							>
 								{/* <div>
 									<div className="font-medium">
-										{formatYmdShort(r.date)} ·{' '}
-										{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
+										{formatYmdShort(r.date, locale)} ·{' '}
+										{toAmPm(r.startTime, locale)}–{toAmPm(r.endTime, locale)}
 									</div>
 
 									<div className="text-sm text-muted-foreground">
@@ -195,8 +195,8 @@ export function SubstituteCalendarClient({
 								</Link> */}
 								<div>
 									<div className="font-medium">
-										{formatYmdShort(r.date)} · {toAmPm(r.startTime)}–
-										{toAmPm(r.endTime)}
+										{formatYmdShort(r.date, locale)} ·{' '}
+										{toAmPm(r.startTime, locale)}–{toAmPm(r.endTime, locale)}
 									</div>
 
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -247,13 +247,13 @@ export function SubstituteCalendarClient({
 						defaultCollapsed={false}
 					/>
 					<Card className="hidden md:block p-6">
-						<MonthCalendar
+							<MonthCalendar
 							month={activeMonth}
 							onPrev={() => setActiveMonth((m) => subMonths(m, 1))}
 							onNext={() => setActiveMonth((m) => addMonths(m, 1))}
-							requestsByDay={openByDay}
-							locale={locale}
-						/>
+								requestsByDay={openByDay}
+								locale={locale}
+							/>
 					</Card>
 				</div>
 			)}
@@ -297,7 +297,12 @@ export function MonthCalendar({
 					←
 				</Button>
 
-				<h3 className="text-lg font-semibold">{format(month, 'MMMM yyyy')}</h3>
+				<h3 className="text-lg font-semibold">
+					{new Intl.DateTimeFormat(locale, {
+						month: 'long',
+						year: 'numeric',
+					}).format(month)}
+				</h3>
 
 				<Button size="sm" variant="outline" onClick={onNext}>
 					→
@@ -306,7 +311,11 @@ export function MonthCalendar({
 
 			{/* ===== Calendar Grid ===== */}
 			<div className="grid grid-cols-7 gap-px bg-white rounded overflow-hidden">
-				{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+				{Array.from({ length: 7 }, (_, i) =>
+					new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(
+						addDays(startOfWeek(new Date()), i)
+					)
+				).map((d) => (
 					<div
 						key={d}
 						className="bg-(--green-logo) text-xs font-medium p-2 text-center"
@@ -347,7 +356,8 @@ export function MonthCalendar({
 												href={`/${locale}/substitutes/request/${r.id}`}
 												className="block truncate rounded bg-(--blue-accent) text-card px-1 py-0.5 text-[11px] hover:bg-(--green-logo)"
 											>
-												{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
+												{toAmPm(r.startTime, locale)}–
+												{toAmPm(r.endTime, locale)}
 											</Link>
 										</HoverCardTrigger>
 
@@ -367,10 +377,11 @@ export function MonthCalendar({
 														{r.requestedBy.name}
 													</div>
 													<div className="text-xs text-muted-foreground">
-														{formatYmdLong(r.date)}
+														{formatYmdLong(r.date, locale)}
 													</div>
 													<div className="text-xs text-muted-foreground">
-														{toAmPm(r.startTime)}–{toAmPm(r.endTime)}
+														{toAmPm(r.startTime, locale)}–
+														{toAmPm(r.endTime, locale)}
 													</div>
 												</div>
 											</div>

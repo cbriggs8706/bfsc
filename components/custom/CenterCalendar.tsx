@@ -78,7 +78,7 @@ type CalendarClass = {
 	descriptionOverride: string | null
 	isCanceled: boolean
 	presenters: string[]
-	kind: 'class' | 'reservation'
+	kind: 'class' | 'reservation' | 'group-visit'
 	reservationStatus?: 'pending' | 'confirmed'
 }
 
@@ -120,6 +120,8 @@ const RESERVATION_CONFIRMED_COLOR =
 	'bg-(--blue-accent-soft) text-(--accent-foreground) border-(--blue-accent)'
 const RESERVATION_PENDING_COLOR =
 	'bg-(--gray-accent-soft) text-(--gray-accent) border-(--gray-accent) border-dotted border-2'
+const GROUP_VISIT_COLOR =
+	'bg-(--green-logo-soft) text-(--foreground) border-(--green-logo)'
 
 /* ============================
    COMPONENT
@@ -194,6 +196,9 @@ export default function CenterCalendar({
 			return event.reservationStatus === 'pending'
 				? RESERVATION_PENDING_COLOR
 				: RESERVATION_CONFIRMED_COLOR
+		}
+		if (event.kind === 'group-visit') {
+			return GROUP_VISIT_COLOR
 		}
 
 		return classColorMap.get(event.title) ?? EVENT_COLORS[0]

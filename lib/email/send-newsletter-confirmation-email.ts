@@ -1,7 +1,5 @@
 // lib/email/send-newsletter-confirmation-email.ts
-import { Resend } from 'resend'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { sendEmail } from './mailer'
 
 export async function sendNewsletterConfirmationEmail(
 	email: string,
@@ -10,9 +8,9 @@ export async function sendNewsletterConfirmationEmail(
 ) {
 	const confirmUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${locale}/newsletter/confirm?token=${token}`
 
-	await resend.emails.send({
+	await sendEmail({
 		from: 'Burley FamilySearch Center <no-reply@burleyfamilysearchcenter.com>',
-		to: email,
+		to: [email],
 		subject: 'Confirm your newsletter subscription',
 		html: `
 			<div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.5;">

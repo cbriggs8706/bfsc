@@ -6,38 +6,21 @@ import { format, parse } from 'date-fns'
 import { fromZonedTime } from 'date-fns-tz'
 
 //toAmPm works but should be replaced
-export function toAmPm(time: string | null): string {
+export function toAmPm(time: string | null, locale?: string): string {
 	if (!time) return ''
 	// time expected as "HH:MM"
 	const [h, m] = time.split(':').map(Number)
 	const date = new Date()
 	date.setHours(h, m, 0, 0)
 
-	return date.toLocaleTimeString([], {
+	return date.toLocaleTimeString(locale, {
 		hour: 'numeric',
 		minute: '2-digit',
-		hour12: true,
 	})
 }
 
-export function formatLongDate(dateStr: string): string {
-	const date = parseLocalYMD(dateStr)
-
-	const weekday = date.toLocaleString('en-US', { weekday: 'long' })
-	const month = date.toLocaleString('en-US', { month: 'long' })
-	const day = date.getDate()
-	const year = date.getFullYear()
-
-	const suffix =
-		day % 10 === 1 && day !== 11
-			? 'st'
-			: day % 10 === 2 && day !== 12
-			? 'nd'
-			: day % 10 === 3 && day !== 13
-			? 'rd'
-			: 'th'
-
-	return `${weekday}, ${month} ${day}${suffix}, ${year}`
+export function formatLongDate(dateStr: string, locale?: string): string {
+	return formatYmdLong(dateStr, locale)
 }
 
 // use for showing times to humans, rendering admin lists, emails, read-only summaries
@@ -125,19 +108,28 @@ export function formatTimeShort(date: Date, timeZone: string) {
 	return `${hour}${dayPeriod[0].toLowerCase()}`
 }
 
-export function formatYmdShort(ymd: string) {
+export function formatYmdShort(ymd: string, locale?: string) {
 	const [y, m, d] = ymd.split('-').map(Number)
-	return format(new Date(y, m - 1, d), 'EEE MMM d')
+	return new Intl.DateTimeFormat(locale, {
+		weekday: 'short',
+		month: 'short',
+		day: 'numeric',
+	}).format(new Date(y, m - 1, d))
 }
 
-export function formatYmdLong(ymd: string) {
+export function formatYmdLong(ymd: string, locale?: string) {
 	const [y, m, d] = ymd.split('-').map(Number)
-	return format(new Date(y, m - 1, d), 'EEEE, MMMM d, yyyy')
+	return new Intl.DateTimeFormat(locale, {
+		weekday: 'long',
+		month: 'long',
+		day: 'numeric',
+		year: 'numeric',
+	}).format(new Date(y, m - 1, d))
 }
 
-export function formatYmdMonth(ym: string) {
+export function formatYmdMonth(ym: string, locale?: string) {
 	const [y, m] = ym.split('-').map(Number)
-	return new Date(y, m - 1, 1).toLocaleString(undefined, {
+	return new Date(y, m - 1, 1).toLocaleString(locale, {
 		month: 'long',
 		year: 'numeric',
 	})

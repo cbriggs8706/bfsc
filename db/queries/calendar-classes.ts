@@ -12,6 +12,7 @@ import {
 import { user } from '@/db/schema/tables/auth'
 import { reservations, resources } from '@/db/schema/tables/resources'
 import { ymdInTz } from '@/utils/time'
+import { getConfirmedEventsForCalendar } from './group-scheduling'
 
 type ClassCalendarEvent = {
 	id: string
@@ -40,7 +41,23 @@ type ReservationCalendarEvent = {
 	reservationStatus: 'pending' | 'confirmed'
 }
 
-export type CalendarEvent = ClassCalendarEvent | ReservationCalendarEvent
+type GroupVisitCalendarEvent = {
+	id: string
+	date: string
+	startsAtIso: string
+	title: string
+	location: string
+	description: string | null
+	descriptionOverride: string | null
+	isCanceled: boolean
+	presenters: string[]
+	kind: 'group-visit'
+}
+
+export type CalendarEvent =
+	| ClassCalendarEvent
+	| ReservationCalendarEvent
+	| GroupVisitCalendarEvent
 
 export async function listCalendarEvents(
 	rangeStart: Date,
@@ -122,7 +139,8 @@ export async function listCalendarEvents(
 		}
 	}
 
-	const reservationRows = await db
+	const [reservationRows, groupVisitRows] = await Promise.all([
+		db
 		.select({
 			id: reservations.id,
 			startTime: reservations.startTime,
@@ -137,7 +155,9 @@ export async function listCalendarEvents(
 				lte(reservations.startTime, rangeEndUtc),
 				inArray(reservations.status, ['pending', 'confirmed'])
 			)
-		)
+		),
+		getConfirmedEventsForCalendar(rangeStartUtc, rangeEndUtc),
+	])
 
 	const reservationEvents: ReservationCalendarEvent[] = reservationRows.map(
 		(r) => {
@@ -159,7 +179,26 @@ export async function listCalendarEvents(
 		}
 	)
 
-	return [...Array.from(bySession.values()), ...reservationEvents].sort((a, b) =>
-		a.startsAtIso.localeCompare(b.startsAtIso)
-	)
+	const groupVisitEvents: GroupVisitCalendarEvent[] = groupVisitRows.map((r) => {
+		const dt = new Date(r.startsAt)
+		const scope = r.wardName ? `${r.stakeName} - ${r.wardName}` : r.stakeName
+		return {
+			id: `group-visit:${r.id}`,
+			date: ymdInTz(dt, centerTimeZone),
+			startsAtIso: dt.toISOString(),
+			title: r.title,
+			location: 'FamilySearch Center',
+			description: scope,
+			descriptionOverride: null,
+			isCanceled: false,
+			presenters: [],
+			kind: 'group-visit',
+		}
+	})
+
+	return [
+		...Array.from(bySession.values()),
+		...reservationEvents,
+		...groupVisitEvents,
+	].sort((a, b) => a.startsAtIso.localeCompare(b.startsAtIso))
 }

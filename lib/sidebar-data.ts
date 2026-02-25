@@ -15,6 +15,7 @@ import {
 	Newspaper,
 	PlusCircle,
 	CalendarCheck,
+	CalendarRange,
 	CalendarPlus,
 	Files,
 	HandHeart,
@@ -221,6 +222,11 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				title: t('sidebar.admin.reservations'),
 				url: `/${locale}/admin/reservation`,
 				icon: CalendarCheck,
+			},
+			{
+				title: t('sidebar.admin.groupScheduler'),
+				url: `/${locale}/admin/groups/scheduler`,
+				icon: CalendarRange,
 			},
 			{
 				title: t('sidebar.admin.projects'),

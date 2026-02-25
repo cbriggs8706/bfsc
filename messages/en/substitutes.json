@@ -29,6 +29,7 @@
 		"expired": "Expired"
 	},
 	"statusAcceptedBy": "Accepted by {name}",
+	"needsSubstitute": "Needs a substitute",
 	"askedToCover": "{name} asked if you could cover this shift.",
 	"youVolunteered": "You’ve volunteered to cover this shift.  It has not been accepted by the requester yet.",
 	"waitingForRequester": "Waiting for requester to accept your offer.",
@@ -39,8 +40,10 @@
 		"title": "Availability",
 		"usually": "Usually available for this shift",
 		"maybe": "Maybe available for this shift",
+		"notAvailable": "Not available",
 		"define": "Define your availability for substitutions."
 	},
+	"volunteerInfo": "By clicking volunteer, you are adding your name to a list of workers who are willing to cover this shift. The requester will then accept your offer to confirm. The status will remain open in the meantime.",
 	"youCreatedRequest": "You created this substitute request",
 	"confirm": "Confirm",
 	"decline": "Decline",

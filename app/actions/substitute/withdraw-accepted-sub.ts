@@ -1,19 +1,18 @@
 // app/actions/substitute/withdraw-accepted-sub.ts
 'use server'
 
-import { db, kioskPeople, notifications } from '@/db'
-import {
-	shiftAssignmentExceptions,
-	shiftSubRequests,
-} from '@/db/schema/tables/substitutes'
+import { db, kioskPeople } from '@/db'
+import { shiftSubRequests } from '@/db/schema/tables/substitutes'
+import { shiftExceptions } from '@/db/schema/tables/shifts'
 import { and, eq } from 'drizzle-orm'
 import { getCurrentUser } from '@/lib/auth'
+import { notifySubstituteEvent } from '@/lib/substitutes/notifications'
 
 export async function withdrawAcceptedSub(requestId: string) {
 	const user = await getCurrentUser()
 	if (!user) throw new Error('Unauthorized')
 
-	await db.transaction(async (tx) => {
+	const requesterNotification = await db.transaction(async (tx) => {
 		const request = await tx
 			.select()
 			.from(shiftSubRequests)
@@ -41,12 +40,13 @@ export async function withdrawAcceptedSub(requestId: string) {
 		 * Remove assignment exception
 		 * --------------------------- */
 		await tx
-			.delete(shiftAssignmentExceptions)
+			.delete(shiftExceptions)
 			.where(
 				and(
-					eq(shiftAssignmentExceptions.shiftId, request.shiftId),
-					eq(shiftAssignmentExceptions.date, request.date),
-					eq(shiftAssignmentExceptions.assignedUserId, user.id)
+					eq(shiftExceptions.shiftId, request.shiftId),
+					eq(shiftExceptions.date, request.date),
+					eq(shiftExceptions.userId, user.id),
+					eq(shiftExceptions.overrideType, 'replace')
 				)
 			)
 
@@ -59,16 +59,26 @@ export async function withdrawAcceptedSub(requestId: string) {
 				status: 'open',
 				acceptedByUserId: null,
 				acceptedAt: null,
+				updatedAt: new Date(),
 			})
 			.where(eq(shiftSubRequests.id, requestId))
 
-		/* -----------------------------
-		 * Notify requester
-		 * --------------------------- */
-		await tx.insert(notifications).values({
+		return {
 			userId: request.requestedByUserId,
-			type: 'sub_request_reopened',
-			message: `${workerName} has withdrawn from covering the shift. The request is open again.`,
-		})
+			actorName: workerName,
+			requestId: request.id,
+			date: request.date,
+			startTime: request.startTime,
+			endTime: request.endTime,
+		}
+	})
+
+	await notifySubstituteEvent(requesterNotification.userId, {
+		type: 'reopened',
+		requestId: requesterNotification.requestId,
+		actorName: requesterNotification.actorName,
+		date: requesterNotification.date,
+		startTime: requesterNotification.startTime,
+		endTime: requesterNotification.endTime,
 	})
 }

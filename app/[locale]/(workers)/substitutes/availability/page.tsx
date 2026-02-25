@@ -25,7 +25,7 @@ export default async function AvailabilityPage({ params }: Props) {
 					{t('availability.define')}
 				</p>
 			</div>
-			<AvailabilityDashboardClient {...data} />
+			<AvailabilityDashboardClient {...data} locale={locale} />
 		</div>
 	)
 }

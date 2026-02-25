@@ -119,14 +119,14 @@ export default async function Page({ params }: DashboardPageProps) {
 					</div>
 				)}
 				<div
-					className={`grid gap-6 md:items-stretch ${
-						showAccountCompletionCard ? 'md:grid-cols-3' : 'md:grid-cols-1'
+					className={`grid gap-6 lg:items-stretch ${
+						showAccountCompletionCard ? 'lg:grid-cols-3' : 'lg:grid-cols-1'
 					}`}
 				>
 					{showAccountCompletionCard && (
-						<div className="space-y-3 md:col-span-1 md:flex md:flex-col">
+						<div className="space-y-3 lg:col-span-1 lg:flex lg:flex-col">
 							<h2 className="text-2xl font-semibold">Account Completion</h2>
-							<Card className="border bg-card md:flex-1">
+							<Card className="border bg-card lg:flex-1">
 								<CardContent className="p-5 md:p-6">
 									<div className="flex flex-col items-center text-center">
 										<ProgressCircle percent={profileCompletionPercent} />
@@ -157,14 +157,14 @@ export default async function Page({ params }: DashboardPageProps) {
 					)}
 					<div
 						className={`${
-							showAccountCompletionCard ? 'md:col-span-2' : 'md:col-span-1'
-						} md:flex md:flex-col`}
+							showAccountCompletionCard ? 'lg:col-span-2' : 'lg:col-span-1'
+						} lg:flex lg:flex-col`}
 					>
 						<CertificatesGrid
 							certificates={certificates}
 							locale={locale}
-							className="h-full md:flex md:flex-col"
-							cardClassName="md:flex-1"
+							className="h-full lg:flex lg:flex-col"
+							cardClassName="lg:flex-1"
 							preferSingleRow={!showAccountCompletionCard}
 						/>
 					</div>

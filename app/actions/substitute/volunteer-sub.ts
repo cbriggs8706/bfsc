@@ -8,19 +8,21 @@ import {
 } from '@/db/schema/tables/substitutes'
 import { eq } from 'drizzle-orm'
 import { getCurrentUser } from '@/lib/auth'
-import { notify } from '@/db/queries/notifications'
+import { notifySubstituteEvent } from '@/lib/substitutes/notifications'
 
 export async function volunteerForSub(requestId: string) {
 	const user = await getCurrentUser()
 	if (!user) throw new Error('Unauthorized')
 
-	await db.transaction(async (tx) => {
+	const notifyRequester = await db.transaction(async (tx) => {
 		const request = await tx
 			.select({
 				id: shiftSubRequests.id,
 				status: shiftSubRequests.status,
 				requestedByUserId: shiftSubRequests.requestedByUserId,
 				date: shiftSubRequests.date,
+				startTime: shiftSubRequests.startTime,
+				endTime: shiftSubRequests.endTime,
 			})
 			.from(shiftSubRequests)
 			.where(eq(shiftSubRequests.id, requestId))
@@ -53,12 +55,23 @@ export async function volunteerForSub(requestId: string) {
 
 		const volunteerName = volunteer?.fullName ?? 'A worker'
 
-		// 🔔 Notify requester ONLY
-		await notify(tx, {
+		return {
 			userId: request.requestedByUserId,
-			type: 'sub_request_volunteered',
-			message: `${volunteerName} volunteered to cover your shift on ${request.date}.`,
-		})
+			actorName: volunteerName,
+			requestId: request.id,
+			date: request.date,
+			startTime: request.startTime,
+			endTime: request.endTime,
+		}
+	})
+
+	await notifySubstituteEvent(notifyRequester.userId, {
+		type: 'volunteered',
+		requestId: notifyRequester.requestId,
+		actorName: notifyRequester.actorName,
+		date: notifyRequester.date,
+		startTime: notifyRequester.startTime,
+		endTime: notifyRequester.endTime,
 	})
 
 	return { success: true }

@@ -1,11 +1,11 @@
 // app/actions/substitute/nominate-substitute.ts
 'use server'
 
-import { db, notifications, user as userTable } from '@/db'
+import { db, user as userTable } from '@/db'
 import { shiftSubRequests } from '@/db/schema/tables/substitutes'
 import { getCurrentUser } from '@/lib/auth'
 import { eq } from 'drizzle-orm'
-import { NotificationType } from '@/types/substitutes'
+import { notifySubstituteEvent } from '@/lib/substitutes/notifications'
 
 export async function nominateSubstitute(
 	requestId: string,
@@ -14,7 +14,7 @@ export async function nominateSubstitute(
 	const user = await getCurrentUser()
 	if (!user) throw new Error('Unauthorized')
 
-	await db.transaction(async (tx) => {
+	const assignedShift = await db.transaction(async (tx) => {
 		const request = await tx
 			.select()
 			.from(shiftSubRequests)
@@ -51,10 +51,19 @@ export async function nominateSubstitute(
 			})
 			.where(eq(shiftSubRequests.id, requestId))
 
-		await tx.insert(notifications).values({
-			userId: workerUserId,
-			type: 'sub_request_assignment' satisfies NotificationType,
-			message: `You have been requested to cover a shift on ${request.date}.`,
-		})
+		return {
+			requestId: request.id,
+			date: request.date,
+			startTime: request.startTime,
+			endTime: request.endTime,
+		}
+	})
+
+	await notifySubstituteEvent(workerUserId, {
+		type: 'assignment',
+		requestId: assignedShift.requestId,
+		date: assignedShift.date,
+		startTime: assignedShift.startTime,
+		endTime: assignedShift.endTime,
 	})
 }

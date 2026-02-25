@@ -77,8 +77,9 @@ export function OpenRequestsSection({
 									>
 										<div>
 											<div className="font-medium">
-												{formatYmdLong(r.date)} · {toAmPm(r.startTime)}–
-												{toAmPm(r.endTime)}
+												{formatYmdLong(r.date, locale)} ·{' '}
+												{toAmPm(r.startTime, locale)}–
+												{toAmPm(r.endTime, locale)}
 											</div>
 
 											<div className="flex items-center gap-2 text-sm text-muted-foreground">
