@@ -5,7 +5,9 @@ import {
 	groupScheduleEventNotes,
 	groupScheduleEvents,
 	groupScheduleEventWards,
+	stakes,
 	unitContacts,
+	wards,
 } from '@/db/schema'
 import {
 	coordinationStatuses,
@@ -38,8 +40,136 @@ function localeFromForm(formData: FormData) {
 
 function revalidateSchedulingPaths(locale: string) {
 	revalidatePath(`/${locale}/admin/groups/scheduler`)
+	revalidatePath(`/${locale}/admin/groups/directory`)
 	revalidatePath(`/${locale}/groups`)
 	revalidatePath(`/${locale}/calendar`)
+}
+
+function normalizeName(value: string) {
+	return value
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, ' ')
+		.trim()
+}
+
+function canonicalWardName(value: string) {
+	return normalizeName(value).replace(/\b(\d+)(st|nd|rd|th)\b/g, '$1').trim()
+}
+
+function expandWardExpression(raw: string) {
+	const value = raw.trim()
+	if (!value) return []
+
+	const expanded: string[] = []
+	const segments = value.split(/[|;&]/).map((s) => s.trim()).filter(Boolean)
+	let currentPrefix: string | null = null
+
+	for (const segment of segments) {
+		const commaParts = segment.split(',').map((p) => p.trim()).filter(Boolean)
+		for (const part of commaParts) {
+			const rangeWithPrefix = part.match(/^(.+?)\s+(\d+)\s*-\s*(\d+)$/i)
+			if (rangeWithPrefix) {
+				const prefix = rangeWithPrefix[1].trim()
+				const start = Number(rangeWithPrefix[2])
+				const end = Number(rangeWithPrefix[3])
+				currentPrefix = prefix
+				for (let n = Math.min(start, end); n <= Math.max(start, end); n++) {
+					expanded.push(`${prefix} ${n}`)
+				}
+				continue
+			}
+
+			const rangeNoPrefix = part.match(/^(\d+)\s*-\s*(\d+)$/i)
+			if (rangeNoPrefix && currentPrefix) {
+				const start = Number(rangeNoPrefix[1])
+				const end = Number(rangeNoPrefix[2])
+				for (let n = Math.min(start, end); n <= Math.max(start, end); n++) {
+					expanded.push(`${currentPrefix} ${n}`)
+				}
+				continue
+			}
+
+			const numberedWithPrefix = part.match(/^(.+?)\s+(\d+)$/i)
+			if (numberedWithPrefix) {
+				currentPrefix = numberedWithPrefix[1].trim()
+				expanded.push(`${currentPrefix} ${numberedWithPrefix[2]}`)
+				continue
+			}
+
+			const ordinalOnly = part.match(/^(\d+)(st|nd|rd|th)?$/i)
+			if (ordinalOnly && currentPrefix) {
+				expanded.push(`${currentPrefix} ${ordinalOnly[1]}`)
+				continue
+			}
+
+			currentPrefix = null
+			expanded.push(part)
+		}
+	}
+
+	return expanded.filter(Boolean)
+}
+
+function parseCsvLike(text: string) {
+	const lines = text
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter(Boolean)
+
+	if (lines.length < 2) {
+		throw new Error('CSV file must include a header row and at least one data row.')
+	}
+
+	const delimiter = lines[0].includes('\t') ? '\t' : ','
+	const splitLine = (line: string) => {
+		if (delimiter === '\t') return line.split('\t').map((v) => v.trim())
+		// basic csv support with quoted cells
+		const cells: string[] = []
+		let current = ''
+		let inQuotes = false
+		for (let i = 0; i < line.length; i++) {
+			const ch = line[i]
+			if (ch === '"') {
+				const next = line[i + 1]
+				if (inQuotes && next === '"') {
+					current += '"'
+					i++
+				} else {
+					inQuotes = !inQuotes
+				}
+				continue
+			}
+			if (ch === ',' && !inQuotes) {
+				cells.push(current.trim())
+				current = ''
+				continue
+			}
+			current += ch
+		}
+		cells.push(current.trim())
+		return cells
+	}
+
+	const headers = splitLine(lines[0])
+	const rows = lines.slice(1).map((line) => splitLine(line))
+	return { headers, rows }
+}
+
+function parseDateInput(value: string) {
+	const v = value.trim()
+	if (!v) return null
+	if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+		const [year, month, day] = v.split('-').map(Number)
+		return new Date(year, month - 1, day, 12, 0, 0, 0)
+	}
+	if (/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(v)) {
+		const [mm, dd, yy] = v.split('/').map(Number)
+		const year = yy < 100 ? 2000 + yy : yy
+		return new Date(year, mm - 1, dd, 12, 0, 0, 0)
+	}
+	const dt = new Date(v)
+	if (Number.isNaN(dt.getTime())) return null
+	return dt
 }
 
 async function shiftGroupScheduleEvent(id: string, deltaDays: number, userId: string) {
@@ -205,6 +335,184 @@ export async function createGroupScheduleEvent(formData: FormData) {
 				wardId,
 			}))
 		)
+	}
+
+	revalidateSchedulingPaths(locale)
+}
+
+export async function bulkImportGroupScheduleEvents(formData: FormData) {
+	const locale = localeFromForm(formData)
+	const user = await requireSchedulerUser()
+	const status = z.enum(scheduleStatuses).parse(
+		String(formData.get('status') ?? 'tentative')
+	)
+	const coordinationStatus = z.enum(coordinationStatuses).parse(
+		String(formData.get('coordinationStatus') ?? 'needs_contact')
+	)
+	const file = formData.get('file')
+	if (!(file instanceof File)) {
+		throw new Error('Please attach a CSV file.')
+	}
+	const text = await file.text()
+	const { headers, rows } = parseCsvLike(text)
+	const headerMap = headers.reduce<Record<string, number>>((acc, header, idx) => {
+		acc[normalizeName(header)] = idx
+		return acc
+	}, {})
+
+	const required = [
+		'stake',
+		'ward',
+		'activity name',
+		'start date',
+		'end date',
+	] as const
+
+	for (const key of required) {
+		if (headerMap[normalizeName(key)] === undefined) {
+			throw new Error(`Missing header: ${key}`)
+		}
+	}
+
+	const stakeRows = await db.select({ id: stakes.id, name: stakes.name }).from(stakes)
+	const stakeByName = new Map(
+		stakeRows.map((row) => [normalizeName(row.name), row] as const)
+	)
+
+	const allWardRows = await db
+		.select({ id: wards.id, name: wards.name, stakeId: wards.stakeId })
+		.from(wards)
+	const wardsByStake = allWardRows.reduce<
+		Record<string, { id: string; name: string; stakeId: string }[]>
+	>((acc, row) => {
+		if (!acc[row.stakeId]) acc[row.stakeId] = []
+		acc[row.stakeId].push(row)
+		return acc
+	}, {})
+
+	const eventsToInsert: (typeof groupScheduleEvents.$inferInsert)[] = []
+	const rowWardIds: string[][] = []
+	const errors: string[] = []
+
+	const stakeIdx = headerMap[normalizeName('Stake')]
+	const wardIdx = headerMap[normalizeName('Ward')]
+	const activityIdx = headerMap[normalizeName('Activity Name')]
+	const startIdx = headerMap[normalizeName('Start Date')]
+	const endIdx = headerMap[normalizeName('End Date')]
+
+	rows.forEach((row, index) => {
+		const lineNo = index + 2
+		const stakeName = String(row[stakeIdx] ?? '').trim()
+		const wardValue = String(row[wardIdx] ?? '').trim()
+		const title = String(row[activityIdx] ?? '').trim()
+		const startRaw = String(row[startIdx] ?? '').trim()
+		const endRaw = String(row[endIdx] ?? '').trim()
+
+		if (!stakeName || !title || !startRaw) {
+			errors.push(`Row ${lineNo}: Stake, Activity Name, and Start Date are required.`)
+			return
+		}
+
+		const stake = stakeByName.get(normalizeName(stakeName))
+		if (!stake) {
+			errors.push(`Row ${lineNo}: Stake not found (${stakeName}).`)
+			return
+		}
+
+		const startsAt = parseDateInput(startRaw)
+		if (!startsAt) {
+			errors.push(`Row ${lineNo}: Invalid Start Date (${startRaw}).`)
+			return
+		}
+
+		const endsAt = parseDateInput(endRaw)
+		if (status !== 'tentative' && !endsAt) {
+			errors.push(`Row ${lineNo}: End Date required for non-tentative import status.`)
+			return
+		}
+		if (endsAt && endsAt <= startsAt) {
+			endsAt.setHours(endsAt.getHours() + 1)
+		}
+
+		const wardCandidates = (wardsByStake[stake.id] ?? []).map((w) => ({
+			...w,
+			normalized: normalizeName(w.name),
+			canonical: canonicalWardName(w.name),
+		}))
+		let matchedWardIds: string[] = []
+		const wardValueNorm = normalizeName(wardValue)
+		if (wardValueNorm.includes('all ysa')) {
+			matchedWardIds = wardCandidates
+				.filter((ward) => ward.normalized.includes('ysa'))
+				.map((ward) => ward.id)
+		} else {
+			const requestedWardNames = expandWardExpression(wardValue).slice(0, 3)
+			matchedWardIds = requestedWardNames
+				.map((name) => {
+					const n = normalizeName(name)
+					const c = canonicalWardName(name)
+					return (
+						wardCandidates.find((ward) => ward.canonical === c)?.id ??
+						wardCandidates.find((ward) => ward.normalized === n)?.id ??
+						wardCandidates.find((ward) => ward.canonical.includes(c))?.id ??
+						wardCandidates.find((ward) => ward.normalized.includes(n))?.id
+					)
+				})
+				.filter(Boolean) as string[]
+
+			if (requestedWardNames.length > 0 && matchedWardIds.length === 0) {
+				errors.push(
+					`Row ${lineNo}: No ward matches for "${wardValue}" in ${stakeName}.`
+				)
+				return
+			}
+		}
+
+		eventsToInsert.push({
+			title,
+			stakeId: stake.id,
+			wardId: matchedWardIds[0] ?? null,
+			startsAt,
+			endsAt: endsAt ?? null,
+			status,
+			coordinationStatus,
+			createdByUserId: user.id,
+			updatedByUserId: user.id,
+			primaryAssistantUserId: null,
+			secondaryAssistantUserId: null,
+			planningNotes: null,
+			internalNotes: null,
+		})
+		rowWardIds.push(matchedWardIds)
+	})
+
+	if (errors.length > 0) {
+		throw new Error(errors.slice(0, 10).join(' '))
+	}
+	if (eventsToInsert.length === 0) {
+		throw new Error('No valid rows found to import.')
+	}
+
+	const created = await db
+		.insert(groupScheduleEvents)
+		.values(eventsToInsert)
+		.returning({ id: groupScheduleEvents.id })
+
+	const wardLinks = created.flatMap((event, idx) =>
+		(rowWardIds[idx] ?? []).map((wardId) => ({
+			eventId: event.id,
+			wardId,
+		}))
+	)
+
+	if (wardLinks.length > 0) {
+		const deduped = wardLinks.filter(
+			(link, idx, all) =>
+				all.findIndex(
+					(item) => item.eventId === link.eventId && item.wardId === link.wardId
+				) === idx
+		)
+		await db.insert(groupScheduleEventWards).values(deduped)
 	}
 
 	revalidateSchedulingPaths(locale)

@@ -100,7 +100,8 @@
     "defineCallings": "Define Callings",
     "training": "Training",
     "projects": "Projects",
-    "groupScheduler": "Group Scheduler"
+    "groupScheduler": "Group Scheduler",
+    "directory": "Directory"
   },
   "worker": {
     "title": "Worker",

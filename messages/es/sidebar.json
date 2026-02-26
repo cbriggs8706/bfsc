@@ -93,7 +93,8 @@
     "rolePermissions": "Permisos de roles",
     "userPermissions": "Permisos de usuarios",
     "training": "Capacitación",
-    "groupScheduler": "Planificador de grupos"
+    "groupScheduler": "Planificador de grupos",
+    "directory": "Directorio"
   },
   "worker": {
     "title": "Trabajador",

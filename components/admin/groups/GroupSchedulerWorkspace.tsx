@@ -1,15 +1,13 @@
 import {
+	bulkImportGroupScheduleEvents,
 	clearPrivateEventNotes,
 	createGroupScheduleEvent,
 	createGroupScheduleNote,
 	deleteGroupScheduleEvent,
-	deleteUnitContact,
 	duplicateGroupScheduleEventNextWeek,
-	markContactAsVerified,
 	setGroupScheduleEventCoordinationStatus,
 	shiftGroupScheduleEventByWeek,
 	updateGroupScheduleEvent,
-	upsertUnitContact,
 } from '@/app/actions/group-scheduling'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -23,8 +21,15 @@ import {
 	coordinationStatuses,
 	scheduleStatuses,
 } from '@/db/queries/group-scheduling'
-import { format } from 'date-fns'
-import { WeeklyRotationBoard } from './WeeklyRotationBoard'
+import {
+	addDays,
+	endOfMonth,
+	endOfWeek,
+	format,
+	isWithinInterval,
+	startOfMonth,
+	startOfWeek,
+} from 'date-fns'
 
 type WorkspaceData = Awaited<
 	ReturnType<typeof import('@/db/queries/group-scheduling').getSchedulingWorkspace>
@@ -35,6 +40,7 @@ type Filters = {
 	status?: string
 	coordinationStatus?: string
 	assignment?: string
+	month?: string
 }
 
 function toLocalDateTimeInput(date: Date) {
@@ -60,6 +66,19 @@ function stakeColor(stakeId: string, sortedStakeIds: string[]) {
 	return classes[idx >= 0 ? idx % classes.length : 0]
 }
 
+function stakeDotColor(stakeId: string, sortedStakeIds: string[]) {
+	const classes = [
+		'bg-(--blue-accent)',
+		'bg-(--green-accent)',
+		'bg-(--orange-accent)',
+		'bg-(--purple-accent)',
+		'bg-(--red-accent)',
+		'bg-(--gray-accent)',
+	]
+	const idx = sortedStakeIds.findIndex((id) => id === stakeId)
+	return classes[idx >= 0 ? idx % classes.length : 0]
+}
+
 const scheduleStatusLabels: Record<ScheduleStatus, string> = {
 	tentative: 'Tentative',
 	pending_confirmation: 'Pending Confirmation',
@@ -78,16 +97,23 @@ const coordinationStatusLabels: Record<CoordinationStatus, string> = {
 	canceled: 'Canceled',
 }
 
-const contactRoleTemplates = [
-	'Stake Assistant Director',
-	'Stake Temple and Family History Leader',
-	'Ward Temple and Family History Leader',
-	'Bishopric Counselor',
-	'Relief Society Contact',
-	'Elders Quorum Contact',
-	'Youth Contact',
-	'Primary Contact',
-]
+function ymd(date: Date) {
+	return format(date, 'yyyy-MM-dd')
+}
+
+function monthKey(date: Date) {
+	return format(date, 'yyyy-MM')
+}
+
+function parseMonth(value?: string) {
+	if (!value) return startOfMonth(new Date())
+	const m = value.match(/^(\d{4})-(\d{2})$/)
+	if (!m) return startOfMonth(new Date())
+	const year = Number(m[1])
+	const month = Number(m[2])
+	if (month < 1 || month > 12) return startOfMonth(new Date())
+	return new Date(year, month - 1, 1)
+}
 
 function rankContact(contact: WorkspaceData['contacts'][number]) {
 	let score = 0
@@ -168,10 +194,87 @@ export function GroupSchedulerWorkspace({
 		return true
 	})
 
-	const filteredContacts = workspace.contacts.filter((contact) => {
-		if (!filters.stakeId) return true
-		return contact.stakeId === filters.stakeId
+	const activeMonthDate = parseMonth(filters.month)
+	const activeMonthStart = startOfMonth(activeMonthDate)
+	const activeMonthEnd = endOfMonth(activeMonthDate)
+	const prevMonth = format(
+		new Date(activeMonthDate.getFullYear(), activeMonthDate.getMonth() - 1, 1),
+		'yyyy-MM'
+	)
+	const nextMonth = format(
+		new Date(activeMonthDate.getFullYear(), activeMonthDate.getMonth() + 1, 1),
+		'yyyy-MM'
+	)
+
+	const occurrenceRows = filteredEvents.flatMap((event) => {
+		const start = new Date(event.startsAt)
+		const end = event.endsAt ? new Date(event.endsAt) : start
+		const rows: {
+			eventId: string
+			date: Date
+			status: string
+			title: string
+			stakeId: string
+			stakeName: string
+		}[] = []
+
+		let cursor = new Date(start)
+		while (cursor <= end) {
+			rows.push({
+				eventId: event.id,
+				date: new Date(cursor),
+				status: event.status,
+				title: event.title,
+				stakeId: event.stakeId,
+				stakeName: event.stakeName,
+			})
+			cursor = addDays(cursor, 7)
+		}
+
+		return rows
 	})
+
+	const occurrenceByDay = occurrenceRows.reduce<
+		Record<
+			string,
+			{
+				eventId: string
+				status: string
+				title: string
+				stakeId: string
+				stakeName: string
+			}[]
+		>
+	>((acc, row) => {
+		const key = ymd(row.date)
+		if (!acc[key]) acc[key] = []
+		acc[key].push({
+			eventId: row.eventId,
+			status: row.status,
+			title: row.title,
+			stakeId: row.stakeId,
+			stakeName: row.stakeName,
+		})
+		return acc
+	}, {})
+
+	const activeMonthEventIds = new Set(
+		occurrenceRows
+			.filter((row) =>
+				isWithinInterval(row.date, { start: activeMonthStart, end: activeMonthEnd })
+			)
+			.map((row) => row.eventId)
+	)
+
+	const activeMonthEvents = filteredEvents.filter((event) =>
+		activeMonthEventIds.has(event.id)
+	)
+	const monthQuery = {
+		stakeId: filters.stakeId ?? '',
+		status: filters.status ?? '',
+		coordinationStatus: filters.coordinationStatus ?? '',
+		assignment: filters.assignment ?? '',
+	}
 
 	const stakeContactsMap = workspace.contacts.reduce<
 		Record<string, WorkspaceData['contacts']>
@@ -193,29 +296,6 @@ export function GroupSchedulerWorkspace({
 
 	const now = Date.now()
 	const staleDays = 180
-	const criticalRoleKeywords = ['assistant director', 'temple and family history']
-
-	const stakeReadiness = workspace.stakes.map((stake) => {
-		const contacts = stakeContactsMap[stake.id] ?? []
-		const staleCount = contacts.filter((contact) => {
-			if (!contact.lastVerifiedAt) return true
-			const diff = now - new Date(contact.lastVerifiedAt).getTime()
-			return diff > staleDays * 24 * 60 * 60 * 1000
-		}).length
-
-		const normalizedRoles = contacts.map((contact) => contact.role.toLowerCase())
-		const missingCritical = criticalRoleKeywords.filter(
-			(keyword) => !normalizedRoles.some((role) => role.includes(keyword))
-		)
-
-		return {
-			stakeId: stake.id,
-			stakeName: stake.name,
-			totalContacts: contacts.length,
-			staleCount,
-			missingCritical,
-		}
-	})
 
 	return (
 		<div className="space-y-6">
@@ -225,6 +305,11 @@ export function GroupSchedulerWorkspace({
 				</CardHeader>
 				<CardContent>
 					<form className="grid gap-4 md:grid-cols-5">
+						<input
+							type="hidden"
+							name="month"
+							value={format(activeMonthDate, 'yyyy-MM')}
+						/>
 						<div className="space-y-2">
 							<Label>Stake</Label>
 							<select
@@ -318,199 +403,348 @@ export function GroupSchedulerWorkspace({
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Directory Readiness</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-2">
-					{stakeReadiness.map((item) => (
-						<div
-							key={item.stakeId}
-							className="flex flex-wrap items-center gap-2 rounded-md border bg-card p-2 text-sm"
-						>
-							<Badge
-								variant="outline"
-								className={stakeColor(item.stakeId, sortedStakeIds)}
-							>
-								{item.stakeName}
-							</Badge>
-							<Badge variant="secondary">{item.totalContacts} contacts</Badge>
-							{item.staleCount > 0 ? (
-								<Badge variant="outline">{item.staleCount} stale</Badge>
-							) : (
-								<Badge variant="outline">Fresh</Badge>
-							)}
-							{item.missingCritical.length > 0 ? (
-								<Badge variant="destructive">
-									Missing: {item.missingCritical.join(', ')}
-								</Badge>
-							) : (
-								<Badge variant="outline">Key roles covered</Badge>
-							)}
-						</div>
-					))}
-				</CardContent>
-			</Card>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>New Group Visit Event</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<form action={createGroupScheduleEvent} className="grid gap-4 lg:grid-cols-4">
-						<input type="hidden" name="locale" value={locale} />
-						<div className="space-y-2 lg:col-span-2">
-							<Label htmlFor="new-title">Title</Label>
-							<Input
-								id="new-title"
-								name="title"
-								required
-								placeholder="Ward youth night, Stake consultant block, etc."
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="new-stakeId">Stake</Label>
-							<select
-								id="new-stakeId"
-								name="stakeId"
-								required
-								className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
-							>
-								<option value="">Select stake</option>
-								{workspace.stakes.map((stake) => (
-									<option key={stake.id} value={stake.id}>
-										{stake.name}
-									</option>
-								))}
-							</select>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="new-wardIds">Wards (up to 3)</Label>
-							<select
-								id="new-wardIds"
-								name="wardIds"
-								multiple
-								size={5}
-								className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm"
-							>
-								{workspace.wards.map((ward) => (
-									<option key={ward.id} value={ward.id}>
-										{ward.stakeName}: {ward.name}
-									</option>
-								))}
-							</select>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="new-primaryAssistantUserId">Primary assistant</Label>
-							<select
-								id="new-primaryAssistantUserId"
-								name="primaryAssistantUserId"
-								className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
-							>
-								<option value="">Unassigned</option>
-								{workspace.assistants.map((assistant) => (
-									<option key={assistant.id} value={assistant.id}>
-										{assistant.name ?? assistant.email}
-									</option>
-								))}
-							</select>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="new-secondaryAssistantUserId">
-								Secondary assistant
-							</Label>
-							<select
-								id="new-secondaryAssistantUserId"
-								name="secondaryAssistantUserId"
-								className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
-							>
-								<option value="">None</option>
-								{workspace.assistants.map((assistant) => (
-									<option key={assistant.id} value={assistant.id}>
-										{assistant.name ?? assistant.email}
-									</option>
-								))}
-							</select>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="new-startsAt">Starts</Label>
-							<Input id="new-startsAt" name="startsAt" type="datetime-local" required />
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="new-endsAt">Ends (optional for tentative)</Label>
-							<Input id="new-endsAt" name="endsAt" type="datetime-local" />
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="new-status">Schedule status</Label>
-							<select
-								id="new-status"
-								name="status"
-								defaultValue="tentative"
-								className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
-							>
-								{scheduleStatuses.map((status) => (
-									<option key={status} value={status}>
-										{scheduleStatusLabels[status]}
-									</option>
-								))}
-							</select>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="new-coordinationStatus">Outreach status</Label>
-							<select
-								id="new-coordinationStatus"
-								name="coordinationStatus"
-								defaultValue="needs_contact"
-								className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
-							>
-								{coordinationStatuses.map((status) => (
-									<option key={status} value={status}>
-										{coordinationStatusLabels[status]}
-									</option>
-								))}
-							</select>
-						</div>
-						<div className="space-y-2 lg:col-span-2">
-							<Label htmlFor="new-planningNotes">Planning notes</Label>
-							<Textarea id="new-planningNotes" name="planningNotes" rows={2} />
-						</div>
-						<div className="space-y-2 lg:col-span-2">
-							<Label htmlFor="new-internalNotes">Internal notes</Label>
-							<Textarea id="new-internalNotes" name="internalNotes" rows={2} />
-						</div>
-						<div className="lg:col-span-4">
-							<Button type="submit">Add Event</Button>
-						</div>
-					</form>
-				</CardContent>
-			</Card>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Weekly Rotation Board</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<WeeklyRotationBoard
-						events={filteredEvents.map((event) => ({
-							id: event.id,
-							title: event.title,
-							stakeId: event.stakeId,
-							startsAtIso: event.startsAt.toISOString(),
-						}))}
-						locale={locale}
-						sortedStakeIds={sortedStakeIds}
-					/>
-				</CardContent>
-			</Card>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Active Scheduling Board</CardTitle>
+					<CardTitle>Create / Import Events</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-4">
-					{filteredEvents.length === 0 ? (
-						<p className="text-sm text-muted-foreground">No matching events.</p>
-					) : null}
+					<details className="rounded-md border border-border bg-card p-3">
+						<summary className="cursor-pointer text-sm font-medium">Add New Event</summary>
+						<form action={createGroupScheduleEvent} className="mt-4 grid gap-4 lg:grid-cols-4">
+							<input type="hidden" name="locale" value={locale} />
+							<div className="space-y-2 lg:col-span-2">
+								<Label htmlFor="new-title">Title</Label>
+								<Input
+									id="new-title"
+									name="title"
+									required
+									placeholder="Ward youth night, Stake consultant block, etc."
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="new-stakeId">Stake</Label>
+								<select
+									id="new-stakeId"
+									name="stakeId"
+									required
+									className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
+								>
+									<option value="">Select stake</option>
+									{workspace.stakes.map((stake) => (
+										<option key={stake.id} value={stake.id}>
+											{stake.name}
+										</option>
+									))}
+								</select>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="new-wardIds">Wards (up to 3)</Label>
+								<select
+									id="new-wardIds"
+									name="wardIds"
+									multiple
+									size={5}
+									className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm"
+								>
+									{workspace.wards.map((ward) => (
+										<option key={ward.id} value={ward.id}>
+											{ward.stakeName}: {ward.name}
+										</option>
+									))}
+								</select>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="new-primaryAssistantUserId">Primary assistant</Label>
+								<select
+									id="new-primaryAssistantUserId"
+									name="primaryAssistantUserId"
+									className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
+								>
+									<option value="">Unassigned</option>
+									{workspace.assistants.map((assistant) => (
+										<option key={assistant.id} value={assistant.id}>
+											{assistant.name ?? assistant.email}
+										</option>
+									))}
+								</select>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="new-secondaryAssistantUserId">
+									Secondary assistant
+								</Label>
+								<select
+									id="new-secondaryAssistantUserId"
+									name="secondaryAssistantUserId"
+									className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
+								>
+									<option value="">None</option>
+									{workspace.assistants.map((assistant) => (
+										<option key={assistant.id} value={assistant.id}>
+											{assistant.name ?? assistant.email}
+										</option>
+									))}
+								</select>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="new-startsAt">Starts</Label>
+								<Input id="new-startsAt" name="startsAt" type="datetime-local" required />
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="new-endsAt">Ends (optional for tentative)</Label>
+								<Input id="new-endsAt" name="endsAt" type="datetime-local" />
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="new-status">Schedule status</Label>
+								<select
+									id="new-status"
+									name="status"
+									defaultValue="tentative"
+									className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
+								>
+									{scheduleStatuses.map((status) => (
+										<option key={status} value={status}>
+											{scheduleStatusLabels[status]}
+										</option>
+									))}
+								</select>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="new-coordinationStatus">Outreach status</Label>
+								<select
+									id="new-coordinationStatus"
+									name="coordinationStatus"
+									defaultValue="needs_contact"
+									className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
+								>
+									{coordinationStatuses.map((status) => (
+										<option key={status} value={status}>
+											{coordinationStatusLabels[status]}
+										</option>
+									))}
+								</select>
+							</div>
+							<div className="space-y-2 lg:col-span-2">
+								<Label htmlFor="new-planningNotes">Planning notes</Label>
+								<Textarea id="new-planningNotes" name="planningNotes" rows={2} />
+							</div>
+							<div className="space-y-2 lg:col-span-2">
+								<Label htmlFor="new-internalNotes">Internal notes</Label>
+								<Textarea id="new-internalNotes" name="internalNotes" rows={2} />
+							</div>
+							<div className="lg:col-span-4">
+								<Button type="submit">Add Event</Button>
+							</div>
+						</form>
+					</details>
+					<details className="rounded-md border border-border bg-card p-3">
+						<summary className="cursor-pointer text-sm font-medium">
+							Bulk Import CSV/TSV
+						</summary>
+						<div className="mt-3 space-y-3">
+							<p className="text-sm text-muted-foreground">
+								Expected headers: Stake, Ward, Activity Name, Start Date, End Date.
+							</p>
+							<form action={bulkImportGroupScheduleEvents} className="grid gap-4 md:grid-cols-4">
+								<input type="hidden" name="locale" value={locale} />
+								<div className="space-y-2 md:col-span-2">
+									<Label htmlFor="bulk-file">CSV file</Label>
+									<Input id="bulk-file" name="file" type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" required />
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="bulk-status">Imported schedule status</Label>
+									<select
+										id="bulk-status"
+										name="status"
+										defaultValue="tentative"
+										className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
+									>
+										{scheduleStatuses.map((status) => (
+											<option key={status} value={status}>
+												{scheduleStatusLabels[status]}
+											</option>
+										))}
+									</select>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="bulk-coordination">Imported outreach status</Label>
+									<select
+										id="bulk-coordination"
+										name="coordinationStatus"
+										defaultValue="needs_contact"
+										className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
+									>
+										{coordinationStatuses.map((status) => (
+											<option key={status} value={status}>
+												{coordinationStatusLabels[status]}
+											</option>
+										))}
+									</select>
+								</div>
+								<div className="md:col-span-4">
+									<Button type="submit">Import File</Button>
+								</div>
+							</form>
+						</div>
+					</details>
+				</CardContent>
+			</Card>
 
-					{filteredEvents.map((event) => {
+			<Card>
+				<CardHeader>
+					<div className="flex items-center justify-between gap-2">
+						<CardTitle>Schedule Calendar (Month)</CardTitle>
+						<form className="flex items-center gap-2">
+							<input type="hidden" name="stakeId" value={monthQuery.stakeId} />
+							<input type="hidden" name="status" value={monthQuery.status} />
+							<input
+								type="hidden"
+								name="coordinationStatus"
+								value={monthQuery.coordinationStatus}
+							/>
+							<input
+								type="hidden"
+								name="assignment"
+								value={monthQuery.assignment}
+							/>
+							<Button type="submit" name="month" value={prevMonth} variant="outline" size="sm">
+								Prev
+							</Button>
+							<Button type="submit" name="month" value={nextMonth} variant="outline" size="sm">
+								Next
+							</Button>
+						</form>
+					</div>
+				</CardHeader>
+				<CardContent className="space-y-6">
+					{(() => {
+						const start = startOfWeek(startOfMonth(activeMonthDate), { weekStartsOn: 0 })
+						const end = endOfWeek(endOfMonth(activeMonthDate), { weekStartsOn: 0 })
+						const days: Date[] = []
+						for (let d = new Date(start); d <= end; d = addDays(d, 1)) {
+							days.push(new Date(d))
+						}
+						const monthDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+						return (
+							<div className="space-y-2">
+								<h3 className="text-lg font-semibold">
+									{format(activeMonthDate, 'MMMM yyyy')}
+								</h3>
+								<div className="grid grid-cols-7 gap-2">
+									{monthDays.map((day) => (
+										<div
+											key={`${monthKey(activeMonthDate)}-${day}`}
+											className="text-xs font-semibold text-muted-foreground px-2"
+										>
+											{day}
+										</div>
+									))}
+									{days.map((day) => {
+										const key = ymd(day)
+										const items = occurrenceByDay[key] ?? []
+										const tentative = items.filter((item) => item.status === 'tentative')
+										const confirmed = items.filter((item) => item.status !== 'tentative')
+										const inMonth = activeMonthDate.getMonth() === day.getMonth()
+										return (
+											<div
+												key={key}
+												className={`min-h-24 rounded-md border p-2 ${inMonth ? 'bg-card' : 'bg-muted/40'}`}
+											>
+												<div className="text-xs font-semibold mb-1">{format(day, 'd')}</div>
+												<div className="flex flex-wrap gap-1 mb-1">
+													{tentative.map((item) => (
+														<span
+															key={`${item.eventId}-dot`}
+															className={`inline-block h-2.5 w-2.5 rounded-full ${stakeDotColor(item.stakeId, sortedStakeIds)}`}
+															title={`Tentative: ${item.stakeName}`}
+														/>
+													))}
+												</div>
+												<div className="space-y-1">
+													{confirmed.slice(0, 2).map((item) => (
+														<div
+															key={`${item.eventId}-txt`}
+															className="text-[11px] leading-tight truncate"
+														>
+															{item.title}
+														</div>
+													))}
+													{confirmed.length > 2 ? (
+														<div className="text-[11px] text-muted-foreground">
+															+{confirmed.length - 2} more
+														</div>
+													) : null}
+												</div>
+												{items.length > 0 ? (
+													<details className="mt-2">
+														<summary className="text-[11px] text-muted-foreground cursor-pointer">
+															Day details
+														</summary>
+														<div className="mt-1 space-y-1">
+															{items.map((item) =>
+																item.status === 'tentative' ? (
+																	<div
+																		key={`${item.eventId}-detail-dot`}
+																		className="flex items-center gap-2"
+																	>
+																		<span
+																			className={`inline-block h-2.5 w-2.5 rounded-full ${stakeDotColor(item.stakeId, sortedStakeIds)}`}
+																		/>
+																		<span className="sr-only">
+																			Tentative {item.stakeName}
+																		</span>
+																	</div>
+																) : (
+																	<div
+																		key={`${item.eventId}-detail-txt`}
+																		className="text-[11px] truncate"
+																	>
+																		{item.title}
+																	</div>
+																)
+															)}
+														</div>
+													</details>
+												) : null}
+											</div>
+										)
+									})}
+								</div>
+							</div>
+						)
+					})()}
+				</CardContent>
+			</Card>
+
+			<Card>
+				<CardHeader>
+					<div className="flex items-center justify-between gap-2">
+						<CardTitle>Active Scheduling Board (By Month)</CardTitle>
+						<form className="flex items-center gap-2">
+							<input type="hidden" name="stakeId" value={monthQuery.stakeId} />
+							<input type="hidden" name="status" value={monthQuery.status} />
+							<input
+								type="hidden"
+								name="coordinationStatus"
+								value={monthQuery.coordinationStatus}
+							/>
+							<input
+								type="hidden"
+								name="assignment"
+								value={monthQuery.assignment}
+							/>
+							<Button type="submit" name="month" value={prevMonth} variant="outline" size="sm">
+								Prev
+							</Button>
+							<Button type="submit" name="month" value={nextMonth} variant="outline" size="sm">
+								Next
+							</Button>
+						</form>
+					</div>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<div className="space-y-3">
+						<h3 className="text-lg font-semibold">
+							{format(activeMonthDate, 'MMMM yyyy')}
+						</h3>
+						{activeMonthEvents.map((event) => {
 						const eventNotes = notesByEvent[event.id] ?? []
 						const stakeContacts = stakeContactsMap[event.stakeId] ?? []
 						const wardContacts = (event.wardIds ?? [])
@@ -898,215 +1132,13 @@ export function GroupSchedulerWorkspace({
 							</details>
 						)
 					})}
-				</CardContent>
-			</Card>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Stake and Ward Contact Directory</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<form action={upsertUnitContact} className="grid gap-4 lg:grid-cols-4">
-						<input type="hidden" name="locale" value={locale} />
-						<div className="space-y-2">
-							<Label htmlFor="contact-stakeId">Stake</Label>
-							<select
-								id="contact-stakeId"
-								name="stakeId"
-								className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
-							>
-								<option value="">No stake selected</option>
-								{workspace.stakes.map((stake) => (
-									<option key={stake.id} value={stake.id}>
-										{stake.name}
-									</option>
-								))}
-							</select>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="contact-wardId">Ward</Label>
-							<select
-								id="contact-wardId"
-								name="wardId"
-								className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
-							>
-								<option value="">No ward selected</option>
-								{workspace.wards.map((ward) => (
-									<option key={ward.id} value={ward.id}>
-										{ward.stakeName}: {ward.name}
-									</option>
-								))}
-							</select>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="contact-role">Role</Label>
-							<Input
-								id="contact-role"
-								name="role"
-								list="contact-role-templates"
-								placeholder="Stake Assistant Director"
-								required
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="contact-name">Name</Label>
-							<Input id="contact-name" name="name" required />
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="contact-phone">Phone</Label>
-							<Input id="contact-phone" name="phone" />
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="contact-email">Email</Label>
-							<Input id="contact-email" name="email" type="email" />
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="contact-method">Preferred method</Label>
-							<select
-								id="contact-method"
-								name="preferredContactMethod"
-								defaultValue="phone"
-								className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
-							>
-								<option value="phone">Phone</option>
-								<option value="text">Text</option>
-								<option value="email">Email</option>
-							</select>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="contact-best">Best contact times</Label>
-							<Input id="contact-best" name="bestContactTimes" placeholder="Evenings after 6:30 PM" />
-						</div>
-						<div className="space-y-2 lg:col-span-2">
-							<Label htmlFor="contact-notes">Notes</Label>
-							<Textarea id="contact-notes" name="notes" rows={2} />
-						</div>
-						<div className="flex items-center gap-6 lg:col-span-2">
-							<label className="flex items-center gap-2 text-sm">
-								<input type="checkbox" name="isPrimary" />
-								Primary contact
-							</label>
-							<label className="flex items-center gap-2 text-sm">
-								<input type="checkbox" name="isPublic" />
-								Show publicly on Group Visits page
-							</label>
-						</div>
-						<div className="lg:col-span-4">
-							<Button type="submit">Add Contact</Button>
-						</div>
-					</form>
-
-					<div className="space-y-3">
-						{filteredContacts.length === 0 ? (
-							<p className="text-sm text-muted-foreground">No contacts yet.</p>
-						) : null}
-						{filteredContacts.map((contact) => (
-							<form key={contact.id} action={upsertUnitContact} className="rounded-md border bg-card p-3">
-								<input type="hidden" name="locale" value={locale} />
-								<input type="hidden" name="id" value={contact.id} />
-								<div className="grid gap-3 md:grid-cols-3">
-									<div className="space-y-2">
-										<Label>Stake</Label>
-										<select
-											name="stakeId"
-											defaultValue={contact.stakeId ?? ''}
-											className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
-										>
-											<option value="">No stake selected</option>
-											{workspace.stakes.map((stake) => (
-												<option key={stake.id} value={stake.id}>
-													{stake.name}
-												</option>
-											))}
-										</select>
-									</div>
-									<div className="space-y-2">
-										<Label>Ward</Label>
-										<select
-											name="wardId"
-											defaultValue={contact.wardId ?? ''}
-											className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
-										>
-											<option value="">No ward selected</option>
-											{workspace.wards.map((ward) => (
-												<option key={ward.id} value={ward.id}>
-													{ward.stakeName}: {ward.name}
-												</option>
-											))}
-										</select>
-									</div>
-									<div className="space-y-2">
-										<Label>Role</Label>
-										<Input name="role" list="contact-role-templates" defaultValue={contact.role} required />
-									</div>
-									<div className="space-y-2">
-										<Label>Name</Label>
-										<Input name="name" defaultValue={contact.name} required />
-									</div>
-									<div className="space-y-2">
-										<Label>Phone</Label>
-										<Input name="phone" defaultValue={contact.phone ?? ''} />
-									</div>
-									<div className="space-y-2">
-										<Label>Email</Label>
-										<Input name="email" type="email" defaultValue={contact.email ?? ''} />
-									</div>
-									<div className="space-y-2">
-										<Label>Preferred method</Label>
-										<select
-											name="preferredContactMethod"
-											defaultValue={contact.preferredContactMethod}
-											className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
-										>
-											<option value="phone">Phone</option>
-											<option value="text">Text</option>
-											<option value="email">Email</option>
-										</select>
-									</div>
-									<div className="space-y-2">
-										<Label>Best contact times</Label>
-										<Input name="bestContactTimes" defaultValue={contact.bestContactTimes ?? ''} />
-									</div>
-									<div className="space-y-2 md:col-span-3">
-										<Label>Notes</Label>
-										<Textarea name="notes" defaultValue={contact.notes ?? ''} rows={2} />
-									</div>
-									<div className="md:col-span-3 flex flex-wrap items-center gap-4">
-										<label className="flex items-center gap-2 text-sm">
-											<input type="checkbox" name="isPrimary" defaultChecked={contact.isPrimary} />
-											Primary contact
-										</label>
-										<label className="flex items-center gap-2 text-sm">
-											<input type="checkbox" name="isPublic" defaultChecked={contact.isPublic} />
-											Public
-										</label>
-										<span className="text-xs text-muted-foreground">
-											Last verified: {contact.lastVerifiedAt ? format(contact.lastVerifiedAt, 'MMM d, yyyy') : 'Never'}
-										</span>
-									</div>
-								</div>
-								<div className="mt-3 flex flex-wrap gap-2">
-									<Button type="submit" size="sm">
-										Save Contact
-									</Button>
-									<Button type="submit" formAction={markContactAsVerified} variant="outline" size="sm">
-										Mark Verified
-									</Button>
-									<Button type="submit" formAction={deleteUnitContact} variant="destructive" size="sm">
-										Delete
-									</Button>
-								</div>
-							</form>
-						))}
 					</div>
+					{activeMonthEvents.length === 0 ? (
+						<p className="text-sm text-muted-foreground">No matching events.</p>
+					) : null}
 				</CardContent>
 			</Card>
 
-			<datalist id="contact-role-templates">
-				{contactRoleTemplates.map((role) => (
-					<option key={role} value={role} />
-				))}
-			</datalist>
 		</div>
 	)
 }

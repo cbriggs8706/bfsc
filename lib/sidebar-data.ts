@@ -229,6 +229,11 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				icon: CalendarRange,
 			},
 			{
+				title: t('sidebar.admin.directory'),
+				url: `/${locale}/admin/groups/directory`,
+				icon: Files,
+			},
+			{
 				title: t('sidebar.admin.projects'),
 				url: `/${locale}/admin/projects`,
 				icon: HandHelping,

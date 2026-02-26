@@ -12,6 +12,7 @@ export default async function GroupSchedulerPage({
 		status?: string
 		coordinationStatus?: string
 		assignment?: string
+		month?: string
 	}>
 }) {
 	const { locale } = await params
@@ -30,8 +31,12 @@ export default async function GroupSchedulerPage({
 				<h1 className="text-3xl font-bold">Stake/Ward Scheduling</h1>
 				<p className="text-sm text-muted-foreground max-w-3xl">
 					Collaborative planning workspace for assistant directors. Create and
-					adjust events, track outreach status, and maintain a shared contact
-					directory for stakes and wards.
+					adjust events and track outreach status for stake and ward visits.
+				</p>
+				<p className="text-sm mt-2">
+					<a className="underline" href={`/${locale}/admin/groups/directory`}>
+						Open Stake/Ward Directory
+					</a>
 				</p>
 			</div>
 
