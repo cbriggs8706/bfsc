@@ -20,6 +20,7 @@ import { readProjectSummaries } from '@/lib/actions/projects/projects'
 import { getCenterTimeConfig } from '@/lib/time/center-time'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { lookupMicroskillStatusesByEmail } from '@/lib/genieGreenieClient'
 
 interface DashboardPageProps {
 	params: Promise<{ locale: string }>
@@ -102,7 +103,24 @@ export default async function Page({ params }: DashboardPageProps) {
 		.filter((field) => !field.done)
 		.map((field) => field.label)
 
-	const certificates = await getUserCertificatesWithMissing(session.user.id)
+	let genieGreenieCertificates: Awaited<
+		ReturnType<typeof lookupMicroskillStatusesByEmail>
+	>['statuses'] = []
+	try {
+		if (session.user.email) {
+			const lookup = await lookupMicroskillStatusesByEmail(session.user.email)
+			genieGreenieCertificates = lookup.statuses.filter(
+				(status) =>
+					status.status === 'active' || status.status === 'renewal_required'
+			)
+		}
+	} catch {
+		// Keep dashboard functional if partner API is unavailable.
+	}
+
+	const certificates = await getUserCertificatesWithMissing(session.user.id, {
+		genieGreenieCertificates,
+	})
 	const shiftInstances = await getUpcomingShiftInstances(session.user.id)
 	const requests = user ? await getOpenSubstituteRequests(user) : []
 	const openRequests = requests.filter((r) => !r.hasVolunteeredByMe)

@@ -187,6 +187,7 @@ export type UserCourse = {
 	description?: string | null
 	badgeImageUrl?: string | null
 	badgeIconName?: string | null
+	continueUrl?: string | null
 	units: UserUnit[]
 	sortOrder: number
 	completedLessonCount: number

@@ -10,9 +10,14 @@ import { CourseBadgeIcon } from './CourseBadgeIcon'
 type Props = {
 	course: UserCourse
 	locale: string
+	showAction?: boolean
 }
 
-export function CourseCard({ course, locale }: Props) {
+export function CourseCard({ course, locale, showAction = true }: Props) {
+	const hasExternalContinueUrl =
+		typeof course.continueUrl === 'string' &&
+		/^https?:\/\//i.test(course.continueUrl)
+
 	return (
 		<Card className="p-4">
 			<div className="flex gap-4 items-start">
@@ -38,11 +43,25 @@ export function CourseCard({ course, locale }: Props) {
 						total={course.totalLessonCount}
 					/>
 
-					<Link href={`/${locale}/training/courses/${course.id}`}>
-						<Button variant="default">
-							{course.isCompleted ? 'Review Course' : 'Continue'}
-						</Button>
-					</Link>
+					{showAction ? (
+						hasExternalContinueUrl ? (
+							<a
+								href={course.continueUrl!}
+								target="_blank"
+								rel="noreferrer"
+							>
+								<Button variant="default">
+									{course.isCompleted ? 'Review Course' : 'Continue'}
+								</Button>
+							</a>
+						) : (
+							<Link href={`/${locale}/training/courses/${course.id}`}>
+								<Button variant="default">
+									{course.isCompleted ? 'Review Course' : 'Continue'}
+								</Button>
+							</Link>
+						)
+					) : null}
 				</div>
 			</div>
 		</Card>

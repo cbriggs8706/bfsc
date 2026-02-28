@@ -31,7 +31,7 @@ export const unitContacts = pgTable(
 			length: 20,
 		})
 			.notNull()
-			.default('phone'),
+			.default('none'),
 		bestContactTimes: text('best_contact_times'),
 		notes: text('notes'),
 		isPrimary: boolean('is_primary').notNull().default(false),
@@ -63,7 +63,7 @@ export const unitContacts = pgTable(
 		),
 		unitContactMethodCheck: check(
 			'unit_contact_method_ck',
-			sql`${t.preferredContactMethod} in ('phone', 'email', 'text')`
+			sql`${t.preferredContactMethod} in ('none', 'phone', 'email', 'text')`
 		),
 		stakeIdx: index('unit_contacts_stake_idx').on(t.stakeId),
 		wardIdx: index('unit_contacts_ward_idx').on(t.wardId),

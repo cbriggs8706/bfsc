@@ -17,6 +17,7 @@ import {
 	UserUnit,
 } from '@/types/training'
 import { getCourseBadgeUrl } from '@/lib/storage/courseBadges.server'
+import { GenieGreenieMicroskillProgress } from '@/lib/genieGreenieClient'
 
 //TODO use these to replace defaults in various pages that were created
 /**
@@ -73,6 +74,18 @@ export type MissingCertificate = {
 	contentVersion: number
 	badgeImageUrl?: string | null
 	badgeIconName?: string | null
+}
+
+type GetUserCertificatesWithMissingOptions = {
+	genieGreenieCertificates?: GenieGreenieMicroskillProgress[]
+}
+
+function mapGenieStatusToCertificateStatus(
+	status: GenieGreenieMicroskillProgress['status']
+): CertificateStatus {
+	if (status === 'renewal_required') return 'renewal'
+	if (status === 'active') return 'current'
+	return 'external'
 }
 
 export async function getUserCertificates(
@@ -187,13 +200,15 @@ function collapseEarnedCertificates(
 }
 
 export async function getUserCertificatesWithMissing(
-	userId: string
+	userId: string,
+	options: GetUserCertificatesWithMissingOptions = {}
 ): Promise<DashboardCertificateItem[]> {
 	const [rawCertificates, publishedCourses] = await Promise.all([
 		getUserCertificates(userId),
 		db
 			.select({
 				id: learningCourses.id,
+				slug: learningCourses.slug,
 				title: learningCourses.title,
 				category: learningCourses.category,
 				level: learningCourses.level,
@@ -205,7 +220,7 @@ export async function getUserCertificatesWithMissing(
 			.where(eq(learningCourses.isPublished, true)),
 	])
 
-	// ---- normalize earned certs
+	// ---- normalize internal earned certs
 	const earnedRaw: EarnedCertificate[] = rawCertificates.map((c) => ({
 		...c,
 		kind: 'earned',
@@ -216,15 +231,49 @@ export async function getUserCertificatesWithMissing(
 		verifyUrl: c.verifyUrl ?? null,
 	}))
 
+	// ---- append Genie Greenie earned certs
+	if (options.genieGreenieCertificates?.length) {
+		const publishedCourseBySlug = new Map(
+			publishedCourses.map((course) => [course.slug, course])
+		)
+
+		for (const microskill of options.genieGreenieCertificates) {
+			if (
+				microskill.status !== 'active' &&
+				microskill.status !== 'renewal_required'
+			) {
+				continue
+			}
+
+			const matchedCourse = publishedCourseBySlug.get(microskill.microskillSlug)
+			earnedRaw.push({
+				kind: 'earned',
+				id: `genie-greenie:${microskill.microskillSlug}`,
+				userId,
+				courseId: matchedCourse?.id ?? null,
+				courseVersion: microskill.currentVersion,
+				title: matchedCourse?.title ?? microskill.microskillTitle,
+				category: matchedCourse?.category ?? null,
+				level: matchedCourse?.level ?? null,
+				source: 'external',
+				issuedAt: microskill.dateEarned
+					? new Date(microskill.dateEarned)
+					: new Date(),
+				verifyUrl: null,
+				status: mapGenieStatusToCertificateStatus(microskill.status),
+				badgeImageUrl: getCourseBadgeUrl(matchedCourse?.badgeImagePath),
+				badgeIconName: matchedCourse?.badgeIconName ?? microskill.badgeIcon,
+			})
+		}
+	}
+
 	// ✅ collapse duplicates (THIS IS THE KEY)
 	const earned = collapseEarnedCertificates(earnedRaw)
 
 	// ---- determine which courses are already current
 	const earnedCourseIds = new Set(
 		earned
-			.filter(
-				(c) => c.kind === 'earned' && c.source === 'internal' && c.courseId
-			)
+			.filter((c) => c.kind === 'earned' && c.courseId)
 			.map((c) => c.courseId!)
 	)
 

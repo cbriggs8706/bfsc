@@ -2,8 +2,8 @@
 
 import { Award } from 'lucide-react'
 import { DynamicIcon } from 'lucide-react/dynamic'
+import dynamicIconImports from 'lucide-react/dynamicIconImports'
 import { cn } from '@/lib/utils'
-import { isCourseBadgeIconName } from '@/lib/training/course-badge'
 
 type BadgeSize = 'sm' | 'md' | 'lg'
 
@@ -25,6 +25,10 @@ const iconSize: Record<BadgeSize, string> = {
 	sm: 'h-5 w-5',
 	md: 'h-7 w-7',
 	lg: 'h-10 w-10',
+}
+
+function isLucideIconName(value: string): value is keyof typeof dynamicIconImports {
+	return value in dynamicIconImports
 }
 
 export function CourseBadgeIcon({
@@ -57,7 +61,7 @@ export function CourseBadgeIcon({
 						WebkitMaskSize: 'contain',
 					}}
 				/>
-			) : iconName && isCourseBadgeIconName(iconName) ? (
+			) : iconName && isLucideIconName(iconName) ? (
 				<DynamicIcon name={iconName} className={iconSize[size]} />
 			) : (
 				<Award className={iconSize[size]} />

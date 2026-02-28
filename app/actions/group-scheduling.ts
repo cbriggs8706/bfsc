@@ -14,6 +14,7 @@ import {
 	scheduleStatuses,
 } from '@/db/queries/group-scheduling'
 import { authOptions } from '@/lib/auth'
+import { getRoleTemplatesForScope } from '@/lib/group-directory-role-templates'
 import { and, eq } from 'drizzle-orm'
 import { getServerSession } from 'next-auth'
 import { revalidatePath } from 'next/cache'
@@ -263,7 +264,7 @@ const upsertContactSchema = z.object({
 	name: z.string().min(2),
 	phone: z.string().optional(),
 	email: z.string().email().optional().or(z.literal('')),
-	preferredContactMethod: z.enum(['phone', 'email', 'text']),
+	preferredContactMethod: z.enum(['none', 'phone', 'email', 'text']),
 	bestContactTimes: z.string().optional(),
 	notes: z.string().optional(),
 	isPrimary: z
@@ -274,6 +275,11 @@ const upsertContactSchema = z.object({
 		.string()
 		.optional()
 		.transform((v) => v === 'on'),
+})
+
+const upsertScopedContactsSchema = z.object({
+	scopeType: z.enum(['stake', 'ward']),
+	scopeId: z.string().uuid(),
 })
 
 const noteSchema = z.object({
@@ -770,6 +776,121 @@ export async function upsertUnitContact(formData: FormData) {
 	if (parsed.id) {
 		await db.update(unitContacts).set(values).where(eq(unitContacts.id, parsed.id))
 	} else {
+		await db.insert(unitContacts).values({
+			...values,
+			createdByUserId: user.id,
+		})
+	}
+
+	revalidateSchedulingPaths(locale)
+}
+
+export async function upsertScopedUnitContacts(formData: FormData) {
+	const locale = localeFromForm(formData)
+	const user = await requireSchedulerUser()
+	const parsedScope = upsertScopedContactsSchema.parse({
+		scopeType: formData.get('scopeType'),
+		scopeId: formData.get('scopeId'),
+	})
+	const roles = getRoleTemplatesForScope(parsedScope.scopeType)
+	const scopeValues = {
+		stakeId: parsedScope.scopeType === 'stake' ? parsedScope.scopeId : null,
+		wardId: parsedScope.scopeType === 'ward' ? parsedScope.scopeId : null,
+	}
+	const resolvePreferredContactMethod = (
+		rawPreferredContactMethod: string
+	): 'phone' | 'email' | 'text' | 'none' => {
+		if (['phone', 'email', 'text', 'none'].includes(rawPreferredContactMethod)) {
+			return rawPreferredContactMethod as 'phone' | 'email' | 'text' | 'none'
+		}
+		return 'none'
+	}
+
+	for (const [index, role] of roles.entries()) {
+		const idValue = String(formData.get(`id_${index}`) ?? '').trim()
+		const name = String(formData.get(`name_${index}`) ?? '').trim()
+		const phone = String(formData.get(`phone_${index}`) ?? '').trim()
+		const email = String(formData.get(`email_${index}`) ?? '').trim()
+		const preferredContactMethod = String(
+			formData.get(`preferredContactMethod_${index}`) ?? ''
+		).trim()
+		const bestContactTimes = String(formData.get(`bestContactTimes_${index}`) ?? '').trim()
+		const notes = String(formData.get(`notes_${index}`) ?? '').trim()
+		const isPrimary = String(formData.get(`isPrimary_${index}`) ?? '') === 'on'
+		const isPublic = String(formData.get(`isPublic_${index}`) ?? '') === 'on'
+		const hasContactValue = Boolean(name || phone || email || bestContactTimes || notes)
+		const safePreferredContactMethod = resolvePreferredContactMethod(preferredContactMethod)
+		const safeEmail = email && z.string().email().safeParse(email).success ? email : null
+
+		if (!hasContactValue) continue
+
+		const values = {
+			...scopeValues,
+			role,
+			name: name || '',
+			phone: phone || null,
+			email: safeEmail,
+			preferredContactMethod: safePreferredContactMethod,
+			bestContactTimes: bestContactTimes || null,
+			notes: notes || null,
+			isPrimary,
+			isPublic,
+			lastVerifiedAt: new Date(),
+			updatedAt: new Date(),
+			updatedByUserId: user.id,
+		}
+
+		if (idValue) {
+			await db.update(unitContacts).set(values).where(eq(unitContacts.id, idValue))
+			continue
+		}
+
+		await db.insert(unitContacts).values({
+			...values,
+			createdByUserId: user.id,
+		})
+	}
+
+	const extraCount = Number(formData.get('extraCount') ?? 0)
+	for (let index = 0; index < extraCount; index++) {
+		const idValue = String(formData.get(`extraId_${index}`) ?? '').trim()
+		const role = String(formData.get(`extraRole_${index}`) ?? '').trim()
+		const name = String(formData.get(`extraName_${index}`) ?? '').trim()
+		const phone = String(formData.get(`extraPhone_${index}`) ?? '').trim()
+		const email = String(formData.get(`extraEmail_${index}`) ?? '').trim()
+		const preferredContactMethod = String(
+			formData.get(`extraPreferredContactMethod_${index}`) ?? ''
+		).trim()
+		const isPrimary = String(formData.get(`extraIsPrimary_${index}`) ?? '') === 'on'
+		const isPublic = String(formData.get(`extraIsPublic_${index}`) ?? '') === 'on'
+		const hasContactValue = Boolean(role || name || phone || email)
+		const safePreferredContactMethod = resolvePreferredContactMethod(preferredContactMethod)
+		const safeEmail = email && z.string().email().safeParse(email).success ? email : null
+
+		if (!hasContactValue) continue
+		if (!role) continue
+
+		const values = {
+			...scopeValues,
+			role,
+			name: name || '',
+			phone: phone || null,
+			email: safeEmail,
+			preferredContactMethod: safePreferredContactMethod,
+			bestContactTimes: null,
+			notes: null,
+			isPrimary,
+			isPublic,
+			lastVerifiedAt: new Date(),
+			updatedAt: new Date(),
+			updatedByUserId: user.id,
+		}
+
+		if (idValue) {
+			await db.update(unitContacts).set(values).where(eq(unitContacts.id, idValue))
+			continue
+		}
+
 		await db.insert(unitContacts).values({
 			...values,
 			createdByUserId: user.id,

@@ -116,6 +116,7 @@ export const COURSE_BADGE_ICON_GROUPS: CourseBadgeIconGroup[] = [
 		key: 'computers',
 		label: 'Computers',
 		icons: [
+			{ value: 'app-window', label: 'App Window' },
 			{ value: 'monitor', label: 'Monitor' },
 			{ value: 'laptop', label: 'Laptop' },
 			{ value: 'cpu', label: 'CPU' },

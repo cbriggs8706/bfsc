@@ -7,10 +7,10 @@ export default async function GroupDirectoryPage({
 	searchParams,
 }: {
 	params: Promise<{ locale: string }>
-	searchParams: Promise<{ stakeId?: string }>
+	searchParams: Promise<{ stakeId?: string; unitSelection?: string }>
 }) {
 	const { locale } = await params
-	const { stakeId } = await searchParams
+	const { stakeId, unitSelection } = await searchParams
 
 	await requireRole(locale, ['Admin', 'Director', 'Assistant Director'], `/${locale}`)
 	const workspace = await getSchedulingWorkspace()
@@ -25,7 +25,12 @@ export default async function GroupDirectoryPage({
 				</p>
 			</div>
 
-			<GroupDirectoryWorkspace workspace={workspace} locale={locale} stakeId={stakeId} />
+			<GroupDirectoryWorkspace
+				workspace={workspace}
+				locale={locale}
+				stakeId={stakeId}
+				unitSelection={unitSelection}
+			/>
 		</div>
 	)
 }
