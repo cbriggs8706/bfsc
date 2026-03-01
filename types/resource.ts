@@ -103,7 +103,9 @@ export type Resource = {
 	requiredItems: string | null
 	prep: string | null
 	notes: string | null
+	image: string | null
 	link: string | null
+	video: string | null
 
 	isActive: boolean
 }

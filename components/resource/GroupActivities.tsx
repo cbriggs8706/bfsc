@@ -57,9 +57,8 @@ export function GroupActivities({
 
 	return (
 		<div className="grid gap-6 lg:grid-cols-3">
-			{items.map((r, idx) => {
+			{items.map((r) => {
 				const hasImage = isHttpUrl(r.image)
-				const imageOnLeftLg = idx % 2 === 1 // alternate only on lg+
 
 				const imageBlock = hasImage ? (
 					<div className="relative w-full aspect-4/3 lg:h-80 overflow-hidden rounded-2xl">
@@ -117,37 +116,14 @@ export function GroupActivities({
 					<Card key={r.id}>
 						<CardHeader className="text-xl font-bold">{r.name}</CardHeader>
 
-						{/* 
-              Mobile: always same order (image then text).
-              Desktop (lg+): alternate left/right IF image exists.
-              If no image: render only text, full width.
-            */}
-						<CardContent className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start">
+						<CardContent className="space-y-4">
 							{hasImage ? (
 								<>
-									{/* mobile image always first */}
-									<div
-										className={[
-											'lg:col-span-1',
-											imageOnLeftLg ? 'lg:order-1' : 'lg:order-2',
-											'order-1',
-										].join(' ')}
-									>
-										{imageBlock}
-									</div>
-
-									<div
-										className={[
-											'lg:col-span-2',
-											imageOnLeftLg ? 'lg:order-2' : 'lg:order-1',
-											'order-2',
-										].join(' ')}
-									>
-										{textBlock}
-									</div>
+									{imageBlock}
+									{textBlock}
 								</>
 							) : (
-								<div className="lg:col-span-3">{textBlock}</div>
+								textBlock
 							)}
 						</CardContent>
 					</Card>

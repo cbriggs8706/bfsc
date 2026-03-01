@@ -1,7 +1,8 @@
 // components/resources/ReservationForm.tsx
 'use client'
 
-import { useState } from 'react'
+import Image from 'next/image'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
@@ -16,7 +17,6 @@ import {
 	SelectContent,
 	SelectItem,
 } from '@/components/ui/select'
-import { useEffect } from 'react'
 import { getAvailability } from '@/lib/actions/resource/availability'
 import { Resource } from '@/types/resource'
 import { ShiftType, TimeFormat } from '@/types/shifts'
@@ -99,6 +99,16 @@ type ReservationFormUIValues = ReservationFormValues & {
 	groupAffiliation?: 'lds' | 'other-faith' | 'none'
 	faithId?: string | null
 	wardId?: string | null
+}
+
+function isHttpUrl(value: string | null | undefined) {
+	if (!value) return false
+	try {
+		const url = new URL(value)
+		return url.protocol === 'http:' || url.protocol === 'https:'
+	} catch {
+		return false
+	}
 }
 
 /* ------------------------------------------------------------------ */
@@ -286,6 +296,8 @@ export function ReservationForm({
 	}, [startTime, slots, form])
 
 	const selectedSlot = slots.find((s) => s.startTime === startTime)
+	const selectedResource = resources.find((resource) => resource.id === resourceId)
+	const selectedResourceHasImage = isHttpUrl(selectedResource?.image)
 
 	const isAppointmentSlot = selectedSlot?.shiftType === 'appointment'
 
@@ -390,6 +402,36 @@ export function ReservationForm({
 								</Field>
 							)}
 						/>
+						{selectedResource && (
+							<div className="col-span-2 rounded-xl border bg-muted/20 p-3 sm:p-4">
+								<div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,180px)_1fr] sm:items-start">
+									{selectedResourceHasImage ? (
+										<div className="relative w-full overflow-hidden rounded-lg aspect-4/3">
+											<Image
+												src={selectedResource.image!}
+												alt={selectedResource.name}
+												fill
+												sizes="(max-width: 640px) 100vw, 180px"
+												className="object-cover object-center"
+											/>
+										</div>
+									) : null}
+									<div className="space-y-1">
+										<p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+											{t(`resource.types.${selectedResource.type}`)}
+										</p>
+										<p className="text-base font-semibold leading-tight sm:text-lg">
+											{selectedResource.name}
+										</p>
+										{selectedResource.description ? (
+											<p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+												{selectedResource.description}
+											</p>
+										) : null}
+									</div>
+								</div>
+							</div>
+						)}
 
 						{/* Date */}
 						<Controller

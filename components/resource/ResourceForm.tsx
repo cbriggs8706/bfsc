@@ -31,6 +31,76 @@ import { Button } from '@/components/ui/button'
 import { Required } from '@/components/Required'
 import { Mode } from '@/types/crud'
 import Image from 'next/image'
+import Cropper, { type Area } from 'react-easy-crop'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog'
+
+const RESOURCE_IMAGE_ASPECT_RATIO = 4 / 3
+const RESOURCE_EXPORT_WIDTH = 1200
+const RESOURCE_EXPORT_HEIGHT = 900
+const RESOURCE_MAX_BYTES = 1_500_000
+
+function toBlob(
+	canvas: HTMLCanvasElement,
+	type: string,
+	quality: number
+): Promise<Blob | null> {
+	return new Promise((resolve) => {
+		canvas.toBlob(resolve, type, quality)
+	})
+}
+
+async function buildCroppedResourceFile(
+	imageSrc: string,
+	cropArea: Area,
+	fileName: string
+): Promise<File> {
+	const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+		const img = new window.Image()
+		img.onload = () => resolve(img)
+		img.onerror = () => reject(new Error('Unable to load selected image'))
+		img.src = imageSrc
+	})
+
+	const canvas = document.createElement('canvas')
+	canvas.width = RESOURCE_EXPORT_WIDTH
+	canvas.height = RESOURCE_EXPORT_HEIGHT
+
+	const ctx = canvas.getContext('2d')
+	if (!ctx) throw new Error('Failed to create image canvas')
+
+	ctx.drawImage(
+		image,
+		cropArea.x,
+		cropArea.y,
+		cropArea.width,
+		cropArea.height,
+		0,
+		0,
+		RESOURCE_EXPORT_WIDTH,
+		RESOURCE_EXPORT_HEIGHT
+	)
+
+	let quality = 0.9
+	let blob = await toBlob(canvas, 'image/webp', quality)
+
+	while (blob && blob.size > RESOURCE_MAX_BYTES && quality > 0.45) {
+		quality = Math.max(quality - 0.1, 0.45)
+		blob = await toBlob(canvas, 'image/webp', quality)
+	}
+
+	if (!blob) throw new Error('Failed to export cropped image')
+
+	return new File([blob], fileName.replace(/\.[^.]+$/, '.webp'), {
+		type: 'image/webp',
+	})
+}
 
 /* ------------------------------------------------------------------ */
 /* Schema (UI validation only — strings) */
@@ -351,18 +421,57 @@ function ResourceImageField(props: {
 	const { value, disabled, onChange } = props
 	const fileRef = React.useRef<HTMLInputElement | null>(null)
 	const [isUploading, setIsUploading] = React.useState(false)
+	const [isProcessingImage, setIsProcessingImage] = React.useState(false)
 	const [error, setError] = React.useState<string | null>(null)
+	const [cropDialogOpen, setCropDialogOpen] = React.useState(false)
+	const [cropSourceImage, setCropSourceImage] = React.useState<string | null>(null)
+	const [cropSourceName, setCropSourceName] = React.useState('resource-image.jpg')
+	const [crop, setCrop] = React.useState({ x: 0, y: 0 })
+	const [zoom, setZoom] = React.useState(1)
+	const [croppedAreaPixels, setCroppedAreaPixels] = React.useState<Area | null>(
+		null
+	)
 
 	async function handlePickFile(e: React.ChangeEvent<HTMLInputElement>) {
 		const file = e.target.files?.[0]
 		if (!file) return
 
 		setError(null)
-		setIsUploading(true)
+		setCrop({ x: 0, y: 0 })
+		setZoom(1)
+		setCroppedAreaPixels(null)
+		setCropSourceName(file.name)
+		if (cropSourceImage?.startsWith('blob:')) {
+			URL.revokeObjectURL(cropSourceImage)
+		}
+		setCropSourceImage(URL.createObjectURL(file))
+		setCropDialogOpen(true)
+		if (fileRef.current) fileRef.current.value = ''
+	}
+
+	async function handleCropAndUpload() {
+		if (!cropSourceImage || !croppedAreaPixels) {
+			setError('Select a crop area first.')
+			return
+		}
+
+		setError(null)
+		setIsProcessingImage(true)
 
 		try {
-			const url = await uploadResourceImage(file)
+			const processedFile = await buildCroppedResourceFile(
+				cropSourceImage,
+				croppedAreaPixels,
+				cropSourceName
+			)
+			setIsUploading(true)
+			const url = await uploadResourceImage(processedFile)
 			onChange(url)
+			setCropDialogOpen(false)
+			if (cropSourceImage.startsWith('blob:')) {
+				URL.revokeObjectURL(cropSourceImage)
+			}
+			setCropSourceImage(null)
 		} catch (err) {
 			if (err instanceof Error) {
 				setError(err.message)
@@ -370,10 +479,20 @@ function ResourceImageField(props: {
 				setError('Upload failed.')
 			}
 		} finally {
+			setIsProcessingImage(false)
 			setIsUploading(false)
-			if (fileRef.current) fileRef.current.value = ''
 		}
 	}
+
+	React.useEffect(() => {
+		return () => {
+			if (cropSourceImage?.startsWith('blob:')) {
+				URL.revokeObjectURL(cropSourceImage)
+			}
+		}
+	}, [cropSourceImage])
+
+	const isBusy = isUploading || isProcessingImage
 
 	return (
 		<div className="space-y-2">
@@ -383,7 +502,7 @@ function ResourceImageField(props: {
 				accept="image/*"
 				className="hidden"
 				onChange={handlePickFile}
-				disabled={disabled || isUploading}
+				disabled={disabled || isBusy}
 			/>
 
 			<div className="flex items-center gap-2">
@@ -391,10 +510,12 @@ function ResourceImageField(props: {
 					type="button"
 					variant="secondary"
 					onClick={() => fileRef.current?.click()}
-					disabled={disabled || isUploading}
+					disabled={disabled || isBusy}
 				>
 					{isUploading
 						? 'Uploading…'
+						: isProcessingImage
+						? 'Processing…'
 						: value
 						? 'Replace image'
 						: 'Upload image'}
@@ -405,7 +526,7 @@ function ResourceImageField(props: {
 						type="button"
 						variant="ghost"
 						onClick={() => onChange('')}
-						disabled={disabled || isUploading}
+						disabled={disabled || isBusy}
 					>
 						Remove
 					</Button>
@@ -430,6 +551,81 @@ function ResourceImageField(props: {
 			) : null}
 
 			{error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+			<Dialog
+				open={cropDialogOpen}
+				onOpenChange={(open) => {
+					if (isBusy) return
+					setCropDialogOpen(open)
+					if (!open && cropSourceImage?.startsWith('blob:')) {
+						URL.revokeObjectURL(cropSourceImage)
+						setCropSourceImage(null)
+					}
+				}}
+			>
+				<DialogContent className="max-w-3xl" showCloseButton={!isBusy}>
+					<DialogHeader>
+						<DialogTitle>Crop Resource Image</DialogTitle>
+						<DialogDescription>
+							Choose a 4:3 crop. The uploaded image is optimized to stay small.
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="space-y-3">
+						<div className="relative h-[45vh] min-h-[280px] w-full overflow-hidden rounded-md border">
+							{cropSourceImage ? (
+								<Cropper
+									image={cropSourceImage}
+									crop={crop}
+									zoom={zoom}
+									aspect={RESOURCE_IMAGE_ASPECT_RATIO}
+									onCropChange={setCrop}
+									onZoomChange={setZoom}
+									onCropComplete={(_, areaPixels) =>
+										setCroppedAreaPixels(areaPixels)
+									}
+								/>
+							) : null}
+						</div>
+						<div className="space-y-1">
+							<label className="text-sm font-medium">Zoom</label>
+							<Input
+								type="range"
+								min={1}
+								max={3}
+								step={0.05}
+								value={zoom}
+								onChange={(e) => setZoom(Number(e.target.value))}
+								disabled={isBusy}
+							/>
+						</div>
+					</div>
+
+					<DialogFooter>
+						<Button
+							type="button"
+							variant="secondary"
+							disabled={isBusy}
+							onClick={() => {
+								setCropDialogOpen(false)
+								if (cropSourceImage?.startsWith('blob:')) {
+									URL.revokeObjectURL(cropSourceImage)
+								}
+								setCropSourceImage(null)
+							}}
+						>
+							Cancel
+						</Button>
+						<Button
+							type="button"
+							disabled={isBusy || !croppedAreaPixels}
+							onClick={handleCropAndUpload}
+						>
+							{isBusy ? 'Working…' : 'Crop and Upload'}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	)
 }
