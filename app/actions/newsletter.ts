@@ -2,7 +2,8 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { eq } from 'drizzle-orm'
+import { revalidatePath } from 'next/cache'
+import { and, eq, ne } from 'drizzle-orm'
 import { db } from '@/db'
 import {
 	newsletterPosts,
@@ -25,6 +26,45 @@ function slugify(value: string): string {
 		.slice(0, 120)
 }
 
+function normalizeExcerpt(value: string): string {
+	return value
+		.replace(/&nbsp;|&#160;/gi, ' ')
+		.replace(/\u00a0/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim()
+}
+
+async function ensureUniqueSlug(
+	tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+	baseInput: string,
+	currentPostId?: string | null
+): Promise<string> {
+	const baseSlug = slugify(baseInput) || `newsletter-${Date.now()}`
+	let candidate = baseSlug
+	let suffix = 2
+
+	for (;;) {
+		const where = currentPostId
+			? and(
+					eq(newsletterPosts.slug, candidate),
+					ne(newsletterPosts.id, currentPostId)
+			  )
+			: eq(newsletterPosts.slug, candidate)
+
+		const existing = await tx
+			.select({ id: newsletterPosts.id })
+			.from(newsletterPosts)
+			.where(where)
+			.limit(1)
+
+		if (!existing.length) return candidate
+
+		const withSuffix = `${baseSlug}-${suffix}`
+		candidate = slugify(withSuffix)
+		suffix += 1
+	}
+}
+
 /**
  * Canonical server action for:
  * - create
@@ -37,7 +77,11 @@ function slugify(value: string): string {
  *   - publish
  *   - unpublish
  */
-export async function saveNewsletter(formData: FormData): Promise<void> {
+async function saveNewsletterInternal(
+	formData: FormData,
+	forcedIntent?: 'draft' | 'publish' | 'unpublish'
+): Promise<void> {
+	const debugId = crypto.randomUUID().slice(0, 8)
 	const user = await getCurrentUser()
 	if (!user) throw new Error('Unauthorized')
 
@@ -50,7 +94,22 @@ export async function saveNewsletter(formData: FormData): Promise<void> {
 	const coverImageUrl = (formData.get('coverImageUrl') as string) || null
 
 	const intent =
-		(formData.get('intent') as 'draft' | 'publish' | 'unpublish') ?? 'draft'
+		forcedIntent ??
+		((formData.get('intent') as 'draft' | 'publish' | 'unpublish') ?? 'draft')
+	const enExcerptRaw = formData.get('translations.en.excerpt')
+	const enExcerptInput =
+		typeof enExcerptRaw === 'string' ? enExcerptRaw : undefined
+	console.log('[newsletter.save:start]', {
+		debugId,
+		forcedIntent: forcedIntent ?? null,
+		formIntent: (formData.get('intent') as string | null) ?? null,
+		resolvedIntent: intent,
+		id,
+		locale,
+		hasEnExcerptField: formData.has('translations.en.excerpt'),
+		enExcerptInputLength: enExcerptInput?.length ?? null,
+		enExcerptInputPreview: enExcerptInput?.slice(0, 80) ?? null,
+	})
 
 	const isUpdate = Boolean(id)
 	const canCreate = await can(user.id, user.role, 'newsletters.create')
@@ -79,27 +138,57 @@ export async function saveNewsletter(formData: FormData): Promise<void> {
 	// ----------------------------
 	// Parse translations
 	// ----------------------------
+	const locales: NewsletterLocale[] = ['en', 'es', 'pt']
+	const existingTranslations = isUpdate
+		? await db.query.newsletterTranslations.findMany({
+				where: eq(newsletterTranslations.postId, id!),
+			})
+		: []
+	const existingByLocale = new Map<
+		NewsletterLocale,
+		{ title: string; excerpt: string; content: string }
+	>(
+		existingTranslations.map((row) => [
+			row.locale as NewsletterLocale,
+			{
+				title: row.title ?? '',
+				excerpt: row.excerpt ?? '',
+				content: row.content ?? '',
+			},
+		])
+	)
+	const fieldValue = (key: string): string | undefined => {
+		const value = formData.get(key)
+		return typeof value === 'string' ? value : undefined
+	}
 	const translations: Record<
 		NewsletterLocale,
 		{ title: string; excerpt: string; content: string }
-	> = {
-		en: {
-			title: formData.get('translations.en.title') as string,
-			excerpt: (formData.get('translations.en.excerpt') as string) ?? '',
-			content: formData.get('translations.en.content') as string,
+	> = locales.reduce(
+		(acc, localeKey) => {
+			const existing = existingByLocale.get(localeKey)
+			const title =
+				fieldValue(`translations.${localeKey}.title`) ?? existing?.title ?? ''
+			const excerptRaw =
+				fieldValue(`translations.${localeKey}.excerpt`) ??
+				existing?.excerpt ??
+				''
+			acc[localeKey] = {
+				title,
+				excerpt: normalizeExcerpt(excerptRaw),
+				content:
+					fieldValue(`translations.${localeKey}.content`) ??
+					existing?.content ??
+					'',
+			}
+			return acc
 		},
-		es: {
-			title: formData.get('translations.es.title') as string,
-			excerpt: (formData.get('translations.es.excerpt') as string) ?? '',
-			content: formData.get('translations.es.content') as string,
-		},
-		pt: {
-			title: formData.get('translations.pt.title') as string,
-			excerpt: (formData.get('translations.pt.excerpt') as string) ?? '',
-			content: formData.get('translations.pt.content') as string,
-		},
-	}
-	const slug = slugify(translations.en.title) || slugify(slugRaw) || `newsletter-${Date.now()}`
+		{} as Record<
+			NewsletterLocale,
+			{ title: string; excerpt: string; content: string }
+		>
+	)
+	const requestedSlug = slugRaw || translations.en.title || `newsletter-${Date.now()}`
 
 	// ----------------------------
 	// Parse tags & categories
@@ -110,97 +199,173 @@ export async function saveNewsletter(formData: FormData): Promise<void> {
 	// ----------------------------
 	// Transaction
 	// ----------------------------
-	await db.transaction(async (tx) => {
-		let postId = id
+	try {
+		let savedPostId: string | null = id
+		let savedSlug: string | null = null
+		await db.transaction(async (tx) => {
+			let postId = id
 
-		// ---------- CREATE ----------
-		if (!postId) {
-			const [post] = await tx
-				.insert(newsletterPosts)
-				.values({
-					slug,
+			const uniqueSlug = await ensureUniqueSlug(tx, requestedSlug, postId)
+			savedSlug = uniqueSlug
+
+			// ---------- CREATE ----------
+			if (!postId) {
+				const [post] = await tx
+					.insert(newsletterPosts)
+					.values({
+						slug: uniqueSlug,
+						status,
+						publishedAt,
+						coverImageUrl,
+						authorId: user.id,
+					})
+					.returning()
+
+				postId = post.id
+			}
+			savedPostId = postId
+
+			// ---------- UPDATE ----------
+			await tx
+				.update(newsletterPosts)
+				.set({
+					slug: uniqueSlug,
 					status,
 					publishedAt,
 					coverImageUrl,
-					authorId: user.id,
+					updatedAt: new Date(),
 				})
-				.returning()
+				.where(eq(newsletterPosts.id, postId))
 
-			postId = post.id
-		}
+			// ---------- TRANSLATIONS ----------
+			for (const localeKey of Object.keys(translations) as NewsletterLocale[]) {
+				const t = translations[localeKey]
 
-		// ---------- UPDATE ----------
-		await tx
-			.update(newsletterPosts)
-			.set({
-				slug,
-				status,
-				publishedAt,
-				coverImageUrl,
-				updatedAt: new Date(),
-			})
-			.where(eq(newsletterPosts.id, postId))
-
-		// ---------- TRANSLATIONS ----------
-		for (const localeKey of Object.keys(translations) as NewsletterLocale[]) {
-			const t = translations[localeKey]
-
-			await tx
-				.insert(newsletterTranslations)
-				.values({
-					postId,
-					locale: localeKey,
-					title: t.title,
-					excerpt: t.excerpt,
-					content: t.content,
-				})
-				.onConflictDoUpdate({
-					target: [
-						newsletterTranslations.postId,
-						newsletterTranslations.locale,
-					],
-					set: {
+				await tx
+					.insert(newsletterTranslations)
+					.values({
+						postId,
+						locale: localeKey,
 						title: t.title,
 						excerpt: t.excerpt,
 						content: t.content,
-						updatedAt: new Date(),
-					},
+					})
+					.onConflictDoUpdate({
+						target: [
+							newsletterTranslations.postId,
+							newsletterTranslations.locale,
+						],
+						set: {
+							title: t.title,
+							excerpt: t.excerpt,
+							content: t.content,
+							updatedAt: new Date(),
+						},
+					})
+			}
+
+			// ---------- TAGS ----------
+			await tx
+				.delete(newsletterPostTags)
+				.where(eq(newsletterPostTags.postId, postId))
+
+			if (tagIds.length) {
+				await tx.insert(newsletterPostTags).values(
+					tagIds.map((tagId) => ({
+						postId,
+						tagId,
+					}))
+				)
+			}
+
+			// ---------- CATEGORIES ----------
+			await tx
+				.delete(newsletterPostCategories)
+				.where(eq(newsletterPostCategories.postId, postId))
+
+			if (categoryIds.length) {
+				await tx.insert(newsletterPostCategories).values(
+					categoryIds.map((categoryId) => ({
+						postId,
+						categoryId,
+					}))
+				)
+			}
+
+			const [savedPost] = await tx
+				.select({
+					id: newsletterPosts.id,
+					status: newsletterPosts.status,
+					publishedAt: newsletterPosts.publishedAt,
+					updatedAt: newsletterPosts.updatedAt,
 				})
+				.from(newsletterPosts)
+				.where(eq(newsletterPosts.id, postId))
+				.limit(1)
+			const [savedEnTranslation] = await tx
+				.select({
+					excerpt: newsletterTranslations.excerpt,
+					title: newsletterTranslations.title,
+				})
+				.from(newsletterTranslations)
+				.where(
+					and(
+						eq(newsletterTranslations.postId, postId),
+						eq(newsletterTranslations.locale, 'en')
+					)
+				)
+				.limit(1)
+
+			console.log('[newsletter.save:done]', {
+				debugId,
+				id: savedPost?.id ?? postId,
+				status: savedPost?.status ?? null,
+				publishedAt: savedPost?.publishedAt ?? null,
+				updatedAt: savedPost?.updatedAt ?? null,
+				enTitleLength: savedEnTranslation?.title?.length ?? null,
+				enExcerptLength: savedEnTranslation?.excerpt?.length ?? null,
+				enExcerptPreview: savedEnTranslation?.excerpt?.slice(0, 80) ?? null,
+			})
+		})
+		revalidatePath(`/${locale}/admin/newsletter`)
+		if (savedPostId) {
+			revalidatePath(`/${locale}/admin/newsletter/update/${savedPostId}`)
 		}
-
-		// ---------- TAGS ----------
-		await tx
-			.delete(newsletterPostTags)
-			.where(eq(newsletterPostTags.postId, postId))
-
-		if (tagIds.length) {
-			await tx.insert(newsletterPostTags).values(
-				tagIds.map((tagId) => ({
-					postId,
-					tagId,
-				}))
-			)
+		revalidatePath(`/${locale}/newsletters`)
+		if (savedSlug) {
+			revalidatePath(`/${locale}/newsletters/${savedSlug}`)
 		}
-
-		// ---------- CATEGORIES ----------
-		await tx
-			.delete(newsletterPostCategories)
-			.where(eq(newsletterPostCategories.postId, postId))
-
-		if (categoryIds.length) {
-			await tx.insert(newsletterPostCategories).values(
-				categoryIds.map((categoryId) => ({
-					postId,
-					categoryId,
-				}))
-			)
-		}
-	})
+	} catch (error) {
+		console.error('[newsletter.save] failed', {
+			debugId,
+			id,
+			intent,
+			locale,
+			requestedSlug,
+			error,
+		})
+		throw new Error('Failed to save newsletter')
+	}
 
 	// ----------------------------
 	// Redirect after success
 	// ----------------------------
 	redirect(`/${locale}/admin/newsletter`)
+}
+
+export async function saveNewsletter(formData: FormData): Promise<void> {
+	console.log('[newsletter.action] saveNewsletter')
+	return saveNewsletterInternal(formData)
+}
+
+export async function saveDraftNewsletter(formData: FormData): Promise<void> {
+	console.log('[newsletter.action] saveDraftNewsletter')
+	return saveNewsletterInternal(formData, 'draft')
+}
+
+export async function publishNewsletter(formData: FormData): Promise<void> {
+	console.log('[newsletter.action] publishNewsletter')
+	return saveNewsletterInternal(formData, 'publish')
 }
 
 /**

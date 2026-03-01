@@ -2,7 +2,7 @@
 import { notFound } from 'next/navigation'
 import { NewsletterForm } from '@/components/newsletters/NewsletterForm'
 import { getNewsletterForForm } from '@/db/queries/newsletters'
-import { saveNewsletter } from '@/app/actions/newsletter'
+import { publishNewsletter, saveDraftNewsletter } from '@/app/actions/newsletter'
 import { requirePermission } from '@/lib/permissions/require-permission'
 import { can } from '@/lib/permissions/can'
 
@@ -35,7 +35,8 @@ export default async function UpdateNewsletterPage({
 				mode="update"
 				value={data}
 				locale={locale}
-				action={saveNewsletter}
+				draftAction={saveDraftNewsletter}
+				publishAction={publishNewsletter}
 				allowPublish={allowPublish}
 			/>
 		</div>

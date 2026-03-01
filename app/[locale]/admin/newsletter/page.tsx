@@ -135,7 +135,10 @@ export default async function AdminNewsletterListPage({
 										variant="outline"
 										className="flex-1 md:flex-none"
 									>
-										<Link href={`/${locale}/admin/newsletter/update/${post.id}`}>
+										<Link
+											href={`/${locale}/admin/newsletter/update/${post.id}`}
+											prefetch={false}
+										>
 											Edit
 										</Link>
 									</Button>

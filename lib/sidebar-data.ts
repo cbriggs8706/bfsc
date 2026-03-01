@@ -47,12 +47,6 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				items: [],
 			},
 			{
-				title: t('sidebar.main.trainingGuide'),
-				url: `/${locale}/training-guide`,
-				icon: GraduationCap,
-				items: [],
-			},
-			{
 				title: t('sidebar.main.consultantHelps'),
 				url: `/${locale}/consultant-helps`,
 				icon: BadgeQuestionMark,

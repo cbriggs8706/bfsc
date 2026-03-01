@@ -1,5 +1,5 @@
 // app/[locale]/admin/newsletter/create/page.tsx
-import { saveNewsletter } from '@/app/actions/newsletter'
+import { publishNewsletter, saveDraftNewsletter } from '@/app/actions/newsletter'
 import { NewsletterForm } from '@/components/newsletters/NewsletterForm'
 import { EMPTY_NEWSLETTER_FORM } from '@/types/newsletters'
 import { requirePermission } from '@/lib/permissions/require-permission'
@@ -32,7 +32,8 @@ export default async function CreateNewsletterPage({
 				mode="create"
 				value={EMPTY_NEWSLETTER_FORM}
 				locale={locale}
-				action={saveNewsletter}
+				draftAction={saveDraftNewsletter}
+				publishAction={publishNewsletter}
 				allowPublish={allowPublish}
 			/>
 		</div>

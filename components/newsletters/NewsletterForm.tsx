@@ -20,6 +20,8 @@ type Props = {
 	value: NewsletterFormData
 	locale: string
 	action?: (formData: FormData) => Promise<void>
+	draftAction?: (formData: FormData) => Promise<void>
+	publishAction?: (formData: FormData) => Promise<void>
 	allowPublish?: boolean
 }
 
@@ -39,6 +41,8 @@ export function NewsletterForm({
 	value,
 	locale,
 	action,
+	draftAction,
+	publishAction,
 	allowPublish = true,
 }: Props) {
 	const isReadOnly = mode === 'read'
@@ -47,9 +51,10 @@ export function NewsletterForm({
 	const [uploadError, setUploadError] = useState<string | null>(null)
 	const derivedSlug =
 		slugify(form.translations.en.title) || slugify(form.slug) || 'newsletter'
+	const defaultAction = draftAction ?? action
 
 	return (
-		<form action={action} className="space-y-6">
+		<form action={defaultAction} className="space-y-6">
 			{/* Hidden fields */}
 			<input type="hidden" name="id" value={form.id ?? ''} />
 			<input type="hidden" name="slug" value={derivedSlug} />
@@ -61,23 +66,12 @@ export function NewsletterForm({
 			/>
 
 			{NEWSLETTER_LOCALES.map((l) => (
-				<div key={l}>
-					<input
-						type="hidden"
-						name={`translations.${l}.title`}
-						value={form.translations[l].title}
-					/>
-					<input
-						type="hidden"
-						name={`translations.${l}.excerpt`}
-						value={form.translations[l].excerpt ?? ''}
-					/>
-					<input
-						type="hidden"
-						name={`translations.${l}.content`}
-						value={form.translations[l].content}
-					/>
-				</div>
+				<input
+					key={l}
+					type="hidden"
+					name={`translations.${l}.content`}
+					value={form.translations[l].content}
+				/>
 			))}
 
 			{/* Status */}
@@ -169,6 +163,7 @@ export function NewsletterForm({
 				{NEWSLETTER_LOCALES.map((l) => (
 					<TabsContent key={l} value={l} className="space-y-4">
 						<Input
+							name={`translations.${l}.title`}
 							value={form.translations[l].title}
 							disabled={isReadOnly}
 							placeholder={`Title (${l})`}
@@ -283,34 +278,12 @@ export function NewsletterForm({
 				<div className="flex gap-3">
 					{mode !== 'delete' && (
 						<>
-							<Button
-								type="submit"
-								variant="outline"
-								formAction={
-									action &&
-									((fd: FormData) => {
-										fd.set('intent', 'draft')
-										return action(fd)
-									})
-								}
-							>
+							<Button type="submit" variant="outline">
 								Save Draft
 							</Button>
 
 							{allowPublish ? (
-								<Button
-									type="submit"
-									formAction={
-										action &&
-										((fd: FormData) => {
-											fd.set('intent', 'publish')
-											if (!fd.get('publishedAt')) {
-												fd.set('publishedAt', new Date().toISOString())
-											}
-											return action(fd)
-										})
-									}
-								>
+								<Button type="submit" formAction={publishAction ?? defaultAction}>
 									Publish
 								</Button>
 							) : null}

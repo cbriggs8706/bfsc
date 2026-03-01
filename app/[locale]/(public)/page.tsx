@@ -10,7 +10,6 @@ import {
 	BadgeQuestionMark,
 	Calendar,
 	Camera,
-	GraduationCap,
 	MapIcon,
 	Newspaper,
 	Pencil,
@@ -83,12 +82,6 @@ export default async function HomePage({ params, searchParams }: Props) {
 			url: `/${locale}/research-specialists`,
 			icon: Search,
 			description: 'Get help from trained research specialists.',
-		},
-		{
-			title: 'Training Guide',
-			url: `/${locale}/training-guide`,
-			icon: GraduationCap,
-			description: 'Learn how to use FamilySearch tools effectively.',
 		},
 		{
 			title: 'Consultant Helps',
