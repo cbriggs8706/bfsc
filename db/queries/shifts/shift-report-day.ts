@@ -143,7 +143,9 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 	 * 6️⃣ Build shift buckets
 	 * ------------------------------------------ */
 
-	const results: TodayShift[] = shifts.map((shift) => {
+	const FIFTEEN_MINUTES_MS = 15 * 60 * 1000
+
+	const shiftWindows = shifts.map((shift) => {
 		const [sh, sm] = shift.startTime.split(':').map(Number)
 		const [eh, em] = shift.endTime.split(':').map(Number)
 
@@ -157,17 +159,68 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 		const shiftEndUtc = fromZonedTime(shiftEndLocal, timeZone)
 
 		return {
+			shift,
+			shiftStartUtc,
+			shiftEndUtc,
+		}
+	})
+
+	const findBestShiftIndexForTimestamp = (timestamp: Date): number => {
+		// Prefer an upcoming shift when check-in is <= 15 minutes before it.
+		const preWindowShiftIndex = shiftWindows.findIndex(
+			({ shiftStartUtc }) =>
+				timestamp < shiftStartUtc &&
+				timestamp.getTime() >= shiftStartUtc.getTime() - FIFTEEN_MINUTES_MS
+		)
+		if (preWindowShiftIndex >= 0) return preWindowShiftIndex
+
+		// Otherwise, place into the shift that currently contains the timestamp.
+		// End is exclusive to avoid boundary overlap between adjacent shifts.
+		const inRangeShiftIndex = shiftWindows.findIndex(
+			({ shiftStartUtc, shiftEndUtc }) =>
+				timestamp >= shiftStartUtc && timestamp < shiftEndUtc
+		)
+		return inRangeShiftIndex
+	}
+
+	const workersByShift = new Map<number, typeof workers>()
+	const patronsByShift = new Map<number, typeof patrons>()
+	const assignedWorkerLogIds = new Set<string>()
+	const assignedPatronIds = new Set<string>()
+
+	for (const worker of workers) {
+		const shiftIndex = findBestShiftIndexForTimestamp(worker.arrivalAt)
+		if (shiftIndex < 0) continue
+
+		const existing = workersByShift.get(shiftIndex) ?? []
+		existing.push(worker)
+		workersByShift.set(shiftIndex, existing)
+		assignedWorkerLogIds.add(worker.shiftLogId)
+	}
+
+	for (const patron of patrons) {
+		const shiftIndex = findBestShiftIndexForTimestamp(patron.arrivedAt)
+		if (shiftIndex < 0) continue
+
+		const existing = patronsByShift.get(shiftIndex) ?? []
+		existing.push(patron)
+		patronsByShift.set(shiftIndex, existing)
+		assignedPatronIds.add(patron.visitId)
+	}
+
+	const results: TodayShift[] = shiftWindows.map(
+		({ shift, shiftStartUtc, shiftEndUtc }, shiftIndex) => {
+			const shiftWorkers = workersByShift.get(shiftIndex) ?? []
+			const shiftPatrons = patronsByShift.get(shiftIndex) ?? []
+
+			return {
 			shiftId: shift.id,
 			weekday,
 			startTime: shift.startTime,
 			endTime: shift.endTime,
 			centerTimeZone: timeZone,
 
-			workers: workers
-				.filter(
-					(w) => w.arrivalAt >= shiftStartUtc && w.arrivalAt <= shiftEndUtc
-				)
-				.map((w) => ({
+			workers: shiftWorkers.map((w) => ({
 					shiftLogId: w.shiftLogId,
 					userId: w.userId,
 					fullName: w.fullName,
@@ -176,11 +229,7 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 					actualDepartureAt: w.actualDepartureAt,
 				})),
 
-			patrons: patrons
-				.filter(
-					(p) => p.arrivedAt >= shiftStartUtc && p.arrivedAt <= shiftEndUtc
-				)
-				.map((p) => ({
+			patrons: shiftPatrons.map((p) => ({
 					visitId: p.visitId,
 					fullName: p.fullName,
 					purposeName: p.purposeName,
@@ -190,7 +239,7 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 
 			reservations: allReservations
 				.filter(
-					(r) => r.startTime >= shiftStartUtc && r.startTime <= shiftEndUtc
+					(r) => r.startTime >= shiftStartUtc && r.startTime < shiftEndUtc
 				)
 				.map((r) => ({
 					id: r.id,
@@ -201,18 +250,13 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 					patronName: r.patronName ?? r.patronEmail,
 				})),
 		}
-	})
+		}
+	)
 
 	/* --------------------------------------------
 	 * 7️⃣ Off-shift activity bucket
 	 * ------------------------------------------ */
 
-	const assignedWorkerIds = new Set(
-		results.flatMap((r) => r.workers.map((w) => w.userId))
-	)
-	const assignedPatronIds = new Set(
-		results.flatMap((r) => r.patrons.map((p) => p.visitId))
-	)
 	const assignedReservationIds = new Set(
 		results.flatMap((r) => r.reservations.map((r) => r.id))
 	)
@@ -227,7 +271,9 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 						endTime: '—',
 						centerTimeZone: timeZone,
 
-						workers: workers.filter((w) => !assignedWorkerIds.has(w.userId)),
+						workers: workers.filter(
+							(w) => !assignedWorkerLogIds.has(w.shiftLogId)
+						),
 						patrons: patrons.filter((p) => !assignedPatronIds.has(p.visitId)),
 						reservations: allReservations
 							.filter((r) => !assignedReservationIds.has(r.id))

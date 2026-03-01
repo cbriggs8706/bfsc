@@ -12,6 +12,7 @@ type Props = {
 	announcements: Announcement[]
 	workers: OnShiftWorker[]
 	certificatesByUser: Record<string, CertificateSummary[]>
+	redirectSecondsRemaining: number
 	onDone: () => void
 }
 
@@ -19,6 +20,7 @@ export function WorkersStep({
 	announcements,
 	workers,
 	certificatesByUser,
+	redirectSecondsRemaining,
 	onDone,
 }: Props) {
 	return (
@@ -70,6 +72,10 @@ export function WorkersStep({
 					))}
 				</div>
 			)}
+
+			<p className="text-center text-muted-foreground">
+				Returning to sign in in {redirectSecondsRemaining} seconds...
+			</p>
 
 			<KioskButton onClick={onDone}>Return to Sign In</KioskButton>
 		</div>

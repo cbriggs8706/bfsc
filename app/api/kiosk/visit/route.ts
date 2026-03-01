@@ -7,7 +7,6 @@ import {
 	kioskPeople,
 	kioskVisitPurposes,
 } from '@/db/schema/tables/kiosk'
-import { user } from '@/db/schema/tables/auth'
 import { and, eq, gt, isNull } from 'drizzle-orm'
 import { createClient } from '@supabase/supabase-js'
 
@@ -17,13 +16,38 @@ const supabase = createClient(
 )
 
 export async function POST(req: Request) {
-	const { personId, userId, purposeId, mailingListOptIn } =
+	const { personId, userId, purposeId, mailingListOptIn, visitMeta } =
 		(await req.json()) as {
 			personId: string
 			userId?: string | null
 			purposeId?: number | null
 			mailingListOptIn?: boolean
+			visitMeta?: {
+				visitReason?: 'patron' | 'training' | 'group'
+				partOfFaithGroup?: boolean | null
+				faithGroupName?: string | null
+				stakeName?: string | null
+				wardName?: string | null
+				peopleCameWithVisitor?: number | null
+			}
 		}
+
+	const normalizedPeopleCameWithVisitor = Math.max(
+		0,
+		Math.floor(visitMeta?.peopleCameWithVisitor ?? 0)
+	)
+
+	const notes =
+		visitMeta && visitMeta.visitReason !== 'patron'
+			? JSON.stringify({
+					visitReason: visitMeta.visitReason,
+					partOfFaithGroup: visitMeta.partOfFaithGroup ?? null,
+					faithGroupName: visitMeta.faithGroupName ?? null,
+					stakeName: visitMeta.stakeName ?? null,
+					wardName: visitMeta.wardName ?? null,
+					peopleCameWithVisitor: normalizedPeopleCameWithVisitor,
+				})
+			: null
 
 	// 1️⃣ Record the visit
 	const [visit] = await db
@@ -33,6 +57,7 @@ export async function POST(req: Request) {
 			userId: userId ?? null,
 			purposeId: purposeId ?? null,
 			mailingListOptIn: !!mailingListOptIn,
+			notes,
 		})
 		.returning()
 

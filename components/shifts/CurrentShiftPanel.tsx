@@ -25,6 +25,7 @@ import {
 import { Input } from '../ui/input'
 import Link from 'next/link'
 import { CenterTimeConfig } from '@/lib/time/center-time'
+import { toDisplayFullName } from '@/lib/names'
 
 type Props = {
 	title?: string
@@ -103,6 +104,7 @@ export function CurrentShiftPanel({
 	// selection state
 	const [selectedKey, setSelectedKey] = useState<string | null>(null)
 	const [manualPick, setManualPick] = useState(false)
+	const [showAllPatrons, setShowAllPatrons] = useState(false)
 
 	const todayStr = ymdInTz(new Date(), centerTime.timeZone)
 
@@ -126,6 +128,27 @@ export function CurrentShiftPanel({
 			setLoading(false)
 		}
 	}, [todayStr])
+
+	const handleDeleteClockIn = useCallback(
+		async (kind: 'worker' | 'patron', id: string, fullName: string) => {
+			const confirmed = window.confirm(
+				`Delete this clock-in for ${toDisplayFullName(fullName)}? This cannot be undone.`
+			)
+			if (!confirmed) return
+
+			const url =
+				kind === 'worker' ? `/api/kiosk/shift/${id}` : `/api/kiosk/visit/${id}`
+
+			const res = await fetch(url, { method: 'DELETE' })
+			if (!res.ok) {
+				window.alert('Unable to delete this clock-in. Please try again.')
+				return
+			}
+
+			refetch()
+		},
+		[refetch]
+	)
 
 	const scheduleRefetch = useCallback(() => {
 		// This panel always represents "today" in center time
@@ -249,6 +272,10 @@ export function CurrentShiftPanel({
 		return cards.find((c) => c.key === key) ?? cards[cards.length - 1]
 	}, [cards, selectedKey, currentKey])
 
+	useEffect(() => {
+		setShowAllPatrons(false)
+	}, [selected.key])
+
 	if (loading) return <p className="text-base">Loading…</p>
 
 	const hasAny =
@@ -273,6 +300,9 @@ export function CurrentShiftPanel({
 	}
 
 	const selectedShift = selected.shift
+	const patrons = selectedShift?.patrons ?? []
+	const visiblePatrons = showAllPatrons ? patrons : patrons.slice(0, 8)
+	const hiddenPatronCount = Math.max(0, patrons.length - visiblePatrons.length)
 
 	return (
 		<div className="space-y-3">
@@ -370,29 +400,53 @@ export function CurrentShiftPanel({
 										)}
 									</span>
 
-									<div className="md:text-right">
-										{c.actualDepartureAt ? (
-											<span className="text-sm text-muted-foreground">
-												Departed{' '}
-												{formatInTz(
-													new Date(c.actualDepartureAt),
-													centerTime.timeZone,
-													centerTime.timeFormat
-												)}
-											</span>
-										) : (
-											<Button
-												variant="link"
-												size="sm"
-												onClick={() =>
-													setDeparting({ kind: 'worker', id: c.shiftLogId })
-												}
-											>
-												Mark Departure
-												<ArrowRight className="ml-1 h-4 w-4" />
-											</Button>
-										)}
-									</div>
+										<div className="md:text-right">
+											{c.actualDepartureAt ? (
+												<div className="flex items-center gap-3 md:justify-end">
+													<span className="text-sm text-muted-foreground">
+														Departed{' '}
+														{formatInTz(
+															new Date(c.actualDepartureAt),
+															centerTime.timeZone,
+															centerTime.timeFormat
+														)}
+													</span>
+													<Button
+														variant="link"
+														size="sm"
+														className="text-destructive"
+														onClick={() =>
+															handleDeleteClockIn('worker', c.shiftLogId, c.fullName)
+														}
+													>
+														Delete Clock In
+													</Button>
+												</div>
+											) : (
+												<div className="flex items-center gap-3 md:justify-end">
+													<Button
+														variant="link"
+														size="sm"
+														onClick={() =>
+															setDeparting({ kind: 'worker', id: c.shiftLogId })
+														}
+													>
+														Mark Departure
+														<ArrowRight className="ml-1 h-4 w-4" />
+													</Button>
+													<Button
+														variant="link"
+														size="sm"
+														className="text-destructive"
+														onClick={() =>
+															handleDeleteClockIn('worker', c.shiftLogId, c.fullName)
+														}
+													>
+														Delete Clock In
+													</Button>
+												</div>
+											)}
+										</div>
 								</li>
 							))}
 						</ul>
@@ -408,7 +462,7 @@ export function CurrentShiftPanel({
 							<p className="text-base">—</p>
 						) : (
 							<ul className="space-y-2">
-								{selectedShift.patrons.slice(0, 8).map((p) => (
+								{visiblePatrons.map((p) => (
 									<li
 										key={p.visitId}
 										className="
@@ -424,7 +478,9 @@ export function CurrentShiftPanel({
 											pb-2
 										"
 									>
-										<span className="font-medium truncate">{p.fullName}</span>
+										<span className="font-medium truncate">
+											{toDisplayFullName(p.fullName)}
+										</span>
 
 										<span className="text-sm text-muted-foreground truncate">
 											{p.purposeName ?? '—'}
@@ -441,33 +497,66 @@ export function CurrentShiftPanel({
 
 										<div className="md:text-right">
 											{p.departedAt ? (
-												<span className="text-sm text-muted-foreground">
-													Departed{' '}
-													{formatInTz(
-														new Date(p.departedAt),
-														centerTime.timeZone,
-														centerTime.timeFormat
-													)}
-												</span>
+												<div className="flex items-center gap-3 md:justify-end">
+													<span className="text-sm text-muted-foreground">
+														Departed{' '}
+														{formatInTz(
+															new Date(p.departedAt),
+															centerTime.timeZone,
+															centerTime.timeFormat
+														)}
+													</span>
+													<Button
+														variant="link"
+														size="sm"
+														className="text-destructive"
+														onClick={() =>
+															handleDeleteClockIn('patron', p.visitId, p.fullName)
+														}
+													>
+														Delete Clock In
+													</Button>
+												</div>
 											) : (
-												<Button
-													variant="link"
-													size="sm"
-													onClick={() =>
-														setDeparting({ kind: 'patron', id: p.visitId })
-													}
-												>
-													Mark Departure
-													<ArrowRight className="ml-1 h-4 w-4" />
-												</Button>
+												<div className="flex items-center gap-3 md:justify-end">
+													<Button
+														variant="link"
+														size="sm"
+														onClick={() =>
+															setDeparting({ kind: 'patron', id: p.visitId })
+														}
+													>
+														Mark Departure
+														<ArrowRight className="ml-1 h-4 w-4" />
+													</Button>
+													<Button
+														variant="link"
+														size="sm"
+														className="text-destructive"
+														onClick={() =>
+															handleDeleteClockIn('patron', p.visitId, p.fullName)
+														}
+													>
+														Delete Clock In
+													</Button>
+												</div>
 											)}
 										</div>
 									</li>
 								))}
 
-								{selectedShift.patrons.length > 8 && (
-									<li className="text-xs text-muted-foreground">
-										+{selectedShift.patrons.length - 8} more
+								{patrons.length > 8 && (
+									<li>
+										<Button
+											variant="link"
+											size="sm"
+											className="h-auto p-0 text-xs"
+											onClick={() => setShowAllPatrons((value) => !value)}
+										>
+											{showAllPatrons
+												? 'Show less'
+												: `+${hiddenPatronCount} more`}
+										</Button>
 									</li>
 								)}
 							</ul>

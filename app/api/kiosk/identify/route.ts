@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { kioskPeople, KioskPeopleInsert } from '@/db/schema/tables/kiosk'
 import { user } from '@/db/schema/tables/auth'
 import { eq, ilike } from 'drizzle-orm'
+import { normalizeFullNameForStorage } from '@/lib/names'
 
 const WORKER_ROLES = [
 	'Worker',
@@ -68,7 +69,7 @@ async function createKioskPersonFromUserRow(u: {
 	const isWorker = isWorkerRole(u.role)
 
 	const insert: KioskPeopleInsert = {
-		fullName: u.name,
+		fullName: normalizeFullNameForStorage(u.name),
 		email: u.email,
 		userId: u.id,
 		isWorkerCached: isWorker,
@@ -133,7 +134,7 @@ export async function POST(req: Request) {
 
 			// No kiosk_people entry yet: create one
 			const insert: KioskPeopleInsert = {
-				fullName: existingUser.name,
+				fullName: normalizeFullNameForStorage(existingUser.name),
 				email: existingUser.email,
 				userId: existingUser.id,
 				isWorkerCached: isWorker,
@@ -198,8 +199,7 @@ export async function POST(req: Request) {
 	}
 
 	// ─────────────────────────────
-	// MODE B: identify by input string
-	// (passcode or name, no prior selection)
+	// MODE B: identify by input string (name only)
 	// ─────────────────────────────
 	if (!('input' in body) || !body.input) {
 		return NextResponse.json<IdentifyResponse>(
@@ -209,50 +209,7 @@ export async function POST(req: Request) {
 	}
 
 	const trimmed = body.input.trim()
-	const isPasscode = /^[0-9]{6}$/.test(trimmed)
-
-	// 1) Passcode search in kiosk_people
-	if (isPasscode) {
-		const rows = await db
-			.select({
-				id: kioskPeople.id,
-				fullName: kioskPeople.fullName,
-				userId: kioskPeople.userId,
-				passcode: kioskPeople.passcode,
-				role: user.role,
-				isWorkerCached: kioskPeople.isWorkerCached,
-			})
-			.from(kioskPeople)
-			.leftJoin(user, eq(kioskPeople.userId, user.id))
-			.where(eq(kioskPeople.passcode, trimmed))
-			.limit(1)
-
-		if (rows.length === 0) {
-			return NextResponse.json<IdentifyResponse>({
-				status: 'notFound',
-				suggestedName: null,
-			})
-		}
-
-		const row = rows[0]
-		const isWorker =
-			row.role !== null ? isWorkerRole(row.role) : row.isWorkerCached
-
-		const person: PersonSummary = {
-			id: row.id,
-			fullName: row.fullName,
-			userId: row.userId,
-			isWorker,
-			hasPasscode: Boolean(row.passcode),
-		}
-
-		return NextResponse.json<IdentifyResponse>({
-			status: 'foundSingle',
-			person,
-		})
-	}
-
-	// 2) Name search in kiosk_people
+	// 1) Name search in kiosk_people
 	const kioskRows = await db
 		.select({
 			id: kioskPeople.id,
@@ -305,7 +262,7 @@ export async function POST(req: Request) {
 		})
 	}
 
-	// 3) No kiosk_people matches → look in user table, and create kiosk_people entries
+	// 2) No kiosk_people matches → look in user table, and create kiosk_people entries
 	const userRows = await db
 		.select({
 			id: user.id,

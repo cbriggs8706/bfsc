@@ -6,6 +6,7 @@ import { callings } from '@/db/schema/tables/faith'
 import { user } from '@/db/schema/tables/auth'
 import { eq } from 'drizzle-orm'
 import { isWorkerRole } from '@/lib/is-worker-role'
+import { normalizeFullNameForStorage } from '@/lib/names'
 
 function generatePasscode() {
 	return Math.floor(100000 + Math.random() * 900000).toString()
@@ -69,10 +70,12 @@ export async function POST(req: Request) {
 	// ──────────────────────────────
 	// CREATE PERSON
 	// ──────────────────────────────
+	const normalizedFullName = normalizeFullNameForStorage(fullName)
+
 	const [person] = await db
 		.insert(kioskPeople)
 		.values({
-			fullName,
+			fullName: normalizedFullName,
 			email: email ?? null,
 			phone: phone ?? null,
 			faithId: faithId ?? null,

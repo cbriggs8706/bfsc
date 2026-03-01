@@ -2,10 +2,9 @@
 
 import { KioskButton } from './KioskButton'
 
-const LETTERS = '!@0123456ABCDEFGHIJKLMNOPQRSTUVWXYZ?'.split('')
-
-// Phone-style keypad order
-const DIGITS = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '*', '0', '#']
+const TOP_ROW = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P']
+const SECOND_ROW = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L']
+const THIRD_ROW = ['Z', 'X', 'C', 'V', 'B', 'N', 'M', "'"]
 
 type Props = {
 	onKey: (char: string) => void
@@ -26,42 +25,49 @@ export function OnScreenKeyboard({
 }: Props) {
 	return (
 		<div className="select-none space-y-3">
-			{/* Main keyboard */}
-			<div className="grid grid-cols-1 gap-3 sm:grid-cols-[auto_auto]">
-				{/* Alphabet */}
-				<div className="grid grid-cols-9 gap-2">
-					{LETTERS.map((k) => (
-						<KioskButton
-							key={k}
-							variant="outline"
-							className="h-12 sm:h-14 text-lg"
-							onClick={() => onKey(k)}
-						>
-							{k}
-						</KioskButton>
-					))}
-				</div>
-
-				{/* Numeric keypad */}
-				<div className="grid grid-cols-3 gap-2">
-					{DIGITS.map((d) => (
-						<KioskButton
-							key={d}
-							variant="default"
-							className="h-12 sm:h-14 text-lg"
-							onClick={() => onKey(d)}
-						>
-							{d}
-						</KioskButton>
-					))}
-				</div>
+			<div className="grid grid-cols-10 gap-2 w-full">
+				{TOP_ROW.map((k) => (
+					<KioskButton
+						key={k}
+						variant="outline"
+						className="!w-full h-20 text-2xl"
+						onClick={() => onKey(k)}
+					>
+						{k}
+					</KioskButton>
+				))}
 			</div>
 
-			{/* Controls */}
-			<div className="grid grid-cols-5 gap-2">
+			<div className="grid grid-cols-9 gap-2 w-full">
+				{SECOND_ROW.map((k) => (
+					<KioskButton
+						key={k}
+						variant="outline"
+						className="!w-full h-20 text-2xl"
+						onClick={() => onKey(k)}
+					>
+						{k}
+					</KioskButton>
+				))}
+			</div>
+
+			<div className="grid grid-cols-8 gap-2 w-full">
+				{THIRD_ROW.map((k) => (
+					<KioskButton
+						key={k}
+						variant="outline"
+						className="!w-full h-20 text-2xl"
+						onClick={() => onKey(k)}
+					>
+						{k}
+					</KioskButton>
+				))}
+			</div>
+
+			<div className="grid grid-cols-4 gap-2 w-full">
 				<KioskButton
 					variant="outline"
-					className="col-span-2 h-12 sm:h-14 text-base sm:text-lg font-semibold"
+					className="!w-full h-20 text-2xl font-semibold"
 					onClick={onSpace}
 				>
 					Space
@@ -69,26 +75,25 @@ export function OnScreenKeyboard({
 
 				<KioskButton
 					variant="destructive"
-					className="h-12 sm:h-14 text-base sm:text-lg"
+					className="!w-full h-20 text-2xl"
 					onClick={onClear}
 				>
 					Clear
 				</KioskButton>
 
 				<KioskButton
-					variant="outline"
-					className="h-12 sm:h-14 text-base sm:text-lg"
-					onClick={onBackspace}
-				>
-					⌫ Backspace
-				</KioskButton>
-
-				<KioskButton
-					className="h-12 sm:h-14 text-base sm:text-lg font-bold tracking-wide shadow-md"
+					className="!w-full h-20 text-2xl font-bold tracking-wide shadow-md"
 					onClick={onContinue}
 					disabled={!canContinue}
 				>
 					Continue
+				</KioskButton>
+				<KioskButton
+					variant="outline"
+					className="!w-full h-20 text-2xl"
+					onClick={onBackspace}
+				>
+					⌫
 				</KioskButton>
 			</div>
 		</div>

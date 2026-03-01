@@ -1,7 +1,7 @@
 // app/[locale]/kiosk/page.tsx
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import type { IdentifyResponse } from '@/app/api/kiosk/identify/route'
 import { PersonSummary, OnShiftWorker, Purpose } from '@/types/kiosk'
@@ -11,15 +11,28 @@ import { WorkersStep } from '@/components/kiosk/WorkersStep'
 import { VisitStep } from '@/components/kiosk/VisitStep'
 import { RoleChoiceStep } from '@/components/kiosk/RoleChoiceStep'
 import { CheckoutStep } from '@/components/kiosk/CheckoutStep'
+import { VisitGroupDetailsStep } from '@/components/kiosk/VisitGroupDetailsStep'
+import { WelcomeStep } from '@/components/kiosk/WelcomeStep'
 import { Announcement } from '@/db'
 import { CertificateSummary } from '@/types/training'
 import { OnScreenKeyboard } from '@/components/kiosk/OnScreenKeyboard'
+
+type VisitReason = 'patron' | 'training' | 'group'
+type Faith = { id: string; name: string }
+type Stake = { id: string; name: string }
+type WardGroup = {
+	stakeId: string
+	stakeName: string
+	wards: { id: string; name: string }[]
+}
 
 export default function KioskPage() {
 	const [step, setStep] = useState<
 		| 'identify'
 		| 'roleChoice'
+		| 'visitGroupDetails'
 		| 'visit'
+		| 'welcome'
 		| 'shift'
 		| 'workers'
 		| 'checkout'
@@ -49,10 +62,23 @@ export default function KioskPage() {
 	const [selectedPerson, setSelectedPerson] = useState<PersonSummary | null>(
 		null
 	)
+	const [visitReason, setVisitReason] = useState<VisitReason>('patron')
 	const [purposes, setPurposes] = useState<Purpose[]>([])
 	const [mailingOptIn, setMailingOptIn] = useState(false)
 	const [expectedDeparture, setExpectedDeparture] = useState('')
 	const [serverMessage, setServerMessage] = useState<string | null>(null)
+	const [partOfFaithGroup, setPartOfFaithGroup] = useState<boolean | null>(
+		null
+	)
+	const [faiths, setFaiths] = useState<Faith[]>([])
+	const [faithId, setFaithId] = useState('')
+	const [stakes, setStakes] = useState<Stake[]>([])
+	const [stakeId, setStakeId] = useState('')
+	const [wardGroups, setWardGroups] = useState<WardGroup[]>([])
+	const [wardId, setWardId] = useState('')
+	const [groupSize, setGroupSize] = useState(0)
+	const [welcomeCountdown, setWelcomeCountdown] = useState(10)
+	const [workersRedirectCountdown, setWorkersRedirectCountdown] = useState(15)
 
 	const [suggestions, setSuggestions] = useState<PersonSummary[]>([])
 	const [searching, setSearching] = useState(false)
@@ -83,12 +109,6 @@ export default function KioskPage() {
 		setSelectedPerson(null)
 		setServerMessage(null)
 
-		if (/^\d{6}$/.test(value)) {
-			setSuggestions([])
-			handleIdentify()
-			return
-		}
-
 		if (searchTimeout.current) {
 			clearTimeout(searchTimeout.current)
 		}
@@ -114,6 +134,32 @@ export default function KioskPage() {
 		const res = await fetch('/api/kiosk/purposes')
 		const data = await res.json()
 		setPurposes(data.purposes)
+	}
+
+	const loadFaiths = async () => {
+		if (faiths.length) return
+		const res = await fetch('/api/faiths')
+		if (!res.ok) return
+		const data: { faiths: Faith[] } = await res.json()
+		setFaiths(data.faiths)
+	}
+
+	const loadLdsUnits = async (selectedFaithId: string) => {
+		if (!selectedFaithId) return
+		const [stakesRes, wardsRes] = await Promise.all([
+			fetch(`/api/faiths/stakes?faithId=${encodeURIComponent(selectedFaithId)}`),
+			fetch(`/api/faiths/wards?faithId=${encodeURIComponent(selectedFaithId)}`),
+		])
+
+		if (stakesRes.ok) {
+			const stakesData: { stakes: Stake[] } = await stakesRes.json()
+			setStakes(stakesData.stakes)
+		}
+
+		if (wardsRes.ok) {
+			const wardsData: { wards: WardGroup[] } = await wardsRes.json()
+			setWardGroups(wardsData.wards)
+		}
 	}
 
 	// ──────────────────────────────
@@ -142,10 +188,6 @@ export default function KioskPage() {
 		const data: IdentifyResponse = await res.json()
 
 		if (data.status === 'notFound') {
-			if (/^\d{6}$/.test(input.trim())) {
-				setServerMessage('Code not found. Try your name instead.')
-				return
-			}
 			setNewName(data.suggestedName ?? input.trim())
 			await loadPurposes()
 			setStep('visit')
@@ -197,7 +239,7 @@ export default function KioskPage() {
 	// VISIT SUBMIT
 	// ──────────────────────────────
 
-	const handleSubmitVisit = async (purposeId: number) => {
+	const submitVisitLog = async (purposeId?: number | null) => {
 		let person = selectedPerson
 
 		if (!person && newName.trim()) {
@@ -209,7 +251,23 @@ export default function KioskPage() {
 
 		if (!person) {
 			setServerMessage('Please identify yourself first.')
-			return
+			return false
+		}
+
+		const selectedFaith = faiths.find((faith) => faith.id === faithId)
+		const selectedStake = stakes.find((stake) => stake.id === stakeId)
+		const selectedWard =
+			wardGroups
+				.find((group) => group.stakeId === stakeId)
+				?.wards.find((ward) => ward.id === wardId) ?? null
+
+		const visitMeta = {
+			visitReason,
+			partOfFaithGroup,
+			faithGroupName: selectedFaith?.name ?? null,
+			stakeName: selectedStake?.name ?? null,
+			wardName: selectedWard?.name ?? null,
+			peopleCameWithVisitor: groupSize,
 		}
 
 		const res = await fetch('/api/kiosk/visit', {
@@ -218,18 +276,35 @@ export default function KioskPage() {
 			body: JSON.stringify({
 				personId: person.id,
 				userId: person.userId,
-				purposeId,
+				purposeId: purposeId ?? null,
 				mailingListOptIn: mailingOptIn,
+				visitMeta,
 			}),
 		})
 
 		if (!res.ok) {
 			setServerMessage('Sorry, something went wrong recording your visit.')
-			return
+			return false
 		}
 
 		setServerMessage(null)
+		return true
+	}
+
+	const handleSubmitVisit = async (purposeId: number) => {
+		const success = await submitVisitLog(purposeId)
+		if (!success) return
+
+		setWorkersRedirectCountdown(15)
 		setStep('workers')
+	}
+
+	const handleSubmitTrainingOrGroupVisit = async () => {
+		const success = await submitVisitLog(null)
+		if (!success) return
+
+		setWelcomeCountdown(10)
+		setStep('welcome')
 	}
 
 	// ──────────────────────────────
@@ -253,6 +328,7 @@ export default function KioskPage() {
 		}
 		setServerMessage(null)
 		await refreshOnShift()
+		setWorkersRedirectCountdown(15)
 		setStep('workers')
 	}
 
@@ -260,15 +336,44 @@ export default function KioskPage() {
 	// RESET
 	// ──────────────────────────────
 
-	const resetForm = () => {
+	const resetForm = useCallback(() => {
 		setStep('identify')
 		setInput('')
 		setSuggestions([])
 		setSelectedPerson(null)
+		setVisitReason('patron')
 		setMailingOptIn(false)
 		setExpectedDeparture('')
 		setNewName('')
+		setPartOfFaithGroup(null)
+		setFaithId('')
+		setStakes([])
+		setStakeId('')
+		setWardGroups([])
+		setWardId('')
+		setGroupSize(0)
+		setWelcomeCountdown(10)
+		setWorkersRedirectCountdown(15)
 		setServerMessage(null)
+	}, [])
+
+	const selectedFaith = faiths.find((faith) => faith.id === faithId)
+	const isLdsFaith =
+		selectedFaith?.name.toLowerCase().includes('latter-day saints') ?? false
+
+	const handleFaithSelection = async (selectedFaithId: string) => {
+		setFaithId(selectedFaithId)
+		setStakeId('')
+		setWardId('')
+		setStakes([])
+		setWardGroups([])
+
+		if (!selectedFaithId) return
+		const faith = faiths.find((item) => item.id === selectedFaithId)
+		const isLds = !!faith?.name.toLowerCase().includes('latter-day saints')
+		if (isLds) {
+			await loadLdsUnits(selectedFaithId)
+		}
 	}
 
 	useEffect(() => {
@@ -313,6 +418,71 @@ export default function KioskPage() {
 		})()
 	}, [])
 
+	useEffect(() => {
+		if (step !== 'welcome') return
+
+		const timer = setTimeout(() => {
+			setWelcomeCountdown((current) => {
+				if (current <= 1) {
+					setTimeout(() => resetForm(), 0)
+					return 0
+				}
+
+				return current - 1
+			})
+		}, 1000)
+
+		return () => clearTimeout(timer)
+	}, [step, welcomeCountdown, resetForm])
+
+	useEffect(() => {
+		const finalSteps: Array<typeof step> = ['workers', 'welcome']
+		if (!finalSteps.includes(step)) return
+
+		let inactivityTimer: ReturnType<typeof setTimeout> | null = null
+		let countdownTicker: ReturnType<typeof setInterval> | null = null
+		let deadlineMs = Date.now() + 15000
+
+		const updateWorkersCountdown = () => {
+			if (step !== 'workers') return
+			const secondsRemaining = Math.max(
+				0,
+				Math.ceil((deadlineMs - Date.now()) / 1000)
+			)
+			setWorkersRedirectCountdown(secondsRemaining)
+		}
+
+		const restartInactivityTimer = () => {
+			deadlineMs = Date.now() + 15000
+			if (inactivityTimer) clearTimeout(inactivityTimer)
+			inactivityTimer = setTimeout(() => {
+				resetForm()
+			}, 15000)
+			updateWorkersCountdown()
+		}
+
+		setTimeout(() => restartInactivityTimer(), 0)
+		countdownTicker = setInterval(updateWorkersCountdown, 250)
+
+		const activityEvents: Array<keyof WindowEventMap> = [
+			'pointerdown',
+			'touchstart',
+			'keydown',
+		]
+
+		activityEvents.forEach((eventName) => {
+			window.addEventListener(eventName, restartInactivityTimer)
+		})
+
+		return () => {
+			if (inactivityTimer) clearTimeout(inactivityTimer)
+			if (countdownTicker) clearInterval(countdownTicker)
+			activityEvents.forEach((eventName) => {
+				window.removeEventListener(eventName, restartInactivityTimer)
+			})
+		}
+	}, [step, resetForm])
+
 	// ──────────────────────────────
 	// RENDER
 	// ──────────────────────────────
@@ -321,7 +491,7 @@ export default function KioskPage() {
 			<Card className="w-full m-4">
 				<CardHeader>
 					<CardTitle className="text-center text-2xl">
-						Family History Center Sign-In
+						Burley FamilySearch Center Login
 					</CardTitle>
 				</CardHeader>
 
@@ -388,11 +558,70 @@ export default function KioskPage() {
 						<RoleChoiceStep
 							person={selectedPerson}
 							onVisit={async () => {
+								setVisitReason('patron')
 								await loadPurposes()
 								setStep('visit')
 							}}
+							onTraining={async () => {
+								setVisitReason('training')
+								setPartOfFaithGroup(null)
+								setFaithId('')
+								setStakeId('')
+								setWardId('')
+								setGroupSize(0)
+								await loadFaiths()
+								setStep('visitGroupDetails')
+							}}
+							onGroup={async () => {
+								setVisitReason('group')
+								setPartOfFaithGroup(null)
+								setFaithId('')
+								setStakeId('')
+								setWardId('')
+								setGroupSize(0)
+								await loadFaiths()
+								setStep('visitGroupDetails')
+							}}
 							onShift={() => setStep('shift')}
-							onCheckout={() => setStep('checkout')}
+						/>
+					)}
+
+					{step === 'visitGroupDetails' && (
+						<VisitGroupDetailsStep
+							reasonLabel={
+								visitReason === 'training'
+									? "You're signing in for training."
+									: "You're signing in with a group."
+							}
+							partOfFaithGroup={partOfFaithGroup}
+							setPartOfFaithGroup={(value) => {
+								setPartOfFaithGroup(value)
+								if (!value) {
+									setFaithId('')
+									setStakeId('')
+									setWardId('')
+									setStakes([])
+									setWardGroups([])
+								}
+							}}
+							faiths={faiths}
+							faithId={faithId}
+							setFaithId={(value) => {
+								void handleFaithSelection(value)
+							}}
+							stakes={stakes}
+							stakeId={stakeId}
+							setStakeId={(value) => {
+								setStakeId(value)
+								setWardId('')
+							}}
+							wardGroups={wardGroups}
+							wardId={wardId}
+							setWardId={setWardId}
+							attendeeCount={groupSize}
+							setAttendeeCount={(value) => setGroupSize(Math.max(0, value))}
+							isLds={isLdsFaith}
+							onContinue={handleSubmitTrainingOrGroupVisit}
 						/>
 					)}
 
@@ -409,6 +638,7 @@ export default function KioskPage() {
 							announcements={announcements}
 							workers={onShiftWorkers}
 							certificatesByUser={certificatesByUser}
+							redirectSecondsRemaining={workersRedirectCountdown}
 							onDone={resetForm}
 						/>
 					)}
@@ -421,6 +651,13 @@ export default function KioskPage() {
 							expectedDeparture={expectedDeparture}
 							setExpectedDeparture={setExpectedDeparture}
 							onSubmit={handleSubmitShift}
+						/>
+					)}
+
+					{step === 'welcome' && (
+						<WelcomeStep
+							secondsRemaining={welcomeCountdown}
+							onReturnNow={resetForm}
 						/>
 					)}
 

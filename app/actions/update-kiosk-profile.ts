@@ -3,6 +3,7 @@
 import { db } from '@/db'
 import { kioskPeople } from '@/db'
 import { getCenterProfile } from '@/lib/actions/center/center'
+import { normalizeFullNameForStorage } from '@/lib/names'
 import { normalizePhoneToE164 } from '@/utils/phone'
 import { eq } from 'drizzle-orm'
 
@@ -35,7 +36,9 @@ export async function updateKioskProfile(
 	await db
 		.update(kioskPeople)
 		.set({
-			...(input.fullName !== undefined && { fullName: input.fullName }),
+			...(input.fullName !== undefined && {
+				fullName: normalizeFullNameForStorage(input.fullName),
+			}),
 			...(input.email !== undefined && { email: input.email }),
 			...(input.phone !== undefined && { phone: input.phone }),
 			...(input.passcode !== undefined && {

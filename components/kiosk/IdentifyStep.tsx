@@ -22,10 +22,6 @@ export function IdentifyStep({
 }: Props) {
 	return (
 		<div className="space-y-4">
-			{/* <Label className="text-lg">
-				Enter your <strong>name</strong> or <strong>6-digit code</strong>
-			</Label> */}
-
 			<KioskInput
 				value={input}
 				onChange={(e) => onInputChange(e.target.value)}
@@ -41,7 +37,7 @@ export function IdentifyStep({
 					{!searching && suggestions.length === 0 && (
 						<p className="text-2xl px-2 text-center mt-10">
 							{input.trim().length < 2
-								? 'Start typing your name or 6-digit code'
+								? 'Start typing your name'
 								: 'No record found yet. Finish typing your full name, then tap Continue.'}
 						</p>
 					)}
