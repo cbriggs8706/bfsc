@@ -59,6 +59,12 @@ function isAssignmentRole(v: string): v is AssignmentRole {
 	return v === 'worker' || v === 'shift_lead' || v === 'trainer'
 }
 
+function normalizeAssignmentRole(v: string): AssignmentRole {
+	if (v === 'helper') return 'worker'
+	if (v === 'lead') return 'shift_lead'
+	return isAssignmentRole(v) ? v : 'worker'
+}
+
 /* ======================================================
  * Main query
  * ==================================================== */
@@ -101,9 +107,7 @@ export async function getShiftPrintData(): Promise<{
 		shiftRecurrenceId: a.shiftRecurrenceId,
 		notes: a.notes,
 		userName: a.userName,
-		assignmentRole: isAssignmentRole(a.assignmentRole)
-			? a.assignmentRole
-			: 'worker',
+		assignmentRole: normalizeAssignmentRole(a.assignmentRole),
 	}))
 
 	/* --------------------------------------------------

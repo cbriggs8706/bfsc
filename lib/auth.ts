@@ -76,8 +76,24 @@ export const authOptions: NextAuthOptions = {
 
 	callbacks: {
 		// You don't really need signIn logic if you always return true
-		async signIn({ user, account }) {
-			// You *could* add rules here later, but for now:
+		async signIn({ user }) {
+			// Track successful sign-ins for admin visibility.
+			try {
+				if (user?.id) {
+					await db
+						.update(userTable)
+						.set({ lastLoginAt: new Date() })
+						.where(eq(userTable.id, user.id))
+				} else if (user?.email) {
+					await db
+						.update(userTable)
+						.set({ lastLoginAt: new Date() })
+						.where(eq(userTable.email, user.email))
+				}
+			} catch (error) {
+				console.error('Failed to update last_login_at on sign-in', error)
+			}
+
 			return true
 		},
 
@@ -88,7 +104,14 @@ export const authOptions: NextAuthOptions = {
 
 			// On first login (credentials OR google), user is defined
 			if (user) {
-				const u = user as any // adapter user with extra fields
+				const u = user as {
+					id?: string
+					email?: string | null
+					name?: string | null
+					username?: string | null
+					role?: string | null
+					image?: string | null
+				}
 
 				token.id = u.id
 				token.email = u.email

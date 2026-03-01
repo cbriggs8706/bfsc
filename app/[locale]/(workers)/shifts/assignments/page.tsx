@@ -1,7 +1,7 @@
 // app/[locale]/(workers)/shifts/assignments/page.tsx
 
 import { Metadata } from 'next'
-import { and, eq, inArray, ne } from 'drizzle-orm'
+import { and, eq, ne } from 'drizzle-orm'
 import { db } from '@/db'
 import {
 	operatingHours,
@@ -36,6 +36,12 @@ const WEEKDAY_LABELS = [
 
 function isAssignmentRole(value: string): value is AssignmentRole {
 	return value === 'worker' || value === 'shift_lead' || value === 'trainer'
+}
+
+function normalizeAssignmentRole(value: string): AssignmentRole {
+	if (value === 'helper') return 'worker'
+	if (value === 'lead') return 'shift_lead'
+	return isAssignmentRole(value) ? value : 'worker'
 }
 
 const EDIT_ROLES = ['Admin', 'Director'] as const
@@ -94,9 +100,7 @@ export default async function ShiftsPage({ params }: Props) {
 
 	const assignments: Assignment[] = rawAssignments.map((a) => ({
 		...a,
-		assignmentRole: isAssignmentRole(a.assignmentRole)
-			? a.assignmentRole
-			: 'worker', // safe fallback
+		assignmentRole: normalizeAssignmentRole(a.assignmentRole),
 	}))
 
 	/* -----------------------------------------------------

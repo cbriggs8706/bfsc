@@ -47,6 +47,7 @@ export default async function AdminUsersPage({
 			email: user.email,
 			username: user.username,
 			role: user.role,
+			lastLoginAt: user.lastLoginAt,
 		})
 		.from(user)
 		.orderBy(
@@ -89,6 +90,15 @@ export default async function AdminUsersPage({
 		}
 	}
 
+	function formatShortDate(date: Date | null) {
+		if (!date) return '—'
+		return date.toLocaleDateString('en-US', {
+			month: '2-digit',
+			day: '2-digit',
+			year: '2-digit',
+		})
+	}
+
 	return (
 		<div className="p-4 space-y-4">
 			<div>
@@ -114,6 +124,7 @@ export default async function AdminUsersPage({
 									<TableHead>Name</TableHead>
 									<TableHead>Email</TableHead>
 									<TableHead>Role</TableHead>
+									<TableHead>Last Login</TableHead>
 									<TableHead className="w-[120px] text-right">
 										Actions
 									</TableHead>
@@ -125,6 +136,7 @@ export default async function AdminUsersPage({
 										<TableCell>{u.name ?? '—'}</TableCell>
 										<TableCell className="">{u.email}</TableCell>
 										<TableCell className="capitalize">{u.role}</TableCell>
+										<TableCell>{formatShortDate(u.lastLoginAt)}</TableCell>
 										<TableCell className="text-right">
 											{canEditUser(userRole, u.role) ? (
 												<div className="flex gap-2 justify-end">

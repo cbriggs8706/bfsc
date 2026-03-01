@@ -412,6 +412,7 @@ function ShiftCard({
 					<AddWorkerDialog
 						shiftRecurrenceId={recurrence.id}
 						workers={workers}
+						assignments={assignments}
 						setLocalAssignments={setLocalAssignments}
 					/>
 				)}
@@ -456,10 +457,12 @@ function ShiftCard({
 function AddWorkerDialog({
 	shiftRecurrenceId,
 	workers,
+	assignments,
 	setLocalAssignments,
 }: {
 	shiftRecurrenceId: string
 	workers: Worker[]
+	assignments: Assignment[]
 	setLocalAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>
 }) {
 	const [open, setOpen] = useState(false)
@@ -467,12 +470,17 @@ function AddWorkerDialog({
 	const [loading, setLoading] = useState(false)
 	const [role, setRole] = useState<AssignmentRole>('worker')
 	const [notes, setNotes] = useState('')
+	const [error, setError] = useState<string | null>(null)
 
-	const filtered = workers.filter((c) =>
+	const assignedUserIds = new Set(assignments.map((a) => a.userId))
+	const availableWorkers = workers.filter((w) => !assignedUserIds.has(w.id))
+
+	const filtered = availableWorkers.filter((c) =>
 		(c.name ?? c.email).toLowerCase().includes(query.toLowerCase())
 	)
 
 	const handleAdd = async (worker: Worker) => {
+		setError(null)
 		setLoading(true)
 		const tempId = `temp-${Date.now()}`
 
@@ -503,7 +511,12 @@ function AddWorkerDialog({
 				}),
 			})
 
-			if (!res.ok) throw new Error('Failed to create assignment')
+			if (!res.ok) {
+				const body = (await res.json().catch(() => null)) as
+					| { error?: string }
+					| null
+				throw new Error(body?.error ?? 'Failed to create assignment')
+			}
 			const data: { id: string } = await res.json()
 
 			setLocalAssignments((prev) =>
@@ -515,6 +528,9 @@ function AddWorkerDialog({
 			// rollback
 			setLocalAssignments((prev) => prev.filter((a) => a.id !== tempId))
 			console.error(e)
+			setError(
+				e instanceof Error ? e.message : 'Failed to create assignment'
+			)
 		} finally {
 			setLoading(false)
 		}
@@ -525,10 +541,17 @@ function AddWorkerDialog({
 		setQuery('')
 		setNotes('')
 		setRole('worker')
+		setError(null)
 	}
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog
+			open={open}
+			onOpenChange={(isOpen) => {
+				if (!isOpen) closeDialog()
+				else setOpen(true)
+			}}
+		>
 			<DialogTrigger asChild>
 				<Button size="icon" variant="outline" className="h-7 w-7">
 					<Plus className="h-4 w-4" />
@@ -591,6 +614,7 @@ function AddWorkerDialog({
 					onChange={(e) => setQuery(e.target.value)}
 					className="mb-3"
 				/>
+				{error && <p className="mb-2 text-xs text-destructive">{error}</p>}
 
 				<div className="max-h-64 overflow-auto space-y-1">
 					{filtered.map((c) => (
@@ -609,7 +633,11 @@ function AddWorkerDialog({
 					))}
 
 					{filtered.length === 0 && (
-						<p className="text-xs text-muted-foreground px-2">No matches</p>
+						<p className="text-xs text-muted-foreground px-2">
+							{availableWorkers.length === 0
+								? 'All workers already assigned'
+								: 'No matches'}
+						</p>
 					)}
 				</div>
 			</DialogContent>
