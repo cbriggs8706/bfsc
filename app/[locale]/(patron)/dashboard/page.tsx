@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getTranslations } from 'next-intl/server'
-import { announcement, db, kioskPeople, user as userTable } from '@/db'
+import { announcement, appSettings, db, kioskPeople, user as userTable } from '@/db'
 import { eq, sql } from 'drizzle-orm'
 import { AnnouncementBanner } from '@/components/custom/AnnouncementBanner'
 import { getUserCertificatesWithMissing } from '@/db/queries/training'
@@ -106,10 +106,28 @@ export default async function Page({ params }: DashboardPageProps) {
 	let genieGreenieCertificates: Awaited<
 		ReturnType<typeof lookupMicroskillStatusesByEmail>
 	>['statuses'] = []
+	let assignedGenieGreenieMicroskills: Awaited<
+		ReturnType<typeof lookupMicroskillStatusesByEmail>
+	>['statuses'] = []
 	try {
 		if (session.user.email) {
+			const [settings] = await db
+				.select({
+					assignedGenieGreenieMicroskillIds:
+						appSettings.assignedGenieGreenieMicroskillIds,
+				})
+				.from(appSettings)
+				.limit(1)
+
+			const assignedIds = new Set(
+				settings?.assignedGenieGreenieMicroskillIds ?? []
+			)
 			const lookup = await lookupMicroskillStatusesByEmail(session.user.email)
-			genieGreenieCertificates = lookup.statuses.filter(
+			assignedGenieGreenieMicroskills = lookup.statuses.filter((status) =>
+				assignedIds.has(status.microskillId)
+			)
+
+			genieGreenieCertificates = assignedGenieGreenieMicroskills.filter(
 				(status) =>
 					status.status === 'active' || status.status === 'renewal_required'
 			)
@@ -120,6 +138,8 @@ export default async function Page({ params }: DashboardPageProps) {
 
 	const certificates = await getUserCertificatesWithMissing(session.user.id, {
 		genieGreenieCertificates,
+		assignedGenieGreenieMicroskills,
+		locale,
 	})
 	const shiftInstances = await getUpcomingShiftInstances(session.user.id)
 	const requests = user ? await getOpenSubstituteRequests(user) : []

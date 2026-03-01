@@ -114,7 +114,7 @@ export function CertificatesGrid({
 					{missing.map((course) => (
 						<Link
 							key={course.courseId}
-							href={`/${locale}/training/courses/${course.courseId}`}
+							href={course.href ?? `/${locale}/training/courses/${course.courseId}`}
 							className="group justify-self-center"
 						>
 							<div className="flex w-28 flex-col items-center gap-2">

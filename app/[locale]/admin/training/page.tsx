@@ -1,5 +1,5 @@
 // app/[locale]/admin/training/page.tsx
-import { redirect } from 'next/navigation'
+import { GenieGreenieAssignmentPanel } from '@/components/admin/training/GenieGreenieAssignmentPanel'
 
 type Props = {
 	params: { locale: string }
@@ -7,5 +7,6 @@ type Props = {
 
 export default async function TrainingAdminPage({ params }: Props) {
 	const { locale } = await params
-	redirect(`/${locale}/admin/training/courses`)
+
+	return <GenieGreenieAssignmentPanel locale={locale} />
 }

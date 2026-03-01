@@ -11,6 +11,7 @@ import {
 	uniqueIndex,
 	check,
 	pgEnum,
+	jsonb,
 } from 'drizzle-orm/pg-core'
 import { user } from './auth' // your existing user table
 import { sql } from 'drizzle-orm'
@@ -237,6 +238,13 @@ export const appSettings = pgTable(
 		// 'MMM d, yyyy'
 		// 'dd/MM/yyyy'
 		// 'yyyy-MM-dd'
+
+		assignedGenieGreenieMicroskillIds: jsonb(
+			'assigned_genie_greenie_microskill_ids'
+		)
+			.$type<number[]>()
+			.notNull()
+			.default(sql`'[]'::jsonb`),
 
 		// --- Auditing ---
 		updatedAt: timestamp('updated_at', { withTimezone: true })

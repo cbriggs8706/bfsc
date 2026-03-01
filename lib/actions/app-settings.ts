@@ -12,6 +12,7 @@ export type AppSettings = {
 	timeFormat: TimeFormat
 	dateFormat: string
 	use24HourClock: boolean
+	assignedGenieGreenieMicroskillIds: number[]
 	updatedAt: Date
 }
 

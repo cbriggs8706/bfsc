@@ -6,7 +6,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog'
-import Image from 'next/image'
 
 interface Announcement {
 	id: string
@@ -29,7 +28,7 @@ export function AnnouncementDialog({
 }: AnnouncementDialogProps) {
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-lg">
+			<DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>{announcement.title}</DialogTitle>
 
@@ -44,12 +43,11 @@ export function AnnouncementDialog({
 					<p className="whitespace-pre-wrap">{announcement.body}</p>
 
 					{announcement.imageUrl && (
-						<div className="relative w-full h-64">
-							<Image
+						<div className="w-full">
+							<img
 								src={announcement.imageUrl}
 								alt=""
-								fill
-								className="object-cover rounded-md"
+								className="block w-full h-auto rounded-md"
 							/>
 						</div>
 					)}

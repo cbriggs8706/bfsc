@@ -31,6 +31,7 @@ type ReservationCalendarEvent = {
 	id: string
 	date: string // yyyy-mm-dd LOCAL
 	startsAtIso: string
+	endsAtIso: string
 	title: string
 	location: string
 	description: string | null
@@ -144,6 +145,7 @@ export async function listCalendarEvents(
 		.select({
 			id: reservations.id,
 			startTime: reservations.startTime,
+			endTime: reservations.endTime,
 			resourceName: resources.name,
 			status: reservations.status,
 		})
@@ -166,6 +168,7 @@ export async function listCalendarEvents(
 				id: `reservation:${r.id}`,
 				date: ymdInTz(dt, centerTimeZone),
 				startsAtIso: dt.toISOString(),
+				endsAtIso: new Date(r.endTime).toISOString(),
 				// Pending reservations intentionally avoid patron identity.
 				title: `Reserved: ${r.resourceName}`,
 				location: r.resourceName,

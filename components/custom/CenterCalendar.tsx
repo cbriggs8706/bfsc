@@ -24,7 +24,6 @@ import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
 	Dialog,
 	DialogContent,
@@ -72,6 +71,7 @@ type CalendarClass = {
 	id: string
 	date: string // yyyy-mm-dd (LOCAL)
 	startsAtIso: string
+	endsAtIso?: string
 	title: string
 	location: string
 	description: string | null
@@ -90,6 +90,26 @@ type CalendarView = 'month' | 'week' | 'day'
 
 function ymd(date: Date) {
 	return format(date, 'yyyy-MM-dd')
+}
+
+function formatCompactTimeRange(
+	startIso: string,
+	endIso: string,
+	timeZone: string
+) {
+	const start = new Date(startIso)
+	const end = new Date(endIso)
+
+	const startTime = formatInTz(start, timeZone, 'h:mm')
+	const endTime = formatInTz(end, timeZone, 'h:mm')
+	const startMeridiem = formatInTz(start, timeZone, 'a').toLowerCase()
+	const endMeridiem = formatInTz(end, timeZone, 'a').toLowerCase()
+
+	if (startMeridiem === endMeridiem) {
+		return `${startTime}-${endTime}${endMeridiem}`
+	}
+
+	return `${startTime}${startMeridiem}-${endTime}${endMeridiem}`
 }
 
 function minutesSinceMidnightInCenter(iso: string, timeZone: string) {
@@ -156,7 +176,10 @@ export default function CenterCalendar({
 
 	// Mobile default: day view
 	useEffect(() => {
-		if (isMobile) setView('day')
+		if (!isMobile) return
+
+		setView('day')
+		setViewDate(startOfDay(new Date()))
 	}, [isMobile])
 
 	/* ============================
@@ -318,9 +341,17 @@ export default function CenterCalendar({
 				<h3 className="font-semibold">Events</h3>
 				<ul className="space-y-2">
 					{dayClasses.map((c) => {
-						const time = toAmPm(
+						const startTime = toAmPm(
 							formatInTz(new Date(c.startsAtIso), centerTime.timeZone, 'HH:mm')
 						)
+						const timeLabel =
+							c.kind === 'reservation' && c.endsAtIso
+								? formatCompactTimeRange(
+										c.startsAtIso,
+										c.endsAtIso,
+										centerTime.timeZone
+								  )
+								: startTime
 
 						return (
 							<li
@@ -332,17 +363,19 @@ export default function CenterCalendar({
 								)}
 							>
 								<div className="text-base mb-2">
-									{time} — {c.title}
+									{timeLabel} — {c.title}
 								</div>
 
-								<div className="text-base ">
-									{c.kind === 'reservation' ? 'Resource' : 'Location'}:{' '}
-									{c.location}
-									{c.kind === 'reservation' &&
-										c.reservationStatus === 'pending' &&
-										' (Pending)'}
-									{c.isCanceled && ' (Canceled)'}
-								</div>
+								{c.kind !== 'reservation' && (
+									<div className="text-base ">
+										Location: {c.location}
+										{c.isCanceled && ' (Canceled)'}
+									</div>
+								)}
+								{c.kind === 'reservation' &&
+									c.reservationStatus === 'pending' && (
+										<div className="text-base ">(Pending)</div>
+									)}
 
 								{c.presenters.length > 0 && (
 									<div className="text-base ">
@@ -1030,20 +1063,8 @@ export default function CenterCalendar({
 				{view === 'day' && <DayView />}
 			</div>
 
-			{/* DESKTOP PANEL */}
-			{!isMobile && selectedDate && (
-				<Card>
-					<CardHeader>
-						<CardTitle>{formatLongDate(ymd(selectedDate))}</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<DayDetails date={selectedDate} />
-					</CardContent>
-				</Card>
-			)}
-
-			{/* MOBILE DIALOG */}
-			{isMobile && selectedDate && (
+			{/* DAY DETAILS DIALOG */}
+			{selectedDate && (
 				<Dialog open onOpenChange={() => setSelectedDate(null)}>
 					<DialogContent>
 						<DialogHeader>

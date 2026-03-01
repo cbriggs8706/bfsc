@@ -2,7 +2,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
@@ -172,12 +171,11 @@ export function AnnouncementForm(props: Props) {
 					/>
 
 					{imageUrl && (
-						<div className="relative w-72 h-40">
-							<Image
+						<div className="w-full max-w-sm">
+							<img
 								src={imageUrl}
 								alt=""
-								fill
-								className="rounded-md object-cover"
+								className="block w-full h-auto rounded-md"
 							/>
 						</div>
 					)}

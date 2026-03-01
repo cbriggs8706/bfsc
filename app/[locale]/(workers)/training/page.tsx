@@ -2,7 +2,7 @@
 
 import { db } from '@/db'
 import { eq } from 'drizzle-orm'
-import { learningCourses, learningLessonCompletions } from '@/db'
+import { appSettings, learningCourses, learningLessonCompletions } from '@/db'
 import { getCurrentUser } from '@/lib/auth'
 import { UserCourse } from '@/types/training'
 import { redirect } from 'next/navigation'
@@ -43,7 +43,18 @@ export default async function TrainingCatalogPage({ params }: Props) {
 		.from(learningLessonCompletions)
 		.where(eq(learningLessonCompletions.userId, user.id))
 
+	const [settings] = await db
+		.select({
+			assignedGenieGreenieMicroskillIds:
+				appSettings.assignedGenieGreenieMicroskillIds,
+		})
+		.from(appSettings)
+		.limit(1)
+
 	const completedLessonIds = new Set(completions.map((c) => c.lessonId))
+	const assignedMicroskillIds = new Set(
+		settings?.assignedGenieGreenieMicroskillIds ?? []
+	)
 
 	const userCourses: UserCourse[] = courses.map((course) => {
 		const lessons = course.units.flatMap((u) => u.lessons)
@@ -82,7 +93,7 @@ export default async function TrainingCatalogPage({ params }: Props) {
 		const courseBySlug = new Map(courses.map((course) => [course.slug, course]))
 
 		genieGreenieCourses = lookup.statuses
-			.filter((status) => status.status !== 'not_started')
+			.filter((status) => assignedMicroskillIds.has(status.microskillId))
 			.map((status, index) => {
 				const matchedCourse = courseBySlug.get(status.microskillSlug)
 				const total = Math.max(status.requiredTotal, 0)

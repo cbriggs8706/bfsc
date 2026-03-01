@@ -46,7 +46,8 @@ export type DashboardCertificateItem =
 			contentVersion: number
 			badgeImageUrl?: string | null
 			badgeIconName?: string | null
-	}
+			href?: string | null
+		}
 
 export type EarnedCertificate = {
 	kind: 'earned'
@@ -74,10 +75,13 @@ export type MissingCertificate = {
 	contentVersion: number
 	badgeImageUrl?: string | null
 	badgeIconName?: string | null
+	href?: string | null
 }
 
 type GetUserCertificatesWithMissingOptions = {
 	genieGreenieCertificates?: GenieGreenieMicroskillProgress[]
+	assignedGenieGreenieMicroskills?: GenieGreenieMicroskillProgress[]
+	locale?: string
 }
 
 function mapGenieStatusToCertificateStatus(
@@ -278,7 +282,7 @@ export async function getUserCertificatesWithMissing(
 	)
 
 	// ---- build missing placeholders
-	const missing: MissingCertificate[] = publishedCourses
+	const missingRaw: MissingCertificate[] = publishedCourses
 		.filter((course) => !earnedCourseIds.has(course.id))
 		.map((course) => ({
 			kind: 'missing',
@@ -289,9 +293,47 @@ export async function getUserCertificatesWithMissing(
 			contentVersion: course.contentVersion,
 			badgeImageUrl: getCourseBadgeUrl(course.badgeImagePath),
 			badgeIconName: course.badgeIconName,
+			href: options.locale ? `/${options.locale}/training/courses/${course.id}` : null,
 		}))
 
-	return [...earned, ...missing]
+	// ---- ensure assigned Genie Greenie microskills in "not_started" also appear as missing
+	if (options.assignedGenieGreenieMicroskills?.length) {
+		const locale = options.locale ?? 'en'
+		const publishedCourseBySlug = new Map(
+			publishedCourses.map((course) => [course.slug, course])
+		)
+
+		for (const microskill of options.assignedGenieGreenieMicroskills) {
+			if (microskill.status !== 'not_started') continue
+
+			const matchedCourse = publishedCourseBySlug.get(microskill.microskillSlug)
+			const fallbackCourseId = `genie-greenie:${microskill.microskillSlug}`
+			const courseId = matchedCourse?.id ?? fallbackCourseId
+
+			missingRaw.push({
+				kind: 'missing',
+				courseId,
+				title: matchedCourse?.title ?? microskill.microskillTitle,
+				category: matchedCourse?.category ?? 'Genie Greenie',
+				level: matchedCourse?.level ?? null,
+				contentVersion: microskill.currentVersion,
+				badgeImageUrl: getCourseBadgeUrl(matchedCourse?.badgeImagePath),
+				badgeIconName: matchedCourse?.badgeIconName ?? microskill.badgeIcon,
+				href: matchedCourse?.id
+					? `/${locale}/training/courses/${matchedCourse.id}`
+					: `/${locale}/training`,
+			})
+		}
+	}
+
+	const missingByCourse = new Map<string, MissingCertificate>()
+	for (const item of missingRaw) {
+		if (!missingByCourse.has(item.courseId)) {
+			missingByCourse.set(item.courseId, item)
+		}
+	}
+
+	return [...earned, ...Array.from(missingByCourse.values())]
 }
 
 /**
