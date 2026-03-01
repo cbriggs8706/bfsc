@@ -4,7 +4,7 @@ import { KioskButton } from './KioskButton'
 
 const TOP_ROW = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P']
 const SECOND_ROW = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L']
-const THIRD_ROW = ['Z', 'X', 'C', 'V', 'B', 'N', 'M', "'"]
+const THIRD_ROW = ['Z', 'X', 'C', 'V', 'B', 'N', 'M']
 
 type Props = {
 	onKey: (char: string) => void
@@ -24,13 +24,13 @@ export function OnScreenKeyboard({
 	canContinue,
 }: Props) {
 	return (
-		<div className="select-none space-y-3">
+		<div className="select-none space-y-2">
 			<div className="grid grid-cols-10 gap-2 w-full">
 				{TOP_ROW.map((k) => (
 					<KioskButton
 						key={k}
 						variant="outline"
-						className="!w-full h-20 text-2xl"
+						className="!w-full h-14 md:h-16 text-xl md:text-2xl"
 						onClick={() => onKey(k)}
 					>
 						{k}
@@ -43,7 +43,7 @@ export function OnScreenKeyboard({
 					<KioskButton
 						key={k}
 						variant="outline"
-						className="!w-full h-20 text-2xl"
+						className="!w-full h-14 md:h-16 text-xl md:text-2xl"
 						onClick={() => onKey(k)}
 					>
 						{k}
@@ -51,12 +51,12 @@ export function OnScreenKeyboard({
 				))}
 			</div>
 
-			<div className="grid grid-cols-8 gap-2 w-full">
+			<div className="grid grid-cols-7 gap-2 w-full">
 				{THIRD_ROW.map((k) => (
 					<KioskButton
 						key={k}
 						variant="outline"
-						className="!w-full h-20 text-2xl"
+						className="!w-full h-14 md:h-16 text-xl md:text-2xl"
 						onClick={() => onKey(k)}
 					>
 						{k}
@@ -67,7 +67,7 @@ export function OnScreenKeyboard({
 			<div className="grid grid-cols-4 gap-2 w-full">
 				<KioskButton
 					variant="outline"
-					className="!w-full h-20 text-2xl font-semibold"
+					className="!w-full h-14 md:h-16 text-xl md:text-2xl font-semibold"
 					onClick={onSpace}
 				>
 					Space
@@ -75,14 +75,14 @@ export function OnScreenKeyboard({
 
 				<KioskButton
 					variant="destructive"
-					className="!w-full h-20 text-2xl"
+					className="!w-full h-14 md:h-16 text-xl md:text-2xl"
 					onClick={onClear}
 				>
 					Clear
 				</KioskButton>
 
 				<KioskButton
-					className="!w-full h-20 text-2xl font-bold tracking-wide shadow-md"
+					className="!w-full h-14 md:h-16 text-xl md:text-2xl font-bold tracking-wide shadow-md"
 					onClick={onContinue}
 					disabled={!canContinue}
 				>
@@ -90,7 +90,7 @@ export function OnScreenKeyboard({
 				</KioskButton>
 				<KioskButton
 					variant="outline"
-					className="!w-full h-20 text-2xl"
+					className="!w-full h-14 md:h-16 text-xl md:text-2xl"
 					onClick={onBackspace}
 				>
 					⌫

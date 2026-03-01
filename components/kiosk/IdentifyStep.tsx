@@ -21,25 +21,29 @@ export function IdentifyStep({
 	onSelectSuggestion,
 }: Props) {
 	return (
-		<div className="space-y-4">
+		<div className="space-y-3">
 			<KioskInput
 				value={input}
 				onChange={(e) => onInputChange(e.target.value)}
 			/>
 
-			{/* 🔒 Reserved suggestion well */}
-			<div className="h-56 rounded-xl border bg-background overflow-hidden">
+			<div className="h-44 md:h-48 rounded-xl border bg-background overflow-hidden">
 				<div className="h-full overflow-y-auto p-2 space-y-2">
 					{searching && (
-						<p className="text-2xl px-2 text-center mt-12">Searching…</p>
+						<p className="text-2xl px-2 text-center mt-10">Searching…</p>
 					)}
 
 					{!searching && suggestions.length === 0 && (
-						<p className="text-2xl px-2 text-center mt-10">
-							{input.trim().length < 2
-								? 'Start typing your name'
-								: 'No record found yet. Finish typing your full name, then tap Continue.'}
-						</p>
+						<div className="mt-6 text-center space-y-3 px-2">
+							<p className="text-2xl font-semibold">
+								Burley FamilySearch Center Login
+							</p>
+							<p className="text-2xl">
+								{input.trim().length < 2
+									? 'Start typing your name'
+									: 'No record found yet. Finish typing your full name, then tap Continue.'}
+							</p>
+						</div>
 					)}
 
 					{suggestions.map((s) => (

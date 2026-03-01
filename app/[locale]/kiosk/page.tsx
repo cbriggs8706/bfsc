@@ -2,7 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import type { IdentifyResponse } from '@/app/api/kiosk/identify/route'
 import { PersonSummary, OnShiftWorker, Purpose } from '@/types/kiosk'
 import { IdentifyStep } from '@/components/kiosk/IdentifyStep'
@@ -16,6 +16,7 @@ import { WelcomeStep } from '@/components/kiosk/WelcomeStep'
 import { Announcement } from '@/db'
 import { CertificateSummary } from '@/types/training'
 import { OnScreenKeyboard } from '@/components/kiosk/OnScreenKeyboard'
+import { Button } from '@/components/ui/button'
 
 type VisitReason = 'patron' | 'training' | 'group'
 type Faith = { id: string; name: string }
@@ -489,13 +490,20 @@ export default function KioskPage() {
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-muted">
 			<Card className="w-full m-4">
-				<CardHeader>
-					<CardTitle className="text-center text-2xl">
-						Burley FamilySearch Center Login
-					</CardTitle>
-				</CardHeader>
+				<CardContent className="space-y-3 p-4 md:p-5">
+					{step !== 'identify' && (
+						<div className="flex justify-end">
+							<Button
+								type="button"
+								variant="outline"
+								className="h-12 px-5 text-lg font-semibold"
+								onClick={resetForm}
+							>
+								Back
+							</Button>
+						</div>
+					)}
 
-				<CardContent className="space-y-4">
 					{step === 'identify' && (
 						<IdentifyStep
 							input={input}
@@ -511,18 +519,16 @@ export default function KioskPage() {
 						/>
 					)}
 
-					<CardContent>
-						{step === 'identify' && (
-							<OnScreenKeyboard
-								onKey={(char) => handleInputChange(input + char)}
-								onBackspace={() => handleInputChange(input.slice(0, -1))}
-								onClear={() => handleInputChange('')}
-								onSpace={() => handleInputChange(`${input} `)}
-								onContinue={() => handleIdentify()}
-								canContinue={input.trim().length >= 2}
-							/>
-						)}
-					</CardContent>
+					{step === 'identify' && (
+						<OnScreenKeyboard
+							onKey={(char) => handleInputChange(input + char)}
+							onBackspace={() => handleInputChange(input.slice(0, -1))}
+							onClear={() => handleInputChange('')}
+							onSpace={() => handleInputChange(`${input} `)}
+							onContinue={() => handleIdentify()}
+							canContinue={input.trim().length >= 2}
+						/>
+					)}
 
 					{/* {step === 'choosePerson' && (
 						<ChoosePersonStep
