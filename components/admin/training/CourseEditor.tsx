@@ -123,6 +123,7 @@ export function CourseEditor({ course, locale }: Props) {
 								Danger zone
 							</div>
 							<Button
+								type="button"
 								variant="destructive"
 								onClick={async () => {
 									if (!confirm('Delete this course and all units/lessons?'))

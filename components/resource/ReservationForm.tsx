@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
 	Select,
 	SelectTrigger,
@@ -45,6 +46,8 @@ function schema(t: (k: string) => string) {
 		startTime: z.string().min(1, t('required')),
 		weeklyShiftId: z.string().uuid(),
 		phone: z.string().min(7, t('required')),
+		isForSomeoneElse: z.boolean(),
+		patronEmail: z.string().catch(''),
 		attendeeCount: z.string().min(1, t('required')),
 		assistanceLevel: z.enum(['none', 'startup', 'full']),
 		isClosedDayRequest: z.boolean(),
@@ -55,6 +58,23 @@ function schema(t: (k: string) => string) {
 		notes: z.string().catch(''),
 
 		status: z.enum(['pending', 'confirmed', 'denied', 'cancelled']).optional(),
+	}).superRefine((value, ctx) => {
+		if (!value.isForSomeoneElse) return
+		if (!value.patronEmail) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['patronEmail'],
+				message: t('required'),
+			})
+			return
+		}
+		if (!z.string().email().safeParse(value.patronEmail).success) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['patronEmail'],
+				message: t('reservation.patronEmailInvalid'),
+			})
+		}
 	})
 }
 
@@ -108,6 +128,8 @@ export function ReservationForm({
 			resourceId: '',
 			date: '',
 			phone: '',
+			isForSomeoneElse: false,
+			patronEmail: '',
 			startTime: '',
 			locale,
 			attendeeCount: '1',
@@ -131,6 +153,7 @@ export function ReservationForm({
 	const resourceId = useWatch({ control, name: 'resourceId' })
 	const date = useWatch({ control, name: 'date' })
 	const startTime = useWatch({ control, name: 'startTime' })
+	const isForSomeoneElse = useWatch({ control, name: 'isForSomeoneElse' })
 	const groupAffiliation = useWatch({ control, name: 'groupAffiliation' })
 
 	const attendeeCountRaw = useWatch({ control, name: 'attendeeCount' })
@@ -166,6 +189,12 @@ export function ReservationForm({
 			form.setValue('assistanceLevel', 'full')
 		}
 	}, [attendeeCount, form])
+
+	useEffect(() => {
+		if (!isForSomeoneElse) {
+			form.setValue('patronEmail', '')
+		}
+	}, [isForSomeoneElse, form])
 
 	/* ---------------- availability ---------------- */
 
@@ -641,6 +670,59 @@ export function ReservationForm({
 								</Field>
 							)}
 						/>
+
+						<Controller
+							name="isForSomeoneElse"
+							control={control}
+							render={({ field }) => (
+								<Field className="col-span-2">
+									<div className="flex items-start gap-3 rounded-lg border p-4">
+										<Checkbox
+											id="is-for-someone-else"
+											checked={field.value}
+											onCheckedChange={(checked) =>
+												field.onChange(Boolean(checked))
+											}
+											disabled={fieldsDisabled}
+										/>
+										<div className="space-y-1">
+											<FieldLabel
+												htmlFor="is-for-someone-else"
+												className="font-medium"
+											>
+												{t('reservation.fillingForSomeoneElse')}
+											</FieldLabel>
+											<p className="text-xs text-muted-foreground">
+												{t('reservation.fillingForSomeoneElseHelp')}
+											</p>
+										</div>
+									</div>
+								</Field>
+							)}
+						/>
+
+						{isForSomeoneElse && (
+							<Controller
+								name="patronEmail"
+								control={control}
+								render={({ field, fieldState }) => (
+									<Field data-invalid={fieldState.invalid} className="col-span-2">
+										<FieldLabel>
+											<Required>{t('reservation.patronEmail')}</Required>
+										</FieldLabel>
+										<Input
+											type="email"
+											placeholder="name@example.com"
+											{...field}
+											disabled={fieldsDisabled}
+										/>
+										{fieldState.error && (
+											<FieldError errors={[fieldState.error]} />
+										)}
+									</Field>
+								)}
+							/>
+						)}
 
 						{/* Status (admin) */}
 						{canSetStatus && (

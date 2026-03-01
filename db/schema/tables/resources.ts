@@ -66,6 +66,7 @@ export const reservations = pgTable(
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
 		phone: text('phone').notNull(),
+		patronEmail: text('patron_email'),
 		locale: text('locale').notNull().default('en'),
 		startTime: timestamp('start_time', { withTimezone: true }).notNull(),
 		endTime: timestamp('end_time', { withTimezone: true }).notNull(),

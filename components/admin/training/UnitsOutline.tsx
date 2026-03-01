@@ -42,6 +42,7 @@ export function UnitsOutline(props: {
 						placeholder="New unit title"
 					/>
 					<Button
+						type="button"
 						disabled={!unitTitle.trim()}
 						onClick={async () => {
 							await createUnit({ courseId, title: unitTitle.trim() })
@@ -78,6 +79,7 @@ export function UnitsOutline(props: {
 								</AccordionTrigger>
 
 								<Button
+									type="button"
 									size="sm"
 									variant="ghost"
 									className="text-destructive"
@@ -132,6 +134,7 @@ export function UnitsOutline(props: {
 												</button>
 
 												<Button
+													type="button"
 													size="sm"
 													variant="ghost"
 													className="text-destructive"
@@ -176,6 +179,7 @@ function LessonAdder(props: { unitId: string; onAdded: () => void }) {
 				placeholder="New lesson title"
 			/>
 			<Button
+				type="button"
 				disabled={!lessonTitle.trim()}
 				onClick={async () => {
 					await createLesson({ unitId, title: lessonTitle.trim() })

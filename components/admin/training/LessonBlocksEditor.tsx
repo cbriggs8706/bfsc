@@ -59,6 +59,7 @@ export function LessonBlocksEditor({ lessonId, blocks }: Props) {
 						<span className="text-xs text-muted-foreground">CONTENT</span>
 
 						<Button
+							type="button"
 							size="sm"
 							variant="destructive"
 							onClick={async () => {
@@ -73,6 +74,7 @@ export function LessonBlocksEditor({ lessonId, blocks }: Props) {
 				</div>
 			) : (
 				<Button
+					type="button"
 					size="sm"
 						onClick={async () => {
 							await createLessonBlock({
@@ -95,6 +97,7 @@ export function LessonBlocksEditor({ lessonId, blocks }: Props) {
 						</span>
 						<div className="flex gap-2">
 							<Button
+								type="button"
 								size="sm"
 								variant="destructive"
 								onClick={async () => {
@@ -115,6 +118,7 @@ export function LessonBlocksEditor({ lessonId, blocks }: Props) {
 							/>
 							<div className="flex flex-wrap gap-2">
 								<Button
+									type="button"
 									size="sm"
 									variant="outline"
 									onClick={async () => {
@@ -124,6 +128,7 @@ export function LessonBlocksEditor({ lessonId, blocks }: Props) {
 									Copy URL
 								</Button>
 								<Button
+									type="button"
 									size="sm"
 									variant="outline"
 									disabled={workingId === 'migrate'}
@@ -149,6 +154,7 @@ export function LessonBlocksEditor({ lessonId, blocks }: Props) {
 							/>
 							<div className="flex flex-wrap gap-2">
 								<Button
+									type="button"
 									size="sm"
 									variant="outline"
 									onClick={async () => {
@@ -158,6 +164,7 @@ export function LessonBlocksEditor({ lessonId, blocks }: Props) {
 									Copy Path/URL
 								</Button>
 								<Button
+									type="button"
 									size="sm"
 									variant="outline"
 									disabled={workingId === 'migrate'}

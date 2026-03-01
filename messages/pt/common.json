@@ -113,6 +113,10 @@
 		"requestSub": "Esta solicitação aparecerá sob o seu nome no sistema. Se você for um consultor, certifique-se de incluir o nome do usuário nas observações.",
 		"requestSuccess": "Solicitação de reserva enviada",
 		"requestSuccessSub": "Sua solicitação foi recebida e será analisada em breve.",
+		"fillingForSomeoneElse": "Estou preenchendo isto para outra pessoa",
+		"fillingForSomeoneElseHelp": "Use quando um consultor estiver enviando para um usuário.",
+		"patronEmail": "E-mail do usuário",
+		"patronEmailInvalid": "Informe um endereço de e-mail válido",
 		"statuses": {
 			"pending": "Pendente",
 			"approved": "Aprovada",

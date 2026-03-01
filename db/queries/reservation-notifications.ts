@@ -12,7 +12,7 @@ import {
 	kioskPeople,
 } from '@/db'
 import { StaffRecipient } from '@/types/resource'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 
 export type ReservationNotificationContext = {
 	reservationId: string
@@ -38,7 +38,7 @@ export async function getReservationNotificationContext(
 		.select({
 			reservationId: reservations.id,
 			locale: reservations.locale,
-			submitterEmail: user.email,
+			submitterEmail: sql<string | null>`coalesce(${reservations.patronEmail}, ${user.email})`,
 			submitterName: user.name,
 			resourceName: resources.name,
 

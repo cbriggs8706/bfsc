@@ -29,17 +29,13 @@ export type ReservationFormValues = {
 	startTime: string // HH:mm (slot start)
 	attendeeCount: string
 	phone: string
+	isForSomeoneElse: boolean
+	patronEmail: string
 	assistanceLevel: AssistanceLevel
 	isClosedDayRequest: boolean
 	notes: string
 	status?: ReservationStatus // Admin-only
 	locale: string
-}
-
-type StakeWithWards = {
-	id: string
-	name: string
-	wards: { id: string; name: string }[]
 }
 
 /* ------------------------------------------------------------------ */
@@ -52,6 +48,8 @@ const ReservationInputSchema = z.object({
 	startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time (HH:mm)'),
 	weeklyShiftId: z.string().uuid(),
 	phone: z.string(),
+	isForSomeoneElse: z.coerce.boolean().default(false),
+	patronEmail: z.string().trim().toLowerCase().default(''),
 	attendeeCount: z.coerce.number().int().min(1),
 	assistanceLevel: z.enum(['none', 'startup', 'full']),
 	isClosedDayRequest: z.coerce.boolean(),
@@ -62,6 +60,25 @@ const ReservationInputSchema = z.object({
 
 	notes: z.string().catch(''),
 	status: z.enum(['pending', 'confirmed', 'denied', 'cancelled']).optional(),
+}).superRefine((data, ctx) => {
+	if (data.isForSomeoneElse) {
+		if (!data.patronEmail) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['patronEmail'],
+				message: 'Email is required when filing for someone else',
+			})
+			return
+		}
+
+		if (!z.string().email().safeParse(data.patronEmail).success) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['patronEmail'],
+				message: 'Please enter a valid email address',
+			})
+		}
+	}
 })
 
 export type ReservationActionResult =
@@ -113,6 +130,7 @@ export async function readReservationForForm(id: string) {
 			startTime: true,
 			endTime: true,
 			phone: true,
+			patronEmail: true,
 			attendeeCount: true,
 			assistanceLevel: true,
 			isClosedDayRequest: true,
@@ -130,6 +148,8 @@ export async function readReservationForForm(id: string) {
 		resourceId: row.resourceId,
 		locale: row.locale,
 		phone: row.phone,
+		isForSomeoneElse: Boolean(row.patronEmail),
+		patronEmail: row.patronEmail ?? '',
 		date: ymdInTz(start, centerTime.timeZone),
 		startTime: toHHMMInTz(start, centerTime.timeZone),
 		attendeeCount: String(row.attendeeCount ?? 1),
@@ -221,6 +241,10 @@ export async function saveReservation(
 					userId,
 					weeklyShiftId: data.weeklyShiftId,
 					phone: normalizedPhone,
+					patronEmail:
+						data.isForSomeoneElse && data.patronEmail
+							? data.patronEmail
+							: null,
 					startTime: start,
 					endTime: end,
 					locale: data.locale,
@@ -265,6 +289,8 @@ export async function saveReservation(
 				endTime: end,
 				locale: data.locale,
 				phone: normalizedPhone,
+				patronEmail:
+					data.isForSomeoneElse && data.patronEmail ? data.patronEmail : null,
 				attendeeCount: data.attendeeCount,
 				assistanceLevel: data.assistanceLevel,
 				isClosedDayRequest: data.isClosedDayRequest,
