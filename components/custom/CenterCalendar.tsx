@@ -38,6 +38,7 @@ import {
 	CalendarDays,
 	CalendarRange,
 	Calendar as CalendarIcon,
+	Printer,
 } from 'lucide-react'
 
 import { toAmPm, formatLongDate, formatInTz } from '@/utils/time'
@@ -83,6 +84,24 @@ type CalendarClass = {
 }
 
 type CalendarView = 'month' | 'week' | 'day'
+type ReservationStatus = 'pending' | 'confirmed' | 'denied' | 'cancelled'
+
+type PrintSettings = {
+	month: string
+	includeClasses: boolean
+	includeReservations: boolean
+	classPresenter: string
+	classLocation: string
+	reservationResource: string
+	reservationStatuses: ReservationStatus[]
+}
+
+const PRIVILEGED_RESERVATION_ROLES = new Set([
+	'Admin',
+	'Director',
+	'Assistant Director',
+	'Shift Leader',
+])
 
 /* ============================
    SMALL HELPERS
@@ -155,6 +174,7 @@ export default function CenterCalendar({
 	initialMonth,
 	locale,
 	centerTime,
+	currentUser,
 }: {
 	specials: Special[]
 	weekly: Weekly[]
@@ -165,6 +185,10 @@ export default function CenterCalendar({
 	centerTime: {
 		timeZone: string
 	}
+	currentUser: {
+		id: string
+		role: string
+	} | null
 }) {
 	const isMobile = useIsMobile()
 
@@ -173,6 +197,27 @@ export default function CenterCalendar({
 		new Date(initialYear, initialMonth, 1)
 	)
 	const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+	const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false)
+
+	const canPrint = Boolean(currentUser?.id)
+	const canSeeUnconfirmedReservations = currentUser
+		? PRIVILEGED_RESERVATION_ROLES.has(currentUser.role)
+		: false
+
+	const monthToInput = (date: Date) => format(date, 'yyyy-MM')
+
+	const [printSettings, setPrintSettings] = useState<PrintSettings>({
+		month: monthToInput(new Date(initialYear, initialMonth, 1)),
+		includeClasses: true,
+		includeReservations: true,
+		classPresenter: 'all',
+		classLocation: 'all',
+		reservationResource: 'all',
+		reservationStatuses: canSeeUnconfirmedReservations
+			? ['confirmed', 'pending']
+			: ['confirmed'],
+	})
+	const [didLoadPrintSettings, setDidLoadPrintSettings] = useState(false)
 
 	// Mobile default: day view
 	useEffect(() => {
@@ -181,6 +226,60 @@ export default function CenterCalendar({
 		setView('day')
 		setViewDate(startOfDay(new Date()))
 	}, [isMobile])
+
+	useEffect(() => {
+		if (!canPrint || !currentUser) return
+		let cancelled = false
+
+		const load = async () => {
+			try {
+				const response = await fetch('/api/calendar/print-settings', {
+					cache: 'no-store',
+				})
+				if (!response.ok) return
+				const payload = (await response.json()) as {
+					settings?: Partial<PrintSettings> | null
+				}
+				if (cancelled || !payload.settings) return
+
+				const statuses = Array.isArray(payload.settings.reservationStatuses)
+					? payload.settings.reservationStatuses.filter(
+							(status): status is ReservationStatus =>
+								['pending', 'confirmed', 'denied', 'cancelled'].includes(
+									String(status)
+								)
+					  )
+					: []
+
+				setPrintSettings((prev) => ({
+					...prev,
+					...payload.settings,
+					reservationStatuses:
+						canSeeUnconfirmedReservations && statuses.length > 0
+							? statuses
+							: ['confirmed'],
+				}))
+			} finally {
+				if (!cancelled) {
+					setDidLoadPrintSettings(true)
+				}
+			}
+		}
+
+		void load()
+
+		return () => {
+			cancelled = true
+		}
+	}, [canPrint, canSeeUnconfirmedReservations, currentUser])
+
+	useEffect(() => {
+		if (printSettings.reservationStatuses.length > 0) return
+		setPrintSettings((prev) => ({
+			...prev,
+			reservationStatuses: ['confirmed'],
+		}))
+	}, [printSettings.reservationStatuses.length])
 
 	/* ============================
 	   MAPS
@@ -212,6 +311,39 @@ export default function CenterCalendar({
 		})
 
 		return map
+	}, [classes])
+
+	const classPresenterOptions = useMemo(() => {
+		return Array.from(
+			new Set(
+				classes
+					.filter((event) => event.kind === 'class')
+					.flatMap((event) => event.presenters)
+					.filter(Boolean)
+			)
+		).sort((a, b) => a.localeCompare(b))
+	}, [classes])
+
+	const classLocationOptions = useMemo(() => {
+		return Array.from(
+			new Set(
+				classes
+					.filter((event) => event.kind === 'class')
+					.map((event) => event.location)
+					.filter(Boolean)
+			)
+		).sort((a, b) => a.localeCompare(b))
+	}, [classes])
+
+	const reservationResourceOptions = useMemo(() => {
+		return Array.from(
+			new Set(
+				classes
+					.filter((event) => event.kind === 'reservation')
+					.map((event) => event.location)
+					.filter(Boolean)
+			)
+		).sort((a, b) => a.localeCompare(b))
 	}, [classes])
 
 	function getEventColorClasses(event: CalendarClass) {
@@ -1002,8 +1134,69 @@ export default function CenterCalendar({
 				<CalendarDays className="h-4 w-4" />
 				<span className="hidden sm:inline">Month</span>
 			</Button>
+
+			{canPrint && (
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => {
+						setPrintSettings((prev) => ({
+							...prev,
+							month: monthToInput(viewDate),
+						}))
+						setIsPrintDialogOpen(true)
+					}}
+					className="gap-2"
+				>
+					<Printer className="h-4 w-4" />
+					<span className="hidden sm:inline">Print</span>
+				</Button>
+			)}
 		</div>
 	)
+
+	const printDisabled =
+		!printSettings.includeClasses && !printSettings.includeReservations
+
+	const openPrintView = () => {
+		if (printDisabled) return
+		const params = new URLSearchParams()
+		params.set('month', printSettings.month)
+		params.set('includeClasses', printSettings.includeClasses ? '1' : '0')
+		params.set(
+			'includeReservations',
+			printSettings.includeReservations ? '1' : '0'
+		)
+
+		if (printSettings.classPresenter !== 'all') {
+			params.set('classPresenter', printSettings.classPresenter)
+		}
+		if (printSettings.classLocation !== 'all') {
+			params.set('classLocation', printSettings.classLocation)
+		}
+		if (printSettings.reservationResource !== 'all') {
+			params.set('reservationResource', printSettings.reservationResource)
+		}
+
+		const statuses = canSeeUnconfirmedReservations
+			? printSettings.reservationStatuses
+			: (['confirmed'] as ReservationStatus[])
+		params.set('reservationStatuses', statuses.join(','))
+
+		if (didLoadPrintSettings) {
+			void fetch('/api/calendar/print-settings', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					...printSettings,
+					reservationStatuses: statuses,
+				}),
+			})
+		}
+
+		window.open(`/calendar/print?${params.toString()}`, '_blank', 'noopener')
+		setIsPrintDialogOpen(false)
+	}
 
 	/* ============================
 	   RENDER
@@ -1071,6 +1264,208 @@ export default function CenterCalendar({
 							<DialogTitle>{formatLongDate(ymd(selectedDate))}</DialogTitle>
 						</DialogHeader>
 						<DayDetails date={selectedDate} />
+					</DialogContent>
+				</Dialog>
+			)}
+
+			{canPrint && (
+				<Dialog open={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen}>
+					<DialogContent className="sm:max-w-xl">
+						<DialogHeader>
+							<DialogTitle>Print Calendar</DialogTitle>
+						</DialogHeader>
+
+						<div className="space-y-4 text-sm">
+							<div className="space-y-1">
+								<label className="font-medium" htmlFor="print-month">
+									Month
+								</label>
+								<input
+									id="print-month"
+									type="month"
+									value={printSettings.month}
+									onChange={(event) =>
+										setPrintSettings((prev) => ({
+											...prev,
+											month: event.target.value,
+										}))
+									}
+									className="w-full rounded-md border px-3 py-2 bg-background"
+								/>
+							</div>
+
+							<div className="space-y-2">
+								<div className="font-medium">Include</div>
+								<label className="flex items-center gap-2">
+									<input
+										type="checkbox"
+										checked={printSettings.includeClasses}
+										onChange={(event) =>
+											setPrintSettings((prev) => ({
+												...prev,
+												includeClasses: event.target.checked,
+											}))
+										}
+									/>
+									<span>Classes</span>
+								</label>
+								<label className="flex items-center gap-2">
+									<input
+										type="checkbox"
+										checked={printSettings.includeReservations}
+										onChange={(event) =>
+											setPrintSettings((prev) => ({
+												...prev,
+												includeReservations: event.target.checked,
+											}))
+										}
+									/>
+									<span>Reservations</span>
+								</label>
+							</div>
+
+							{printSettings.includeClasses && (
+								<div className="grid gap-3 sm:grid-cols-2">
+									<div className="space-y-1">
+										<label className="font-medium" htmlFor="class-location">
+											Class location
+										</label>
+										<select
+											id="class-location"
+											className="w-full rounded-md border px-3 py-2 bg-background"
+											value={printSettings.classLocation}
+											onChange={(event) =>
+												setPrintSettings((prev) => ({
+													...prev,
+													classLocation: event.target.value,
+												}))
+											}
+										>
+											<option value="all">All locations</option>
+											{classLocationOptions.map((location) => (
+												<option key={location} value={location}>
+													{location}
+												</option>
+											))}
+										</select>
+									</div>
+									<div className="space-y-1">
+										<label className="font-medium" htmlFor="class-presenter">
+											Class presenter
+										</label>
+										<select
+											id="class-presenter"
+											className="w-full rounded-md border px-3 py-2 bg-background"
+											value={printSettings.classPresenter}
+											onChange={(event) =>
+												setPrintSettings((prev) => ({
+													...prev,
+													classPresenter: event.target.value,
+												}))
+											}
+										>
+											<option value="all">All presenters</option>
+											{classPresenterOptions.map((presenter) => (
+												<option key={presenter} value={presenter}>
+													{presenter}
+												</option>
+											))}
+										</select>
+									</div>
+								</div>
+							)}
+
+							{printSettings.includeReservations && (
+								<div className="space-y-3">
+									<div className="space-y-1">
+										<label
+											className="font-medium"
+											htmlFor="reservation-resource"
+										>
+											Reservation resource
+										</label>
+										<select
+											id="reservation-resource"
+											className="w-full rounded-md border px-3 py-2 bg-background"
+											value={printSettings.reservationResource}
+											onChange={(event) =>
+												setPrintSettings((prev) => ({
+													...prev,
+													reservationResource: event.target.value,
+												}))
+											}
+										>
+											<option value="all">All resources</option>
+											{reservationResourceOptions.map((resource) => (
+												<option key={resource} value={resource}>
+													{resource}
+												</option>
+											))}
+										</select>
+									</div>
+
+									<div className="space-y-2">
+										<div className="font-medium">Reservation status</div>
+										{canSeeUnconfirmedReservations ? (
+											<div className="grid grid-cols-2 gap-2">
+												{([
+													['confirmed', 'Confirmed'],
+													['pending', 'Tentative'],
+													['denied', 'Denied'],
+													['cancelled', 'Cancelled'],
+												] as [ReservationStatus, string][]).map(
+													([status, label]) => (
+														<label
+															key={status}
+															className="flex items-center gap-2"
+														>
+															<input
+																type="checkbox"
+																checked={printSettings.reservationStatuses.includes(
+																	status
+																)}
+																onChange={(event) => {
+																	setPrintSettings((prev) => {
+																		const next = new Set(
+																			prev.reservationStatuses
+																		)
+																		if (event.target.checked) next.add(status)
+																		else next.delete(status)
+																		return {
+																			...prev,
+																			reservationStatuses:
+																				Array.from(next) as ReservationStatus[],
+																		}
+																	})
+																}}
+															/>
+															<span>{label}</span>
+														</label>
+													)
+												)}
+											</div>
+										) : (
+											<p className="text-muted-foreground">
+												Only confirmed reservations are available for your
+												role.
+											</p>
+										)}
+									</div>
+								</div>
+							)}
+
+							<div className="flex justify-end gap-2 pt-2">
+								<Button
+									variant="outline"
+									onClick={() => setIsPrintDialogOpen(false)}
+								>
+									Cancel
+								</Button>
+								<Button onClick={openPrintView} disabled={printDisabled}>
+									Open Print View
+								</Button>
+							</div>
+						</div>
 					</DialogContent>
 				</Dialog>
 			)}

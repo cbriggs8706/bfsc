@@ -5,10 +5,12 @@ import {
 	text,
 	boolean,
 	timestamp,
+	integer,
 	index,
 	jsonb,
 	unique,
 } from 'drizzle-orm/pg-core'
+import { user } from '@/db/schema/tables/auth'
 
 export const newsletterPosts = pgTable(
 	'newsletter_posts',
@@ -139,4 +141,30 @@ export const newsletterSubscribers = pgTable(
 			.defaultNow(),
 	},
 	(table) => [index('newsletter_email_unique').on(table.email)]
+)
+
+export const newsletterEmailSends = pgTable(
+	'newsletter_email_sends',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+		senderUserId: uuid('sender_user_id').references(() => user.id, {
+			onDelete: 'set null',
+		}),
+		senderEmail: text('sender_email').notNull(),
+		sendMode: text('send_mode').$type<'test' | 'full'>().notNull(),
+		selectedMonth: text('selected_month'),
+		subject: text('subject').notNull(),
+		recipientCount: integer('recipient_count').notNull(),
+		recipientEmailsSample: jsonb('recipient_emails_sample')
+			.$type<string[]>()
+			.notNull(),
+		attachmentNames: jsonb('attachment_names').$type<string[]>().notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index('newsletter_email_sends_created_at_idx').on(table.createdAt),
+		index('newsletter_email_sends_sender_user_id_idx').on(table.senderUserId),
+	]
 )

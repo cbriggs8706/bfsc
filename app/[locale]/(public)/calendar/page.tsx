@@ -6,6 +6,8 @@ import { and, gte, lte } from 'drizzle-orm'
 import { listCalendarEvents } from '@/db/queries/calendar-classes'
 import { getTranslations } from 'next-intl/server'
 import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 type Props = {
 	params: Promise<{ locale: string }>
@@ -16,6 +18,7 @@ export default async function Page({ params }: Props) {
 
 	const t = await getTranslations({ locale, namespace: 'common' })
 	const centerTime = await getCenterTimeConfig()
+	const session = await getServerSession(authOptions)
 
 	const [year, month] = ymdInTz(new Date(), centerTime.timeZone)
 		.split('-')
@@ -75,6 +78,14 @@ export default async function Page({ params }: Props) {
 				initialYear={year}
 				initialMonth={month - 1}
 				locale={locale}
+				currentUser={
+					session?.user?.id
+						? {
+								id: session.user.id,
+								role: session.user.role ?? 'Patron',
+						  }
+						: null
+				}
 			/>
 		</div>
 	)

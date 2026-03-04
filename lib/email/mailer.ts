@@ -1,11 +1,18 @@
 // lib/email/mailer.ts
 import { Resend } from 'resend'
 
+type EmailAttachment = {
+	filename: string
+	content: string
+	contentType?: string
+}
+
 type SendEmailArgs = {
 	from: string
 	to: string[]
 	subject: string
 	html: string
+	attachments?: EmailAttachment[]
 }
 
 export type OutboxEmail = SendEmailArgs & {
@@ -31,7 +38,13 @@ export function clearEmailOutbox() {
 	outbox.length = 0
 }
 
-export async function sendEmail({ from, to, subject, html }: SendEmailArgs) {
+export async function sendEmail({
+	from,
+	to,
+	subject,
+	html,
+	attachments,
+}: SendEmailArgs) {
 	if (to.length === 0) return
 
 	if (!shouldSendRealEmail()) {
@@ -40,6 +53,10 @@ export async function sendEmail({ from, to, subject, html }: SendEmailArgs) {
 			to,
 			subject,
 			html,
+			attachments: (attachments ?? []).map((attachment) => ({
+				...attachment,
+				content: '[base64 omitted]',
+			})),
 			sentAt: new Date().toISOString(),
 		})
 		return
@@ -51,5 +68,6 @@ export async function sendEmail({ from, to, subject, html }: SendEmailArgs) {
 		to,
 		subject,
 		html,
+		attachments,
 	})
 }
