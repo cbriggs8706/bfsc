@@ -12,6 +12,10 @@ import {
 import { can } from '@/lib/permissions/can'
 import { requirePermission } from '@/lib/permissions/require-permission'
 import { sendEmail } from '@/lib/email/mailer'
+import { renderNewsletterMonthlySchedulePdf } from '@/lib/pdf/newsletter-monthly-schedule'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { listCalendarPrintData } from '@/db/queries/calendar-print'
+import { formatInTz, formatYmdMonth } from '@/utils/time'
 
 const FROM_EMAIL =
 	'Burley FamilySearch Center <no-reply@burleyfamilysearchcenter.com>'
@@ -22,6 +26,15 @@ type EncodedAttachment = {
 	filename: string
 	content: string
 	contentType?: string
+}
+
+function escapeHtml(input: string) {
+	return input
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#39;')
 }
 
 function sanitizeEmailHtml(raw: string) {
@@ -77,6 +90,81 @@ function htmlHasVisibleText(raw: string) {
 
 function toHtmlMessage(bodyHtml: string) {
 	return `<div style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6;">${bodyHtml}</div>`
+}
+
+async function buildMonthlyScheduleHtml(month: string) {
+	const centerTime = await getCenterTimeConfig()
+	const data = await listCalendarPrintData({
+		month,
+		centerTimeZone: centerTime.timeZone,
+		includeClasses: true,
+		includeReservations: false,
+		classPresenter: null,
+		classLocation: null,
+		reservationResource: null,
+		reservationStatuses: ['confirmed'],
+		canViewUnconfirmedReservations: false,
+	})
+
+	const monthLabel = formatYmdMonth(month, 'en-US')
+	const sections: string[] = []
+	const byDate = new Map<string, string[]>()
+
+	for (const event of data.classes) {
+		const time = formatInTz(new Date(event.startsAtIso), centerTime.timeZone, 'h:mm a')
+		const lineItems = [
+			`<strong>${escapeHtml(time)} - ${escapeHtml(event.title)}${
+				event.isCanceled ? ' (Canceled)' : ''
+			}</strong>`,
+			escapeHtml(event.location),
+		]
+		if (event.presenters.length > 0) {
+			lineItems.push(`Presenters: ${escapeHtml(event.presenters.join(', '))}`)
+		}
+		if (event.description?.trim()) {
+			lineItems.push(escapeHtml(event.description.trim()))
+		}
+		const item = `<li>${lineItems.join('<br />')}</li>`
+		const rows = byDate.get(event.date) ?? []
+		rows.push(item)
+		byDate.set(event.date, rows)
+	}
+
+	for (const closure of data.closures) {
+		const reason = closure.reason?.trim()
+			? ` - ${escapeHtml(closure.reason.trim())}`
+			: ''
+		const item = `<li><strong>Closed</strong>${reason}</li>`
+		const rows = byDate.get(closure.date) ?? []
+		rows.push(item)
+		byDate.set(closure.date, rows)
+	}
+
+	const orderedDates = Array.from(byDate.keys()).sort((a, b) => a.localeCompare(b))
+	for (const ymd of orderedDates) {
+		const [year, mon, day] = ymd.split('-').map(Number)
+		const dateLabel = new Date(year, mon - 1, day).toLocaleDateString('en-US', {
+			weekday: 'long',
+			month: 'long',
+			day: 'numeric',
+			year: 'numeric',
+		})
+		sections.push(
+			`<p><strong>${escapeHtml(dateLabel)}</strong></p><ul>${(
+				byDate.get(ymd) ?? []
+			).join('')}</ul>`
+		)
+	}
+
+	if (sections.length === 0) {
+		return `<p><strong>Class Schedule - ${escapeHtml(
+			monthLabel
+		)}</strong></p><p>No classes or closures found for this month.</p>`
+	}
+
+	return `<p><strong>Class Schedule - ${escapeHtml(
+		monthLabel
+	)}</strong></p>${sections.join('')}`
 }
 
 function splitIntoBatches(values: string[], size: number) {
@@ -207,6 +295,15 @@ export async function sendNewsletterBroadcastEmail(formData: FormData) {
 			getNewsletterAudienceEmails(),
 			encodeAttachments(files),
 		])
+		const calendarAttachment = selectedMonth
+			? await renderNewsletterMonthlySchedulePdf(selectedMonth)
+			: null
+		const scheduleHtmlSection = selectedMonth
+			? await buildMonthlyScheduleHtml(selectedMonth)
+			: ''
+		const finalAttachments = calendarAttachment
+			? [calendarAttachment, ...attachments]
+			: attachments
 
 		const recipients =
 			sendMode === 'test'
@@ -225,14 +322,16 @@ export async function sendNewsletterBroadcastEmail(formData: FormData) {
 			)
 		}
 
-		const html = toHtmlMessage(messageHtml)
+		const html = toHtmlMessage(
+			`${messageHtml}${scheduleHtmlSection ? `<br /><br />${scheduleHtmlSection}` : ''}`
+		)
 		for (const batch of splitIntoBatches(recipients, RECIPIENT_BATCH_SIZE)) {
 			await sendEmail({
 				from: FROM_EMAIL,
 				to: batch,
 				subject,
 				html,
-				attachments,
+				attachments: finalAttachments,
 			})
 		}
 
@@ -244,7 +343,7 @@ export async function sendNewsletterBroadcastEmail(formData: FormData) {
 			subject,
 			recipientCount: recipients.length,
 			recipientEmailsSample: recipients.slice(0, 10),
-			attachmentNames: attachments.map((attachment) => attachment.filename),
+			attachmentNames: finalAttachments.map((attachment) => attachment.filename),
 		})
 
 		redirect(

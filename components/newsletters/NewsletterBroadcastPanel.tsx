@@ -144,6 +144,10 @@ export function NewsletterBroadcastPanel({ locale, returnTo, action }: Props) {
 						Total selected: {files.length} file(s), {totalAttachmentMb} MB (server
 						action limit is 8 MB total).
 					</p>
+					<p className="text-xs text-muted-foreground">
+						The selected month&apos;s class schedule PDF is auto-attached at send
+						time.
+					</p>
 				</div>
 
 				{files.length > 0 ? (

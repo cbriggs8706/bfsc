@@ -27,7 +27,8 @@ const outbox = globalForMail.__mailOutbox ?? []
 globalForMail.__mailOutbox = outbox
 
 function shouldSendRealEmail() {
-	return process.env.NODE_ENV === 'production' && Boolean(process.env.RESEND_API_KEY)
+	if (process.env.FORCE_EMAIL_OUTBOX === '1') return false
+	return Boolean(process.env.RESEND_API_KEY)
 }
 
 export function getEmailOutbox() {

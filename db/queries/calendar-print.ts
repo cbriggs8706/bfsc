@@ -13,6 +13,7 @@ import { user } from '@/db/schema/tables/auth'
 import { reservations, resources } from '@/db/schema/tables/resources'
 import { specialHours } from '@/db/schema/tables/shifts'
 import { ymdInTz } from '@/utils/time'
+import { listGoogleCalendarEvents } from '@/lib/calendar/google-calendar'
 
 type ReservationStatus = 'pending' | 'confirmed' | 'denied' | 'cancelled'
 
@@ -21,6 +22,7 @@ export type PrintableClassEvent = {
 	date: string
 	startsAtIso: string
 	title: string
+	description: string | null
 	location: string
 	presenters: string[]
 	isCanceled: boolean
@@ -94,8 +96,10 @@ export async function listCalendarPrintData({
 				startsAt: classSession.startsAt,
 				status: classSession.status,
 				titleOverride: classSession.titleOverride,
+				descriptionOverride: classSession.descriptionOverride,
 				locationOverride: classSession.locationOverride,
 				seriesTitle: classSeries.title,
+				seriesDescription: classSeries.description,
 				seriesLocation: classSeries.location,
 				presenterName: user.name,
 			})
@@ -124,6 +128,7 @@ export async function listCalendarPrintData({
 					date: ymdInTz(start, centerTimeZone),
 					startsAtIso: start.toISOString(),
 					title: row.titleOverride || row.seriesTitle,
+					description: row.descriptionOverride || row.seriesDescription,
 					location: row.locationOverride || row.seriesLocation,
 					presenters: row.presenterName ? [row.presenterName] : [],
 					isCanceled: row.status === 'canceled',
@@ -151,6 +156,41 @@ export async function listCalendarPrintData({
 					: true
 			)
 			.sort((a, b) => a.startsAtIso.localeCompare(b.startsAtIso))
+
+		const googleEvents = await listGoogleCalendarEvents({
+			rangeStart: rangeStartUtc,
+			rangeEnd: rangeEndUtc,
+			centerTimeZone,
+		})
+
+		const printableGoogleEvents: PrintableClassEvent[] = googleEvents
+			.map((event) => {
+				const start = new Date(event.startsAtIso)
+				return {
+					id: `google:${event.id}`,
+					date: ymdInTz(start, centerTimeZone),
+					startsAtIso: event.startsAtIso,
+						title: event.title,
+						description: event.description,
+						location: event.location,
+						presenters: [] as string[],
+						isCanceled: false,
+					}
+				})
+			.filter((event) =>
+				classPresenter && classPresenter !== 'all'
+					? event.presenters.includes(classPresenter)
+					: true
+			)
+			.filter((event) =>
+				classLocation && classLocation !== 'all'
+					? event.location === classLocation
+					: true
+			)
+
+		printableClasses = [...printableClasses, ...printableGoogleEvents].sort(
+			(a, b) => a.startsAtIso.localeCompare(b.startsAtIso)
+		)
 	}
 
 	let printableReservations: PrintableReservationEvent[] = []

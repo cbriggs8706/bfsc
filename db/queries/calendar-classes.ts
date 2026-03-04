@@ -13,6 +13,7 @@ import { user } from '@/db/schema/tables/auth'
 import { reservations, resources } from '@/db/schema/tables/resources'
 import { ymdInTz } from '@/utils/time'
 import { getConfirmedEventsForCalendar } from './group-scheduling'
+import { listGoogleCalendarEvents } from '@/lib/calendar/google-calendar'
 
 type ClassCalendarEvent = {
 	id: string
@@ -161,6 +162,12 @@ export async function listCalendarEvents(
 		getConfirmedEventsForCalendar(rangeStartUtc, rangeEndUtc),
 	])
 
+	const googleEvents = await listGoogleCalendarEvents({
+		rangeStart: rangeStartUtc,
+		rangeEnd: rangeEndUtc,
+		centerTimeZone,
+	})
+
 	const reservationEvents: ReservationCalendarEvent[] = reservationRows.map(
 		(r) => {
 			const dt = new Date(r.startTime)
@@ -199,9 +206,26 @@ export async function listCalendarEvents(
 		}
 	})
 
+	const googleCalendarEvents: ClassCalendarEvent[] = googleEvents.map((event) => {
+		const dt = new Date(event.startsAtIso)
+		return {
+			id: `google:${event.id}`,
+			date: ymdInTz(dt, centerTimeZone),
+			startsAtIso: event.startsAtIso,
+			title: event.title,
+			description: event.description,
+			descriptionOverride: null,
+			location: event.location,
+			isCanceled: false,
+			presenters: [],
+			kind: 'class',
+		}
+	})
+
 	return [
 		...Array.from(bySession.values()),
 		...reservationEvents,
 		...groupVisitEvents,
+		...googleCalendarEvents,
 	].sort((a, b) => a.startsAtIso.localeCompare(b.startsAtIso))
 }
