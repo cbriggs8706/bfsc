@@ -18,11 +18,12 @@ import {
 	CalendarRange,
 	CalendarPlus,
 	Files,
-	HandHeart,
 	HandHelping,
 } from 'lucide-react'
 import type { TFunction } from '@/types/i18n'
 import { CASE_VIEWS } from '@/lib/cases/views'
+import type { CmsMenuGroups } from '@/types/cms'
+import { resolveCmsMenuIcon } from '@/lib/cms-menu-icons'
 
 export function buildSidebarData(t: TFunction, locale: string) {
 	return {
@@ -46,12 +47,7 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				icon: Search,
 				items: [],
 			},
-			{
-				title: t('sidebar.main.consultantHelps'),
-				url: `/${locale}/consultant-helps`,
-				icon: BadgeQuestionMark,
-				items: [],
-			},
+
 			{
 				title: t('sidebar.main.communityProjects'),
 				url: `/${locale}/projects`,
@@ -64,12 +60,7 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				icon: Camera,
 				items: [],
 			},
-			{
-				title: t('sidebar.main.activities'),
-				url: `/${locale}/activities`,
-				icon: Pencil,
-				items: [],
-			},
+
 			{
 				title: t('sidebar.main.newsletters'),
 				url: `/${locale}/newsletters`,
@@ -237,6 +228,49 @@ export function buildSidebarData(t: TFunction, locale: string) {
 				url: `/${locale}/admin/training`,
 				icon: GraduationCap,
 			},
+			{
+				title: 'Page Builder',
+				url: `/${locale}/admin/pages`,
+				icon: Files,
+			},
+		],
+	}
+}
+
+export function mergeCmsMenuGroups(
+	data: ReturnType<typeof buildSidebarData>,
+	cmsMenuGroups?: CmsMenuGroups,
+) {
+	if (!cmsMenuGroups) return data
+
+	return {
+		...data,
+		navMain: [
+			...data.navMain,
+			...cmsMenuGroups.main.map((item) => ({
+				title: item.title,
+				url: item.url,
+				icon: resolveCmsMenuIcon(item.iconName),
+				items: [],
+			})),
+		],
+		worker: [
+			...data.worker,
+			...cmsMenuGroups.worker.map((item) => ({
+				title: item.title,
+				url: item.url,
+				icon: resolveCmsMenuIcon(item.iconName),
+				items: [],
+			})),
+		],
+		admin: [
+			...data.admin,
+			...cmsMenuGroups.admin.map((item) => ({
+				title: item.title,
+				url: item.url,
+				icon: resolveCmsMenuIcon(item.iconName),
+				items: [],
+			})),
 		],
 	}
 }

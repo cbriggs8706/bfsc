@@ -1,15 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 
-import {
-	readCheckpointContributionForForm,
-	saveCheckpointContribution,
-} from '@/lib/actions/projects/front-checkpoints'
+import { saveCheckpointContribution } from '@/lib/actions/projects/front-checkpoints'
 import type { CheckpointFormMode, CheckpointFormValues } from '@/types/projects'
 
 import { Button } from '@/components/ui/button'
@@ -35,6 +32,7 @@ type Props = {
 	checkpointId: string
 	projectId: string
 	locale: string
+	canMarkComplete: boolean
 }
 
 export function CheckpointContributionForm({
@@ -42,9 +40,11 @@ export function CheckpointContributionForm({
 	checkpointId,
 	projectId,
 	locale,
+	canMarkComplete,
 }: Props) {
 	const router = useRouter()
 	const [isPending, startTransition] = useTransition()
+	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 	const disabled = isPending || mode === 'read'
 
 	const form = useForm<CheckpointFormValues>({
@@ -64,16 +64,21 @@ export function CheckpointContributionForm({
 		const markComplete = submitter?.dataset.intent === 'logAndComplete'
 
 		startTransition(async () => {
+			setErrorMessage(null)
 			const res = await saveCheckpointContribution(
 				checkpointId,
 				values,
 				locale,
-				{ markComplete }
+				{ markComplete: canMarkComplete && markComplete }
 			)
 
 			if (res.ok) {
 				router.push(`/${locale}/projects/${projectId}`)
+				router.refresh()
+				return
 			}
+
+			setErrorMessage(res.message)
 		})
 	}
 
@@ -85,6 +90,8 @@ export function CheckpointContributionForm({
 						<Label>Minutes Spent</Label>
 						<Input
 							type="number"
+							min={1}
+							step={1}
 							disabled={disabled}
 							{...form.register('minutesSpent')}
 						/>
@@ -113,15 +120,21 @@ export function CheckpointContributionForm({
 							Log Time Only
 						</Button>
 
-						<Button
-							type="submit"
-							disabled={isPending}
-							variant="default"
-							data-intent="logAndComplete"
-						>
-							Log Time & Mark Complete
-						</Button>
+						{canMarkComplete ? (
+							<Button
+								type="submit"
+								disabled={isPending}
+								variant="default"
+								data-intent="logAndComplete"
+							>
+								Log Time & Mark Complete
+							</Button>
+						) : null}
 					</div>
+
+					{errorMessage ? (
+						<p className="text-sm text-destructive">{errorMessage}</p>
+					) : null}
 				</form>
 			</CardContent>
 		</Card>

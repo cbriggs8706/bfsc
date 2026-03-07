@@ -1,11 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog'
+import { Spinner } from '@/components/ui/spinner'
 
 interface Announcement {
 	id: string
@@ -19,6 +21,27 @@ interface AnnouncementDialogProps {
 	open: boolean
 	onOpenChange: (open: boolean) => void
 	announcement: Announcement
+}
+
+function AnnouncementImage({ src }: { src: string }) {
+	const [imageLoading, setImageLoading] = useState(true)
+
+	return (
+		<div className="relative w-full overflow-hidden rounded-md bg-muted min-h-40">
+			{imageLoading && (
+				<div className="absolute inset-0 z-10 flex items-center justify-center bg-muted/80">
+					<Spinner className="size-6 text-muted-foreground" />
+				</div>
+			)}
+			<img
+				src={src}
+				alt=""
+				className="block h-auto w-full rounded-md"
+				onLoad={() => setImageLoading(false)}
+				onError={() => setImageLoading(false)}
+			/>
+		</div>
+	)
 }
 
 export function AnnouncementDialog({
@@ -43,13 +66,10 @@ export function AnnouncementDialog({
 					<p className="whitespace-pre-wrap">{announcement.body}</p>
 
 					{announcement.imageUrl && (
-						<div className="w-full">
-							<img
-								src={announcement.imageUrl}
-								alt=""
-								className="block w-full h-auto rounded-md"
-							/>
-						</div>
+						<AnnouncementImage
+							key={announcement.imageUrl}
+							src={announcement.imageUrl}
+						/>
 					)}
 				</div>
 			</DialogContent>

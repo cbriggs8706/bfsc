@@ -145,6 +145,7 @@ export default async function Page({ params }: DashboardPageProps) {
 	const requests = user ? await getOpenSubstituteRequests(user) : []
 	const openRequests = requests.filter((r) => !r.hasVolunteeredByMe)
 	const projects = await readProjectSummaries()
+	const currentProjects = projects.slice(0, 6)
 	return (
 		<div className="p-4 space-y-4">
 			<div className="space-y-8">
@@ -212,9 +213,15 @@ export default async function Page({ params }: DashboardPageProps) {
 					locale={locale}
 					centerTime={centerTime}
 				/>
-				<h2 className="text-2xl font-semibold">Current Projects</h2>
-				{/* TODO add a prop to determine how many ProjectCards to display */}
-				<ProjectCardGrid projects={projects} locale={locale} />
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+					<h2 className="text-2xl font-semibold">
+						Current Projects ({projects.length})
+					</h2>
+					<Link href={`/${locale}/projects`}>
+						<Button>View all projects</Button>
+					</Link>
+				</div>
+				<ProjectCardGrid projects={currentProjects} locale={locale} />
 				<OpenRequestsSection
 					openRequests={openRequests}
 					currentUserId={session.user.id}

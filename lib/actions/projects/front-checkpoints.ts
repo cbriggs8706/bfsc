@@ -3,6 +3,7 @@
 import { db } from '@/db'
 import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
+import { revalidatePath, unstable_noStore as noStore } from 'next/cache'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import {
@@ -30,6 +31,8 @@ export async function readCheckpointDetail(
 	locale: string,
 	checkpointId: string
 ): Promise<CheckpointDetail | null> {
+	noStore()
+
 	const checkpoint = await db.query.projectCheckpoints.findFirst({
 		where: eq(projectCheckpoints.id, checkpointId),
 	})
@@ -65,6 +68,8 @@ export async function readCheckpointDetail(
 export async function readProjectCheckpoints(
 	projectId: string
 ): Promise<ProjectCheckpointRow[]> {
+	noStore()
+
 	const rows = await db
 		.select({
 			id: projectCheckpoints.id,
@@ -93,6 +98,8 @@ export async function readProjectCheckpoints(
    FORM-SHAPED READ (USER CONTRIBUTION ONLY)
 ------------------------------------------------------------------ */
 export async function readCheckpointContributionForForm(checkpointId: string) {
+	noStore()
+
 	const session = await getServerSession(authOptions)
 	if (!session?.user?.id) return null
 
@@ -164,6 +171,10 @@ export async function saveCheckpointContribution(
 		return { ok: false, message: 'Checkpoint is locked' }
 	}
 
+	if (options?.markComplete && !isAdmin) {
+		return { ok: false, message: 'Only admins can complete checkpoints' }
+	}
+
 	try {
 		await db.transaction(async (tx) => {
 			// 1️⃣ Add contribution
@@ -177,10 +188,19 @@ export async function saveCheckpointContribution(
 			if (options?.markComplete) {
 				await tx
 					.update(projectCheckpoints)
-					.set({ isCompleted: true })
+					.set({
+						isCompleted: true,
+						completedAt: new Date(),
+						completedByUserId: session.user.id,
+					})
 					.where(eq(projectCheckpoints.id, checkpointId))
 			}
 		})
+
+		const checkpointPath = `/${locale}/projects/${checkpoint.projectId}/checkpoints/${checkpointId}`
+		revalidatePath(`/${locale}/projects/${checkpoint.projectId}`)
+		revalidatePath(checkpointPath)
+		revalidatePath(`${checkpointPath}/contribute`)
 
 		return { ok: true }
 	} catch {
@@ -216,6 +236,20 @@ export async function completeCheckpoint(
 			})
 			.where(eq(projectCheckpoints.id, checkpointId))
 
+		const checkpoint = await db.query.projectCheckpoints.findFirst({
+			where: eq(projectCheckpoints.id, checkpointId),
+			columns: {
+				projectId: true,
+			},
+		})
+
+		if (checkpoint) {
+			const checkpointPath = `/${locale}/projects/${checkpoint.projectId}/checkpoints/${checkpointId}`
+			revalidatePath(`/${locale}/projects/${checkpoint.projectId}`)
+			revalidatePath(checkpointPath)
+			revalidatePath(`${checkpointPath}/contribute`)
+		}
+
 		return { ok: true }
 	} catch {
 		return { ok: false, message: 'Complete failed' }
@@ -244,6 +278,20 @@ export async function reopenCheckpoint(
 				completedByUserId: null,
 			})
 			.where(eq(projectCheckpoints.id, checkpointId))
+
+		const checkpoint = await db.query.projectCheckpoints.findFirst({
+			where: eq(projectCheckpoints.id, checkpointId),
+			columns: {
+				projectId: true,
+			},
+		})
+
+		if (checkpoint) {
+			const checkpointPath = `/${locale}/projects/${checkpoint.projectId}/checkpoints/${checkpointId}`
+			revalidatePath(`/${locale}/projects/${checkpoint.projectId}`)
+			revalidatePath(checkpointPath)
+			revalidatePath(`${checkpointPath}/contribute`)
+		}
 
 		return { ok: true }
 	} catch {

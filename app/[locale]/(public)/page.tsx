@@ -49,6 +49,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 	const heroImageSrc = center.heroImageUrl || '/900px-Idahoburleyfhc.jpg'
 
 	const [latest, ...rest] = posts
+	const latestCoverImageUrl = latest?.coverImageUrl ?? null
 
 	const { items: reservationItems } = await readAllResources({
 		page: 1,
@@ -83,12 +84,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 			icon: Search,
 			description: 'Get help from trained research specialists.',
 		},
-		{
-			title: 'Consultant Helps',
-			url: `/${locale}/consultant-helps`,
-			icon: BadgeQuestionMark,
-			description: 'Resources and guides for consultants.',
-		},
+
 		{
 			title: 'Community Projects',
 			url: `/${locale}/projects`,
@@ -101,12 +97,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 			icon: Camera,
 			description: 'Stories, photos, and shared memories.',
 		},
-		{
-			title: 'Activities',
-			url: `/${locale}/activities`,
-			icon: Pencil,
-			description: 'Games and activities for individuals and groups.',
-		},
+
 		{
 			title: 'Newsletters',
 			url: `/${locale}/newsletters`,
@@ -287,29 +278,37 @@ export default async function HomePage({ params, searchParams }: Props) {
 			============================= */}
 			{latest && (
 				<section className="overflow-hidden rounded-xl border bg-card">
-					<div className="relative w-full h-[46vh] min-h-[280px]">
-						{latest.coverImageUrl && (
+					{latestCoverImageUrl && (
+						<div className="relative h-[46vh] min-h-[280px] w-full">
 							<Image
-								src={latest.coverImageUrl}
+								src={latestCoverImageUrl}
 								alt={latest.title}
 								fill
 								className="object-cover"
 								priority
 							/>
-						)}
-					</div>
+						</div>
+					)}
 
-					<div className="max-w-3xl p-6 md:p-10 space-y-4">
-						<div className="text-sm text-muted-foreground">Latest Newsletter</div>
+					<div
+						className={`space-y-4 p-6 md:p-10 ${latestCoverImageUrl ? 'max-w-3xl' : 'mx-auto max-w-4xl'}`}
+					>
+						<div className="text-sm text-muted-foreground">
+							Latest Newsletter
+						</div>
 
 						<h1 className="text-3xl md:text-5xl font-bold leading-tight">
 							{latest.title}
 						</h1>
 
-						{latest.excerpt && <p className="text-lg text-muted-foreground">{latest.excerpt}</p>}
+						{latest.excerpt && (
+							<p className="text-lg text-muted-foreground">{latest.excerpt}</p>
+						)}
 
 						<Button asChild size="lg">
-							<Link href={`/${locale}/newsletters/${latest.slug}`}>Read Now</Link>
+							<Link href={`/${locale}/newsletters/${latest.slug}`}>
+								Read Now
+							</Link>
 						</Button>
 					</div>
 				</section>

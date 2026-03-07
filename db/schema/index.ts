@@ -16,6 +16,7 @@ export * from './tables/resources'
 export * from './tables/permissions'
 export * from './tables/projects'
 export * from './tables/group-scheduling'
+export * from './tables/cms'
 
 export * from './relations/auth.relations'
 export * from './relations/kiosk.relations'

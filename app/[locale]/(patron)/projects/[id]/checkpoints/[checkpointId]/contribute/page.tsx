@@ -26,6 +26,14 @@ export default async function ContributeCheckpointPage({ params }: Props) {
 		`/${locale}/projects/${id}/checkpoints/${checkpointId}`
 	)
 
+	const canMarkComplete = await requireRole(
+		locale,
+		['Admin', 'Director', 'Assistant Director'],
+		`/${locale}/projects/${id}/checkpoints/${checkpointId}/contribute`
+	)
+		.then(() => true)
+		.catch(() => false)
+
 	return (
 		<div className="p-4 space-y-4">
 			<div>
@@ -40,6 +48,7 @@ export default async function ContributeCheckpointPage({ params }: Props) {
 				projectId={id}
 				checkpointId={checkpointId}
 				locale={locale}
+				canMarkComplete={canMarkComplete}
 			/>
 		</div>
 	)

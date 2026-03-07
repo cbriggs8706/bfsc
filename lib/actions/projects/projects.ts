@@ -76,6 +76,8 @@ export async function readProjectForForm(id: string) {
 export async function readPublicProject(
 	projectId: string
 ): Promise<PublicProject | null> {
+	noStore()
+
 	const row = await db.query.projects.findFirst({
 		where: eq(projects.id, projectId),
 	})

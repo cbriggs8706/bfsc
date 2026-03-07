@@ -17,14 +17,14 @@ import {
 import { NavAdmin } from './NavAdmin'
 import { NavUser } from './NavUser'
 import { Session } from 'next-auth'
-import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { buildSidebarData } from '@/lib/sidebar-data'
+import { buildSidebarData, mergeCmsMenuGroups } from '@/lib/sidebar-data'
 import { Separator } from '../ui/separator'
 import { NavMain } from './NavMain'
 import { SidebarLanguageSwitcher } from './SidebarLanguageSwitcher'
 import { SidebarCalendar } from './SidebarCalendar'
 import { NavWorker } from './NavWorker'
+import type { CmsMenuGroups } from '@/types/cms'
 
 type Weekly = {
 	id: string
@@ -47,20 +47,23 @@ type Specials = {
 export function AppSidebar({
 	session,
 	role,
+	locale,
 	weekly,
 	specials,
 	centerTimeZone,
+	cmsMenuGroups,
 	...props
 }: {
 	session: Session | null
 	role: string
+	locale: string
 	weekly: Weekly[]
 	specials: Specials[]
 	centerTimeZone: string
+	cmsMenuGroups?: CmsMenuGroups
 } & React.ComponentProps<typeof Sidebar>) {
-	const { locale } = useParams()
 	const t = useTranslations()
-	const data = buildSidebarData(t, locale as string)
+	const data = mergeCmsMenuGroups(buildSidebarData(t, locale), cmsMenuGroups)
 	return (
 		<Sidebar variant="inset" {...props}>
 			<SidebarHeader>
@@ -122,11 +125,11 @@ export function AppSidebar({
 				<SidebarCalendar
 					specials={specials}
 					weekly={weekly}
-					locale={locale as string}
+					locale={locale}
 					centerTimeZone={centerTimeZone}
 				/>
 				<SidebarLanguageSwitcher
-					locale={(locale as string) ?? 'en'}
+					locale={locale ?? 'en'}
 					label={t('sidebar.main.language')}
 					choose={t('sidebar.main.chooseLanguage')}
 				/>
@@ -139,7 +142,7 @@ export function AppSidebar({
 					logout={t('sidebar.user.logout')}
 					login={t('sidebar.user.login')}
 					register={t('sidebar.user.register')}
-					locale={(locale as string) ?? 'en'}
+					locale={locale ?? 'en'}
 				/>
 			</SidebarFooter>
 		</Sidebar>
