@@ -61,13 +61,13 @@ type Assignment = {
 	notes: string | null
 	userName: string | null
 	userRole: string
-	userEmail: string
+	userEmail: string | null
 }
 
 type Worker = {
 	id: string
 	name: string | null
-	email: string
+	email: string | null
 	role: string
 }
 
@@ -476,7 +476,7 @@ function AddWorkerDialog({
 	const availableWorkers = workers.filter((w) => !assignedUserIds.has(w.id))
 
 	const filtered = availableWorkers.filter((c) =>
-		(c.name ?? c.email).toLowerCase().includes(query.toLowerCase())
+		(c.name ?? c.email ?? '').toLowerCase().includes(query.toLowerCase())
 	)
 
 	const handleAdd = async (worker: Worker) => {
@@ -625,7 +625,7 @@ function AddWorkerDialog({
 							disabled={loading}
 							onClick={() => handleAdd(c)}
 						>
-							{c.name ?? c.email}
+							{c.name ?? c.email ?? 'Unnamed worker'}
 							<Badge variant="outline" className="ml-2 text-[10px]">
 								{c.role}
 							</Badge>
@@ -718,7 +718,7 @@ function EditAssignmentDialog({
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>
-						Edit {assignment.userName ?? assignment.userEmail}
+						Edit {assignment.userName ?? assignment.userEmail ?? 'worker'}
 					</DialogTitle>
 				</DialogHeader>
 
@@ -819,7 +819,7 @@ function DraggableAssignmentChip({
 		>
 			{/* LEFT: text (clickable) */}
 			<span className="truncate">
-				{assignment.userName ?? assignment.userEmail}
+				{assignment.userName ?? assignment.userEmail ?? 'Unnamed worker'}
 				{assignment.notes ? (
 					<span className="ml-1 text-[10px] text-muted-foreground">
 						({assignment.notes})

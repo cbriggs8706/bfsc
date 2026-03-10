@@ -1,6 +1,6 @@
 type Mode = 'create' | 'update'
 
-type PresenterOption = { id: string; name: string | null; email: string }
+type PresenterOption = { id: string; name: string | null; email: string | null }
 
 type ClassSeriesFormProps = {
 	mode: Mode

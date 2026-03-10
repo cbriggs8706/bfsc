@@ -14,10 +14,17 @@ const ROLES = [
 export async function POST(request: Request) {
 	try {
 		const body = await request.json()
-		const { name, email, username, role } = body
+		const name = typeof body.name === 'string' ? body.name.trim() : ''
+		const email = typeof body.email === 'string' ? body.email.trim() : ''
+		const username =
+			typeof body.username === 'string' ? body.username.trim() : ''
+		const role = body.role
 
-		if (!email) {
-			return NextResponse.json({ error: 'Email required' }, { status: 400 })
+		if (!name && !email) {
+			return NextResponse.json(
+				{ error: 'Name or email is required' },
+				{ status: 400 }
+			)
 		}
 
 		if (role && !ROLES.includes(role)) {
@@ -27,10 +34,10 @@ export async function POST(request: Request) {
 		const [created] = await db
 			.insert(user)
 			.values({
-				name: name ?? null,
-				email,
-				username: username ?? null,
-				role: role ?? 'patron',
+				name: name || null,
+				email: email || null,
+				username: username || null,
+				role: role ?? 'Patron',
 			})
 			.returning({
 				id: user.id,

@@ -372,7 +372,7 @@ export default async function AdminUsersPage({
 											</TableCell>
 										) : null}
 										<TableCell>{u.name ?? '—'}</TableCell>
-										<TableCell className="">{u.email}</TableCell>
+										<TableCell className="">{u.email ?? '—'}</TableCell>
 										<TableCell className="capitalize">{u.role}</TableCell>
 										<TableCell>{formatShortDate(u.lastLoginAt)}</TableCell>
 										<TableCell className="text-right">

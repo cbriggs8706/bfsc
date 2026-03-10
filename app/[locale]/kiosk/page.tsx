@@ -12,6 +12,7 @@ import { VisitStep } from '@/components/kiosk/VisitStep'
 import { RoleChoiceStep } from '@/components/kiosk/RoleChoiceStep'
 import { CheckoutStep } from '@/components/kiosk/CheckoutStep'
 import { VisitGroupDetailsStep } from '@/components/kiosk/VisitGroupDetailsStep'
+import { MissionariesStep } from '@/components/kiosk/MissionariesStep'
 import { WelcomeStep } from '@/components/kiosk/WelcomeStep'
 import { Announcement } from '@/db'
 import { CertificateSummary } from '@/types/training'
@@ -28,9 +29,13 @@ type WardGroup = {
 }
 
 export default function KioskPage() {
+	const isMissionariesName = (value: string | null | undefined) =>
+		value?.trim().toLowerCase() === 'missionaries'
+
 	const [step, setStep] = useState<
 		| 'identify'
 		| 'roleChoice'
+		| 'missionaries'
 		| 'visitGroupDetails'
 		| 'visit'
 		| 'welcome'
@@ -189,9 +194,20 @@ export default function KioskPage() {
 		const data: IdentifyResponse = await res.json()
 
 		if (data.status === 'notFound') {
-			setNewName(data.suggestedName ?? input.trim())
-			await loadPurposes()
-			setStep('visit')
+			const suggestedName = data.suggestedName ?? input.trim()
+			setNewName(suggestedName)
+			setVisitReason('patron')
+			setPartOfFaithGroup(null)
+			setFaithId('')
+			setStakeId('')
+			setWardId('')
+			setGroupSize(0)
+			if (isMissionariesName(suggestedName)) {
+				setVisitReason('group')
+				setStep('missionaries')
+				return
+			}
+			setStep('roleChoice')
 			return
 		}
 
@@ -207,12 +223,18 @@ export default function KioskPage() {
 		setSelectedPerson(foundPerson)
 		setSuggestions([])
 
-		if (foundPerson.isWorker) {
-			setStep('roleChoice')
-		} else {
-			await loadPurposes()
-			setStep('visit')
+		setVisitReason('patron')
+		setPartOfFaithGroup(null)
+		setFaithId('')
+		setStakeId('')
+		setWardId('')
+		setGroupSize(0)
+		if (isMissionariesName(foundPerson.fullName)) {
+			setVisitReason('group')
+			setStep('missionaries')
+			return
 		}
+		setStep('roleChoice')
 	}
 
 	// ──────────────────────────────
@@ -560,9 +582,18 @@ export default function KioskPage() {
 					)}
 
 					{/* STEP: ROLE CHOICE FOR WORKERS */}
-					{step === 'roleChoice' && selectedPerson && (
+					{step === 'roleChoice' &&
+						(selectedPerson || newName.trim()) && (
 						<RoleChoiceStep
-							person={selectedPerson}
+							person={
+								selectedPerson ?? {
+									id: '',
+									fullName: newName.trim(),
+									userId: null,
+									isWorker: false,
+									hasPasscode: false,
+								}
+							}
 							onVisit={async () => {
 								setVisitReason('patron')
 								await loadPurposes()
@@ -588,7 +619,9 @@ export default function KioskPage() {
 								await loadFaiths()
 								setStep('visitGroupDetails')
 							}}
-							onShift={() => setStep('shift')}
+							onShift={
+								selectedPerson?.isWorker ? () => setStep('shift') : undefined
+							}
 						/>
 					)}
 
@@ -628,6 +661,14 @@ export default function KioskPage() {
 							setAttendeeCount={(value) => setGroupSize(Math.max(0, value))}
 							isLds={isLdsFaith}
 							onContinue={handleSubmitTrainingOrGroupVisit}
+						/>
+					)}
+
+					{step === 'missionaries' && (
+						<MissionariesStep
+							attendeeCount={groupSize}
+							setAttendeeCount={(value) => setGroupSize(Math.max(0, value))}
+							onSubmit={handleSubmitTrainingOrGroupVisit}
 						/>
 					)}
 

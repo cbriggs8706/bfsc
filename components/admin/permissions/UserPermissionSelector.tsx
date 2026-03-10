@@ -13,7 +13,7 @@ import { GrantPermissionForm } from '@/components/admin/permissions/GrantPermiss
 type UserRow = {
 	id: string
 	name: string | null
-	email: string
+	email: string | null
 	role: string
 }
 
@@ -44,7 +44,7 @@ export function UserPermissionSelector({
 						{users.map((u) => (
 							<CommandItem
 								key={u.id}
-								value={`${u.name ?? ''} ${u.email}`}
+								value={`${u.name ?? ''} ${u.email ?? ''}`}
 								onSelect={() => setSelectedUser(u)}
 							>
 								<div className="flex flex-col">

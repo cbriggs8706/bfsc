@@ -9,7 +9,7 @@ type Props = {
 	onVisit: () => void
 	onTraining: () => void
 	onGroup: () => void
-	onShift: () => void
+	onShift?: () => void
 }
 
 export function RoleChoiceStep({
@@ -23,10 +23,7 @@ export function RoleChoiceStep({
 		<div className="space-y-4 text-center">
 			<p className="text-xl font-semibold">Hi {person.fullName}!</p>
 
-			<p className="text-lg">
-				Are you here for your <strong>shift</strong> or for{' '}
-				<strong>your own research</strong>?
-			</p>
+			<p className="text-lg">What brings you in today?</p>
 
 			<KioskButton onClick={onVisit}>I’m visiting as a patron</KioskButton>
 
@@ -38,9 +35,11 @@ export function RoleChoiceStep({
 				I&apos;m here with a group
 			</KioskButton>
 
-			<KioskButton variant="outline" onClick={onShift}>
-				I’m here for my shift
-			</KioskButton>
+			{onShift && (
+				<KioskButton variant="outline" onClick={onShift}>
+					I’m here for my shift
+				</KioskButton>
+			)}
 		</div>
 	)
 }

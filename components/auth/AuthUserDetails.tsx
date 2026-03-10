@@ -31,7 +31,7 @@ export interface UserDetailsData {
 	id: string
 	name: string | null
 	username: string | null
-	email: string
+	email: string | null
 	role: string
 	hasPassword: boolean
 

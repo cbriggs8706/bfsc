@@ -12,7 +12,7 @@ interface Props {
 	details: {
 		name: string | null
 		username: string | null
-		email: string
+		email: string | null
 		phone?: string | null
 		hasPassword: boolean
 	}
@@ -49,7 +49,7 @@ export function AccountCard({ details, onUpdated }: Props) {
 
 					<div className="grid gap-2 sm:grid-cols-[140px_1fr] sm:items-baseline">
 						<span className="font-medium">{t('account.email')}:</span>
-						<span className="break-all">{details.email}</span>
+						<span className="break-all">{details.email ?? '—'}</span>
 					</div>
 
 					<div className="grid gap-2 sm:grid-cols-[140px_1fr] sm:items-baseline">

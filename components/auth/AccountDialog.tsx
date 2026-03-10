@@ -22,7 +22,7 @@ interface Props {
 	details: {
 		name: string | null
 		username: string | null
-		email: string
+		email: string | null
 	}
 }
 
@@ -45,7 +45,7 @@ export function AccountDialog({
 		defaultValues: {
 			name: details.name ?? '',
 			username: details.username ?? '',
-			email: details.email,
+			email: details.email ?? '',
 		},
 	})
 

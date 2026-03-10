@@ -14,6 +14,7 @@ import { startOfDay, endOfDay, parseISO } from 'date-fns'
 import { TodayShift } from '@/types/shift-report'
 import { ReservationStatus } from '@/types/resource'
 import { formatInTz } from '@/utils/time'
+import { getVisitReportReason } from '@/lib/kiosk/visit-report-reason'
 
 //CORRECTED TIMEZONES
 
@@ -101,6 +102,7 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 			departedAt: kioskVisitLogs.departedAt,
 			fullName: kioskPeople.fullName,
 			purposeName: kioskVisitPurposes.name,
+			notes: kioskVisitLogs.notes,
 		})
 		.from(kioskVisitLogs)
 		.innerJoin(kioskPeople, eq(kioskVisitLogs.personId, kioskPeople.id))
@@ -232,7 +234,11 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 			patrons: shiftPatrons.map((p) => ({
 					visitId: p.visitId,
 					fullName: p.fullName,
-					purposeName: p.purposeName,
+					purposeName: getVisitReportReason({
+						fullName: p.fullName,
+						purposeName: p.purposeName,
+						notes: p.notes,
+					}),
 					arrivedAt: p.arrivedAt,
 					departedAt: p.departedAt,
 				})),
@@ -247,7 +253,7 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 					startTime: formatInTz(r.startTime, timeZone, 'HH:mm'),
 					endTime: formatInTz(r.endTime, timeZone, 'HH:mm'),
 					status: toReservationStatus(r.status),
-					patronName: r.patronName ?? r.patronEmail,
+					patronName: r.patronName ?? r.patronEmail ?? 'Unknown',
 				})),
 		}
 		}
@@ -274,7 +280,16 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 						workers: workers.filter(
 							(w) => !assignedWorkerLogIds.has(w.shiftLogId)
 						),
-						patrons: patrons.filter((p) => !assignedPatronIds.has(p.visitId)),
+						patrons: patrons
+							.filter((p) => !assignedPatronIds.has(p.visitId))
+							.map((p) => ({
+								...p,
+								purposeName: getVisitReportReason({
+									fullName: p.fullName,
+									purposeName: p.purposeName,
+									notes: p.notes,
+								}),
+							})),
 						reservations: allReservations
 							.filter((r) => !assignedReservationIds.has(r.id))
 							.map((r) => ({
@@ -283,7 +298,7 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 								startTime: formatInTz(r.startTime, timeZone, 'HH:mm'),
 								endTime: formatInTz(r.endTime, timeZone, 'HH:mm'),
 								status: toReservationStatus(r.status),
-								patronName: r.patronName ?? r.patronEmail,
+								patronName: r.patronName ?? r.patronEmail ?? 'Unknown',
 							})),
 					},
 			  ]

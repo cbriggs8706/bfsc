@@ -219,7 +219,7 @@ async function getNewsletterAudienceEmails() {
 	return [
 		...new Set(
 			[...userRows, ...subscriberRows]
-				.map((row) => row.email.trim().toLowerCase())
+				.map((row) => row.email?.trim().toLowerCase() ?? '')
 				.filter((email) => email.length > 0)
 		),
 	]

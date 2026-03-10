@@ -24,7 +24,7 @@ export function GrantPermissionForm({
 	user: {
 		id: string
 		name: string | null
-		email: string
+		email: string | null
 		role: string
 	}
 	initialGrants: Grant[]

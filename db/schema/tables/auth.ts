@@ -18,7 +18,7 @@ export const user = pgTable(
 	{
 		id: uuid().defaultRandom().primaryKey().notNull(),
 		name: varchar({ length: 255 }),
-		email: varchar({ length: 255 }).notNull(),
+		email: varchar({ length: 255 }),
 		emailVerified: timestamp({ withTimezone: true }),
 		image: text(),
 		username: varchar({ length: 100 }),

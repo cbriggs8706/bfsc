@@ -31,7 +31,9 @@ export function PresenterMultiSelect({
 		return options
 			.filter(
 				(p) =>
-					p.name?.toLowerCase().includes(q) || p.email.toLowerCase().includes(q)
+					p.name?.toLowerCase().includes(q) ||
+					p.email?.toLowerCase().includes(q) ||
+					false
 			)
 			.slice(0, 10)
 	}, [options, query])
@@ -54,7 +56,7 @@ export function PresenterMultiSelect({
 				<div className="flex flex-wrap gap-2">
 					{selected.map((p) => (
 						<Badge key={p.id} variant="secondary" className="flex gap-1">
-							<span>{p.name ?? p.email}</span>
+							<span>{p.name ?? p.email ?? 'Unnamed presenter'}</span>
 							<Button
 								type="button"
 								variant="ghost"
@@ -100,8 +102,12 @@ export function PresenterMultiSelect({
 									className="mt-1"
 								/>
 								<div>
-									<div className="font-medium">{p.name ?? p.email}</div>
-									<div className="text-xs text-muted-foreground">{p.email}</div>
+									<div className="font-medium">
+										{p.name ?? p.email ?? 'Unnamed presenter'}
+									</div>
+									<div className="text-xs text-muted-foreground">
+										{p.email ?? 'No email'}
+									</div>
 								</div>
 							</button>
 						)

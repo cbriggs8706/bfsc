@@ -12,7 +12,6 @@ const ALLOWED_ROLES = [
 	'Shift Lead',
 	'Patron',
 ] as const
-type AllowedRole = (typeof ALLOWED_ROLES)[number]
 
 export async function PATCH(
 	request: Request,
@@ -23,12 +22,24 @@ export async function PATCH(
 		// console.log('Updating user with id:', id)
 
 		const body = await request.json()
+		const role = body.role ?? null
+
+		if (role && !ALLOWED_ROLES.includes(role)) {
+			return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+		}
 
 		const updates = {
-			name: body.name ?? null,
-			email: body.email ?? null,
-			username: body.username ?? null,
-			role: body.role ?? null,
+			name:
+				typeof body.name === 'string' ? body.name.trim() || null : body.name ?? null,
+			email:
+				typeof body.email === 'string'
+					? body.email.trim() || null
+					: body.email ?? null,
+			username:
+				typeof body.username === 'string'
+					? body.username.trim() || null
+					: body.username ?? null,
+			role,
 		}
 
 		const [updated] = await db

@@ -92,7 +92,7 @@ async function getFilteredUserEmails(searchQuery: string, roles: string[]) {
 		.where(filters.length > 0 ? and(...filters) : undefined)
 
 	return rows
-		.map((row) => row.email.trim().toLowerCase())
+		.map((row) => row.email?.trim().toLowerCase() ?? '')
 		.filter((email) => email.length > 0)
 }
 
@@ -105,7 +105,7 @@ async function getSelectedUserEmails(selectedIds: string[]) {
 		.where(inArray(user.id, selectedIds))
 
 	return rows
-		.map((row) => row.email.trim().toLowerCase())
+		.map((row) => row.email?.trim().toLowerCase() ?? '')
 		.filter((email) => email.length > 0)
 }
 
@@ -125,7 +125,7 @@ async function getNewsletterNonUserEmails() {
 
 	const userEmailSet = new Set(
 		allUserRows
-			.map((row) => row.email.trim().toLowerCase())
+			.map((row) => row.email?.trim().toLowerCase() ?? '')
 			.filter((email) => email.length > 0)
 	)
 

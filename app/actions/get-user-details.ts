@@ -37,7 +37,7 @@ export async function getUserDetails(): Promise<UserDetailsData | null> {
 		id: dbUser.id,
 		name: dbUser.name,
 		username: dbUser.username,
-		email: dbUser.email,
+		email: dbUser.email ?? null,
 		role: dbUser.role,
 		hasPassword: !!dbUser.passwordHash,
 

@@ -10,6 +10,7 @@ import {
 import { weeklyShifts } from '@/db/schema/tables/shifts'
 import { and, eq, gte, lte, asc } from 'drizzle-orm'
 import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { getVisitReportReason } from '@/lib/kiosk/visit-report-reason'
 
 type ShiftSlot = {
 	slotId: string // `${date}|${weeklyShiftId}`
@@ -262,6 +263,7 @@ export async function GET(req: Request) {
 			visitId: kioskVisitLogs.id,
 			fullName: kioskPeople.fullName,
 			purposeName: kioskVisitPurposes.name,
+			notes: kioskVisitLogs.notes,
 			createdAt: kioskVisitLogs.createdAt,
 		})
 		.from(kioskVisitLogs)
@@ -313,7 +315,11 @@ export async function GET(req: Request) {
 				.map((p) => ({
 					visitId: p.visitId,
 					fullName: p.fullName,
-					purposeName: p.purposeName ?? null,
+					purposeName: getVisitReportReason({
+						fullName: p.fullName,
+						purposeName: p.purposeName,
+						notes: p.notes,
+					}),
 					createdAtIso: p.createdAt.toISOString(),
 				}))
 

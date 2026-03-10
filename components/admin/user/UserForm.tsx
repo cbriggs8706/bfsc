@@ -29,7 +29,7 @@ interface UserFormProps {
 	user?: {
 		id: string
 		name: string | null
-		email: string
+		email: string | null
 		username: string | null
 		role: string
 	}
@@ -70,7 +70,7 @@ export function UserForm({ locale, user }: UserFormProps) {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					name: name.trim() || null,
-					email: email.trim(),
+					email: email.trim() || null,
 					username: username.trim() || null,
 					role,
 				}),
@@ -133,11 +133,13 @@ export function UserForm({ locale, user }: UserFormProps) {
 				<Input
 					id="email"
 					type="email"
-					required
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
 					placeholder="user@example.com"
 				/>
+				<p className="text-sm text-muted-foreground">
+					Optional if you only know the consultant&apos;s name for now.
+				</p>
 			</div>
 
 			<div className="space-y-2">

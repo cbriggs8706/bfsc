@@ -7,6 +7,7 @@ import {
 	kioskVisitPurposes,
 } from '@/db/schema/tables/kiosk'
 import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { getVisitReportReason } from '@/lib/kiosk/visit-report-reason'
 import { CertificateSummary } from '@/types/training'
 import { gt, eq, inArray, and, isNull, sql } from 'drizzle-orm'
 
@@ -95,6 +96,7 @@ export async function getCurrentPresence() {
 			fullName: kioskPeople.fullName,
 			profileImageUrl: kioskPeople.profileImageUrl,
 			purposeName: kioskVisitPurposes.name,
+			notes: kioskVisitLogs.notes,
 		})
 		.from(kioskVisitLogs)
 		.innerJoin(kioskPeople, eq(kioskVisitLogs.personId, kioskPeople.id))
@@ -129,7 +131,14 @@ export async function getCurrentPresence() {
 
 	return {
 		workers,
-		patrons,
+		patrons: patrons.map((patron) => ({
+			...patron,
+			purposeName: getVisitReportReason({
+				fullName: patron.fullName,
+				purposeName: patron.purposeName,
+				notes: patron.notes,
+			}),
+		})),
 		certificatesByUser,
 	}
 }

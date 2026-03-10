@@ -73,5 +73,5 @@ export type Assignment = {
 
 	userName: string | null
 	userRole: string
-	userEmail: string
+	userEmail: string | null
 }

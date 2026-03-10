@@ -16,7 +16,7 @@ import {
 export type ClassSeriesRow = typeof classSeries.$inferSelect
 export type ClassSessionRow = typeof classSession.$inferSelect
 
-export type PresenterOption = { id: string; name: string | null; email: string }
+export type PresenterOption = { id: string; name: string | null; email: string | null }
 
 export type UILink = { id: string; label: string; url: string }
 export type UIHandout = {
