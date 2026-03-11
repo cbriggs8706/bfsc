@@ -53,6 +53,10 @@ export default async function Page({ params }: Props) {
 					<Button>{t('sidebar.admin.definePurposes')}</Button>
 				</Link>
 
+				<Link href={`/${locale}/admin/center/kiosk-history`}>
+					<Button>{t('sidebar.admin.kioskHistory')}</Button>
+				</Link>
+
 				<Link href={`/${locale}/admin/center/case-types`}>
 					<Button>{t('sidebar.admin.defineCaseTypes')}</Button>
 				</Link>

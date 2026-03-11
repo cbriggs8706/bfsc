@@ -169,6 +169,10 @@ export function buildSidebarData(t: TFunction, locale: string) {
 						url: `/${locale}/admin/center/purposes`,
 					},
 					{
+						title: t('sidebar.admin.kioskHistory'),
+						url: `/${locale}/admin/center/kiosk-history`,
+					},
+					{
 						title: t('sidebar.admin.defineCaseTypes'),
 						url: `/${locale}/admin/center/case-types`,
 					},
