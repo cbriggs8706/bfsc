@@ -66,7 +66,7 @@ export default async function Page({ params }: Props) {
 			<div>
 				<h1 className="text-3xl font-bold">{t('bfscCalendar')}</h1>
 				<p className="text-sm text-muted-foreground">
-					Normal Operating Hours and Class Schedule
+					{t('calendarPage.subtitle')}
 				</p>
 			</div>
 

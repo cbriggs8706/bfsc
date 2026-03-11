@@ -129,6 +129,7 @@ export function ReservationForm({
 	const t = useTranslations('common')
 	const router = useRouter()
 	const fieldsDisabled = mode === 'read' || mode === 'delete'
+	const ldsStakeSuffix = t('reservation.ldsStakeSuffix')
 
 	/* ---------------- form ---------------- */
 
@@ -582,7 +583,7 @@ export function ReservationForm({
 									render={({ field }) => (
 										<Field>
 											<FieldLabel>
-												Is your group associated with a faith community?
+												{t('reservation.groupAffiliation.label')}
 											</FieldLabel>
 
 											<Select
@@ -590,18 +591,22 @@ export function ReservationForm({
 												onValueChange={field.onChange}
 											>
 												<SelectTrigger>
-													<SelectValue placeholder="Select one" />
+													<SelectValue
+														placeholder={t(
+															'reservation.groupAffiliation.placeholder'
+														)}
+													/>
 												</SelectTrigger>
 
 												<SelectContent>
 													<SelectItem value="lds">
-														Yes – Church of Jesus Christ of Latter-day Saints
+														{t('reservation.groupAffiliation.lds')}
 													</SelectItem>
 													<SelectItem value="other-faith">
-														No, another faith
+														{t('reservation.groupAffiliation.otherFaith')}
 													</SelectItem>
 													<SelectItem value="none">
-														Not associated with a faith group
+														{t('reservation.groupAffiliation.none')}
 													</SelectItem>
 												</SelectContent>
 											</Select>
@@ -622,14 +627,16 @@ export function ReservationForm({
 												onValueChange={field.onChange}
 											>
 												<SelectTrigger>
-													<SelectValue placeholder="Select ward" />
+													<SelectValue
+														placeholder={t('reservation.selectWard')}
+													/>
 												</SelectTrigger>
 
 												<SelectContent>
 													{ldsFaith.stakes.map((stake) => (
 														<div key={stake.id}>
 															<div className="px-2 py-1 text-base font-semibold text-muted-foreground">
-																{stake.name} Stake
+																{stake.name} {ldsStakeSuffix}
 															</div>
 															{stake.wards.map((ward) => (
 																<SelectItem
@@ -697,7 +704,7 @@ export function ReservationForm({
 
 									<Input
 										type="tel"
-										placeholder="(208) 555-1234"
+										placeholder={t('reservation.phonePlaceholder')}
 										{...field}
 										disabled={fieldsDisabled}
 									/>
@@ -754,7 +761,7 @@ export function ReservationForm({
 										</FieldLabel>
 										<Input
 											type="email"
-											placeholder="name@example.com"
+											placeholder={t('reservation.emailPlaceholder')}
 											{...field}
 											disabled={fieldsDisabled}
 										/>

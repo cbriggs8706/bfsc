@@ -13,7 +13,7 @@ export default async function AdminUsersPage({
 }) {
 	const { locale } = await params
 
-	await requireRole(
+	const user = await requireRole(
 		locale,
 		['Admin', 'Director', 'Assistant Director'],
 		`/${locale}`
@@ -62,9 +62,11 @@ export default async function AdminUsersPage({
 					<Link href={`/${locale}/admin/pages`}>
 						<Button variant="default">Page Builder</Button>
 					</Link>
-					<Link href={`/${locale}/admin/groups/scheduler`}>
-						<Button variant="default">Group Scheduler</Button>
-					</Link>
+					{['Admin', 'Director'].includes(user.role ?? '') ? (
+						<Link href={`/${locale}/admin/groups/scheduler`}>
+							<Button variant="default">Group Scheduler</Button>
+						</Link>
+					) : null}
 				</CardContent>
 			</Card>
 		</div>

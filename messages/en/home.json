@@ -1,0 +1,83 @@
+{
+	"subscribed": {
+		"title": "You're subscribed to our newsletter!",
+		"body": "Stay tuned toward the end of the month. In the meantime, you can browse previous newsletters below."
+	},
+	"hero": {
+		"imageAlt": "Burley FamilySearch Center building",
+		"callAriaLabel": "Call {centerName}"
+	},
+	"hours": {
+		"title": "Hours of Operation",
+		"sunday": "Sunday: 2pm - 6pm",
+		"monday": "Monday: 12pm - 4pm",
+		"tuesday": "Tuesday: 10am - 6pm",
+		"wednesday": "Wednesday: 10am - 6pm",
+		"thursday": "Thursday: 10am - 8pm",
+		"friday": "Friday: By Appointment",
+		"saturday": "Saturday: By Appointment"
+	},
+	"appointments": {
+		"title": "Appointments",
+		"bodyOne": "We can open the center for individuals or groups by appointment outside of our normal operating hours.",
+		"bodyTwo": "Many youth groups schedule guided activities and classes on Wednesday evenings from 6pm to 8pm.",
+		"cta": "Make a reservation",
+		"requiresLogin": "Requires login"
+	},
+	"about": {
+		"title": "About This Center",
+		"body": "The Burley FamilySearch Center helps people research their family history and preserve memories for future generations. Staff are available for one-on-one help, and we offer classes for all ages and experience levels. We can also digitize most media types, including VHS and VHS-C tapes, mini DV, 8 mm cassette films, audio cassettes, audio reels, 8 mm reel films, slides, negatives, photographs, documents, and newspaper clippings."
+	},
+	"cards": {
+		"calendar": {
+			"title": "Calendar",
+			"description": "Plan a visit to attend a class or meet one-on-one with a worker."
+		},
+		"groups": {
+			"title": "Group Visits",
+			"description": "Plan and manage group visits to the center."
+		},
+		"research": {
+			"title": "Research Specialists",
+			"description": "Get help from trained research specialists."
+		},
+		"projects": {
+			"title": "Community Projects",
+			"description": "Explore and contribute to local history projects."
+		},
+		"memoryLane": {
+			"title": "Memory Lane",
+			"description": "Stories, photos, and shared memories."
+		},
+		"newsletters": {
+			"title": "Newsletters",
+			"description": "Read updates, highlights, and center news."
+		}
+	},
+	"latest": {
+		"label": "Latest Newsletter",
+		"cta": "Read now"
+	},
+	"recent": {
+		"title": "Recent Newsletters",
+		"viewAll": "View all",
+		"readMore": "Read more"
+	},
+	"connect": {
+		"title": "Stay Connected",
+		"body": "Subscribe, follow, or visit regularly for updates.",
+		"facebookAriaLabel": "Visit us on Facebook",
+		"instagramAriaLabel": "Visit us on Instagram"
+	},
+	"subscribe": {
+		"cta": "Subscribe to our monthly newsletter",
+		"title": "Subscribe to our monthly newsletter",
+		"success": "Check your email to confirm your subscription.",
+		"alreadySubscribed": "This email is already subscribed to the newsletter.",
+		"emailPlaceholder": "you@example.com",
+		"submitting": "Subscribing...",
+		"submit": "Subscribe",
+		"invalidEmail": "Please enter a valid email address.",
+		"genericError": "Something went wrong. Please try again."
+	}
+}

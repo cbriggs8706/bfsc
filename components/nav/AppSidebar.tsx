@@ -64,6 +64,12 @@ export function AppSidebar({
 } & React.ComponentProps<typeof Sidebar>) {
 	const t = useTranslations()
 	const data = mergeCmsMenuGroups(buildSidebarData(t, locale), cmsMenuGroups)
+	const adminItems =
+		role === 'Assistant Director'
+			? data.admin.filter(
+					(item) => item.url !== `/${locale}/admin/groups/scheduler`
+				)
+			: data.admin
 	return (
 		<Sidebar variant="inset" {...props}>
 			<SidebarHeader>
@@ -116,7 +122,7 @@ export function AppSidebar({
 				)}
 				{['Admin', 'Director', 'Assistant Director'].includes(role) && (
 					<>
-						<NavAdmin items={data.admin} label={t('sidebar.admin.title')} />
+						<NavAdmin items={adminItems} label={t('sidebar.admin.title')} />
 						<Separator className="my-0" />
 					</>
 				)}

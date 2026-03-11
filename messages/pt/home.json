@@ -1,0 +1,83 @@
+{
+	"subscribed": {
+		"title": "Seu e-mail já está inscrito em nossa newsletter.",
+		"body": "Fique atento ao fim do mês. Enquanto isso, você pode ver as newsletters anteriores abaixo."
+	},
+	"hero": {
+		"imageAlt": "Prédio do Burley FamilySearch Center",
+		"callAriaLabel": "Ligar para {centerName}"
+	},
+	"hours": {
+		"title": "Horário de funcionamento",
+		"sunday": "Domingo: 14h - 18h",
+		"monday": "Segunda-feira: 12h - 16h",
+		"tuesday": "Terça-feira: 10h - 18h",
+		"wednesday": "Quarta-feira: 10h - 18h",
+		"thursday": "Quinta-feira: 10h - 20h",
+		"friday": "Sexta-feira: Somente com agendamento",
+		"saturday": "Sábado: Somente com agendamento"
+	},
+	"appointments": {
+		"title": "Agendamentos",
+		"bodyOne": "Podemos abrir o centro para pessoas ou grupos mediante agendamento fora do nosso horário normal de funcionamento.",
+		"bodyTwo": "Muitos grupos de jovens agendam atividades guiadas e aulas nas noites de quarta-feira, das 18h às 20h.",
+		"cta": "Fazer uma reserva",
+		"requiresLogin": "Requer login"
+	},
+	"about": {
+		"title": "Sobre este centro",
+		"body": "O Burley FamilySearch Center ajuda as pessoas a pesquisar sua história familiar e preservar memórias para as futuras gerações. A equipe está disponível para atendimento individual, e oferecemos aulas para todas as idades e níveis de experiência. Também podemos digitalizar a maioria dos tipos de mídia, incluindo fitas VHS e VHS-C, mini DV, filmes em cartucho de 8 mm, fitas cassete de áudio, rolos de áudio, filmes em rolo de 8 mm, slides, negativos, fotografias, documentos e recortes de jornal."
+	},
+	"cards": {
+		"calendar": {
+			"title": "Calendário",
+			"description": "Planeje uma visita para participar de uma aula ou conversar individualmente com um consultor."
+		},
+		"groups": {
+			"title": "Visitas em grupo",
+			"description": "Planeje e gerencie visitas em grupo ao centro."
+		},
+		"research": {
+			"title": "Especialistas em pesquisa",
+			"description": "Receba ajuda de especialistas treinados em pesquisa."
+		},
+		"projects": {
+			"title": "Projetos comunitários",
+			"description": "Explore e contribua com projetos de história local."
+		},
+		"memoryLane": {
+			"title": "Memory Lane",
+			"description": "Histórias, fotos e memórias compartilhadas."
+		},
+		"newsletters": {
+			"title": "Newsletters",
+			"description": "Leia atualizações, destaques e notícias do centro."
+		}
+	},
+	"latest": {
+		"label": "Newsletter mais recente",
+		"cta": "Ler agora"
+	},
+	"recent": {
+		"title": "Newsletters recentes",
+		"viewAll": "Ver todas",
+		"readMore": "Ler mais"
+	},
+	"connect": {
+		"title": "Continue conectado",
+		"body": "Inscreva-se, siga-nos ou visite-nos regularmente para receber atualizações.",
+		"facebookAriaLabel": "Visite-nos no Facebook",
+		"instagramAriaLabel": "Visite-nos no Instagram"
+	},
+	"subscribe": {
+		"cta": "Inscreva-se em nossa newsletter mensal",
+		"title": "Inscreva-se em nossa newsletter mensal",
+		"success": "Verifique seu e-mail para confirmar sua inscrição.",
+		"alreadySubscribed": "Este e-mail já está inscrito na newsletter.",
+		"emailPlaceholder": "voce@exemplo.com",
+		"submitting": "Inscrevendo...",
+		"submit": "Inscrever-se",
+		"invalidEmail": "Digite um endereço de e-mail válido.",
+		"genericError": "Algo deu errado. Tente novamente."
+	}
+}

@@ -2,6 +2,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
 	Dialog,
 	DialogContent,
@@ -25,8 +26,15 @@ export function NewsletterSubscribeDialog({
 	const [email, setEmail] = useState('')
 	const [status, setStatus] = useState<Status>('idle')
 	const [error, setError] = useState<string | null>(null)
+	const t = useTranslations('home.subscribe')
 
 	async function handleSubmit() {
+		if (!email.trim().includes('@')) {
+			setStatus('error')
+			setError(t('invalidEmail'))
+			return
+		}
+
 		setStatus('loading')
 		setError(null)
 
@@ -38,7 +46,7 @@ export function NewsletterSubscribeDialog({
 			setStatus('already')
 		} else {
 			setStatus('error')
-			setError(result.message)
+			setError(result.message || t('genericError'))
 		}
 	}
 
@@ -58,31 +66,28 @@ export function NewsletterSubscribeDialog({
 		>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Subscribe to our Monthly Newsletter</DialogTitle>
+					<DialogTitle>{t('title')}</DialogTitle>
 				</DialogHeader>
 
-				{/* SUCCESS */}
 				{status === 'success' && (
 					<div className="flex items-start gap-3 text-sm">
 						<CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-						<p>Check your email to confirm your subscription.</p>
+						<p>{t('success')}</p>
 					</div>
 				)}
 
-				{/* ALREADY CONFIRMED */}
 				{status === 'already' && (
 					<div className="flex items-start gap-3 text-sm">
 						<CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-						<p>This email is already subscribed to the newsletter.</p>
+						<p>{t('alreadySubscribed')}</p>
 					</div>
 				)}
 
-				{/* FORM */}
 				{status === 'idle' || status === 'loading' || status === 'error' ? (
 					<div className="space-y-4">
 						<Input
 							type="email"
-							placeholder="you@example.com"
+							placeholder={t('emailPlaceholder')}
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
 							disabled={status === 'loading'}
@@ -103,10 +108,10 @@ export function NewsletterSubscribeDialog({
 							{status === 'loading' ? (
 								<>
 									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Subscribing…
+									{t('submitting')}
 								</>
 							) : (
-								'Subscribe'
+								t('submit')
 							)}
 						</Button>
 					</div>

@@ -18,6 +18,8 @@ import { Announcement } from '@/db'
 import { CertificateSummary } from '@/types/training'
 import { OnScreenKeyboard } from '@/components/kiosk/OnScreenKeyboard'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { subscribeToNewsletter } from '@/app/actions/newsletter/subscribe'
 
 type VisitReason = 'patron' | 'training' | 'group'
 type Faith = { id: string; name: string }
@@ -34,6 +36,8 @@ export default function KioskPage() {
 
 	const [step, setStep] = useState<
 		| 'identify'
+		| 'newsletterSignup'
+		| 'newsletterSuccess'
 		| 'roleChoice'
 		| 'missionaries'
 		| 'visitGroupDetails'
@@ -97,6 +101,14 @@ export default function KioskPage() {
 	const [certificatesByUser, setCertificatesByUser] = useState<
 		Record<string, CertificateSummary[]>
 	>({})
+	const [newsletterEmail, setNewsletterEmail] = useState('')
+	const [newsletterSubmitting, setNewsletterSubmitting] = useState(false)
+	const [newsletterError, setNewsletterError] = useState<string | null>(null)
+	const [newsletterSuccessMessage, setNewsletterSuccessMessage] =
+		useState<string>('Check your email to confirm your subscription.')
+	const [newsletterCountdown, setNewsletterCountdown] = useState(5)
+	const [visitSubmitting, setVisitSubmitting] = useState(false)
+	const visitSubmitLockRef = useRef(false)
 
 	// ──────────────────────────────
 	// LIVE SEARCH
@@ -129,6 +141,46 @@ export default function KioskPage() {
 			await performSearch(value)
 			setSearching(false)
 		}, 250)
+	}
+
+	const handleHardRefresh = async () => {
+		try {
+			if (typeof window !== 'undefined') {
+				window.localStorage.clear()
+				window.sessionStorage.clear()
+			}
+
+			if (typeof caches !== 'undefined') {
+				const cacheKeys = await caches.keys()
+				await Promise.all(cacheKeys.map((key) => caches.delete(key)))
+			}
+		} finally {
+			window.location.reload()
+		}
+	}
+
+	const handleNewsletterSignup = async () => {
+		setNewsletterSubmitting(true)
+		setNewsletterError(null)
+
+		try {
+			const result = await subscribeToNewsletter(newsletterEmail)
+
+			if (result.status === 'error') {
+				setNewsletterError(result.message)
+				return
+			}
+
+			setNewsletterSuccessMessage(
+				result.status === 'already-confirmed'
+					? 'This email is already subscribed to our newsletter.'
+					: 'Check your email to confirm your subscription.'
+			)
+			setNewsletterCountdown(5)
+			setStep('newsletterSuccess')
+		} finally {
+			setNewsletterSubmitting(false)
+		}
 	}
 
 	// ──────────────────────────────
@@ -263,55 +315,64 @@ export default function KioskPage() {
 	// ──────────────────────────────
 
 	const submitVisitLog = async (purposeId?: number | null) => {
+		if (visitSubmitLockRef.current) return false
+		visitSubmitLockRef.current = true
+		setVisitSubmitting(true)
+
 		let person = selectedPerson
 
-		if (!person && newName.trim()) {
-			person = await createGuestPerson()
-			if (person) {
-				setSelectedPerson(person)
+		try {
+			if (!person && newName.trim()) {
+				person = await createGuestPerson()
+				if (person) {
+					setSelectedPerson(person)
+				}
 			}
+
+			if (!person) {
+				setServerMessage('Please identify yourself first.')
+				return false
+			}
+
+			const selectedFaith = faiths.find((faith) => faith.id === faithId)
+			const selectedStake = stakes.find((stake) => stake.id === stakeId)
+			const selectedWard =
+				wardGroups
+					.find((group) => group.stakeId === stakeId)
+					?.wards.find((ward) => ward.id === wardId) ?? null
+
+			const visitMeta = {
+				visitReason,
+				partOfFaithGroup,
+				faithGroupName: selectedFaith?.name ?? null,
+				stakeName: selectedStake?.name ?? null,
+				wardName: selectedWard?.name ?? null,
+				peopleCameWithVisitor: groupSize,
+			}
+
+			const res = await fetch('/api/kiosk/visit', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					personId: person.id,
+					userId: person.userId,
+					purposeId: purposeId ?? null,
+					mailingListOptIn: mailingOptIn,
+					visitMeta,
+				}),
+			})
+
+			if (!res.ok) {
+				setServerMessage('Sorry, something went wrong recording your visit.')
+				return false
+			}
+
+			setServerMessage(null)
+			return true
+		} finally {
+			visitSubmitLockRef.current = false
+			setVisitSubmitting(false)
 		}
-
-		if (!person) {
-			setServerMessage('Please identify yourself first.')
-			return false
-		}
-
-		const selectedFaith = faiths.find((faith) => faith.id === faithId)
-		const selectedStake = stakes.find((stake) => stake.id === stakeId)
-		const selectedWard =
-			wardGroups
-				.find((group) => group.stakeId === stakeId)
-				?.wards.find((ward) => ward.id === wardId) ?? null
-
-		const visitMeta = {
-			visitReason,
-			partOfFaithGroup,
-			faithGroupName: selectedFaith?.name ?? null,
-			stakeName: selectedStake?.name ?? null,
-			wardName: selectedWard?.name ?? null,
-			peopleCameWithVisitor: groupSize,
-		}
-
-		const res = await fetch('/api/kiosk/visit', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				personId: person.id,
-				userId: person.userId,
-				purposeId: purposeId ?? null,
-				mailingListOptIn: mailingOptIn,
-				visitMeta,
-			}),
-		})
-
-		if (!res.ok) {
-			setServerMessage('Sorry, something went wrong recording your visit.')
-			return false
-		}
-
-		setServerMessage(null)
-		return true
 	}
 
 	const handleSubmitVisit = async (purposeId: number) => {
@@ -376,6 +437,15 @@ export default function KioskPage() {
 		setWardId('')
 		setGroupSize(0)
 		setWelcomeCountdown(10)
+		setNewsletterEmail('')
+		setNewsletterSubmitting(false)
+		setNewsletterError(null)
+		setNewsletterSuccessMessage(
+			'Check your email to confirm your subscription.'
+		)
+		setNewsletterCountdown(5)
+		setVisitSubmitting(false)
+		visitSubmitLockRef.current = false
 		setWorkersRedirectCountdown(15)
 		setServerMessage(null)
 	}, [])
@@ -459,6 +529,23 @@ export default function KioskPage() {
 	}, [step, welcomeCountdown, resetForm])
 
 	useEffect(() => {
+		if (step !== 'newsletterSuccess') return
+
+		const timer = setTimeout(() => {
+			setNewsletterCountdown((current) => {
+				if (current <= 1) {
+					setTimeout(() => resetForm(), 0)
+					return 0
+				}
+
+				return current - 1
+			})
+		}, 1000)
+
+		return () => clearTimeout(timer)
+	}, [step, newsletterCountdown, resetForm])
+
+	useEffect(() => {
 		const finalSteps: Array<typeof step> = ['workers', 'welcome']
 		if (!finalSteps.includes(step)) return
 
@@ -510,8 +597,9 @@ export default function KioskPage() {
 	// RENDER
 	// ──────────────────────────────
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-muted">
-			<Card className="w-full m-4">
+		<div className="relative flex min-h-screen items-center justify-center bg-(--green-logo)">
+			<div className="w-full m-4 space-y-3">
+				<Card className="w-full">
 				<CardContent className="space-y-3 p-4 md:p-5">
 					{step !== 'identify' && (
 						<div className="flex justify-end">
@@ -539,6 +627,50 @@ export default function KioskPage() {
 								handleIdentify(p)
 							}}
 						/>
+					)}
+
+					{step === 'newsletterSignup' && (
+						<div className="space-y-4 py-4">
+							<div className="space-y-2 text-center">
+								<p className="text-3xl font-semibold">
+									Sign up for our newsletter
+								</p>
+								<p className="text-lg text-muted-foreground">
+									Enter your email address and we&apos;ll send you a confirmation
+									link.
+								</p>
+							</div>
+
+							<Input
+								type="email"
+								inputMode="email"
+								autoComplete="email"
+								placeholder="you@example.com"
+								className="h-14 text-lg rounded-xl"
+								value={newsletterEmail}
+								onChange={(e) => setNewsletterEmail(e.target.value)}
+								disabled={newsletterSubmitting}
+							/>
+
+							{newsletterError && (
+								<p className="text-center text-base text-destructive">
+									{newsletterError}
+								</p>
+							)}
+
+							<Button
+								type="button"
+								className="h-14 w-full rounded-xl text-lg"
+								onClick={() => {
+									void handleNewsletterSignup()
+								}}
+								disabled={
+									newsletterSubmitting || !newsletterEmail.trim().includes('@')
+								}
+							>
+								{newsletterSubmitting ? 'Submitting…' : 'Sign up'}
+							</Button>
+						</div>
 					)}
 
 					{step === 'identify' && (
@@ -577,6 +709,7 @@ export default function KioskPage() {
 								}
 							}
 							purposes={purposes}
+							isSubmitting={visitSubmitting}
 							onSubmit={handleSubmitVisit}
 						/>
 					)}
@@ -708,13 +841,61 @@ export default function KioskPage() {
 						/>
 					)}
 
+					{step === 'newsletterSuccess' && (
+						<div className="space-y-4 py-10 text-center">
+							<p className="text-4xl font-semibold">Thank you!</p>
+							<p className="text-2xl text-muted-foreground">
+								{newsletterSuccessMessage}
+							</p>
+							<p className="text-base text-muted-foreground">
+								Returning to sign-in in {newsletterCountdown} seconds...
+							</p>
+							<Button variant="outline" onClick={resetForm}>
+								Return to Sign In Now
+							</Button>
+						</div>
+					)}
+
 					{serverMessage && (
 						<p className="text-center text-xl text-muted-foreground">
 							{serverMessage}
 						</p>
 					)}
 				</CardContent>
-			</Card>
+				</Card>
+
+				{step === 'identify' && (
+					<div className="flex justify-center">
+						<Button
+							type="button"
+							variant="secondary"
+							className="h-12 rounded-xl px-6 text-base font-semibold"
+							onClick={() => {
+								setNewsletterEmail('')
+								setNewsletterError(null)
+								setNewsletterSubmitting(false)
+								setStep('newsletterSignup')
+							}}
+						>
+							Sign up for our newsletter
+						</Button>
+					</div>
+				)}
+			</div>
+
+			{step === 'identify' && (
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					className="absolute bottom-3 right-3 h-8 px-2 text-[11px] font-medium text-white/65 hover:text-white hover:bg-white/10"
+					onClick={() => {
+						void handleHardRefresh()
+					}}
+				>
+					Refresh
+				</Button>
+			)}
 		</div>
 	)
 }

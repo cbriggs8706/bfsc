@@ -20,7 +20,7 @@ import { getServerSession } from 'next-auth'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
-const allowedRoles = ['Admin', 'Director', 'Assistant Director'] as const
+const allowedRoles = ['Admin', 'Director'] as const
 
 async function requireSchedulerUser() {
 	const session = await getServerSession(authOptions)

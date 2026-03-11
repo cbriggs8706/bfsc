@@ -49,6 +49,27 @@ export async function POST(req: Request) {
 				})
 			: null
 
+	const [existingOpenVisit] = await db
+		.select({
+			id: kioskVisitLogs.id,
+			createdAt: kioskVisitLogs.createdAt,
+		})
+		.from(kioskVisitLogs)
+		.where(
+			and(
+				eq(kioskVisitLogs.personId, personId),
+				isNull(kioskVisitLogs.departedAt)
+			)
+		)
+		.limit(1)
+
+	if (existingOpenVisit) {
+		return NextResponse.json({
+			visit: existingOpenVisit,
+			alreadyCheckedIn: true,
+		})
+	}
+
 	// 1️⃣ Record the visit
 	const [visit] = await db
 		.insert(kioskVisitLogs)

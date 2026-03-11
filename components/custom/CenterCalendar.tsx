@@ -2,6 +2,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
 	addDays,
 	addMonths,
@@ -41,7 +42,7 @@ import {
 	Printer,
 } from 'lucide-react'
 
-import { toAmPm, formatLongDate, formatInTz } from '@/utils/time'
+import { toAmPm, formatInTz } from '@/utils/time'
 import { formatHourShort } from '@/lib/date'
 import { getDayInfo } from '@/lib/calendar/day-info'
 import Link from 'next/link'
@@ -191,6 +192,8 @@ export default function CenterCalendar({
 	} | null
 }) {
 	const isMobile = useIsMobile()
+	const t = useTranslations('common')
+	const calendarLocale = ['en', 'es', 'pt'].includes(locale) ? locale : 'en'
 
 	const [view, setView] = useState<CalendarView>('month')
 	const [viewDate, setViewDate] = useState(
@@ -359,6 +362,19 @@ export default function CenterCalendar({
 		return classColorMap.get(event.title) ?? EVENT_COLORS[0]
 	}
 
+	const formatLocalized = (
+		date: Date,
+		options: Intl.DateTimeFormatOptions
+	) => new Intl.DateTimeFormat(calendarLocale, options).format(date)
+
+	const formatLongLocalizedDate = (date: Date) =>
+		formatLocalized(date, {
+			weekday: 'long',
+			month: 'long',
+			day: 'numeric',
+			year: 'numeric',
+		})
+
 	/* ============================
 	   DAY INFO
 	============================ */
@@ -452,14 +468,31 @@ export default function CenterCalendar({
 	}
 
 	const headerLabel = useMemo(() => {
-		if (view === 'month') return format(viewDate, 'MMMM yyyy')
+		if (view === 'month') {
+			return new Intl.DateTimeFormat(calendarLocale, {
+				month: 'long',
+				year: 'numeric',
+			}).format(viewDate)
+		}
 		if (view === 'week') {
 			const ws = startOfWeek(viewDate, { weekStartsOn: 0 })
 			const we = endOfWeek(viewDate, { weekStartsOn: 0 })
-			return `${format(ws, 'MMM d')} – ${format(we, 'MMM d, yyyy')}`
+			return `${new Intl.DateTimeFormat(calendarLocale, {
+				month: 'short',
+				day: 'numeric',
+			}).format(ws)} - ${new Intl.DateTimeFormat(calendarLocale, {
+				month: 'short',
+				day: 'numeric',
+				year: 'numeric',
+			}).format(we)}`
 		}
-		return format(viewDate, 'MMMM d, yyyy')
-	}, [view, viewDate])
+		return new Intl.DateTimeFormat(calendarLocale, {
+			weekday: 'long',
+			month: 'long',
+			day: 'numeric',
+			year: 'numeric',
+		}).format(viewDate)
+	}, [view, viewDate, calendarLocale])
 
 	/* ============================
 	   DAY DETAILS (you already had this, kept)
@@ -470,7 +503,7 @@ export default function CenterCalendar({
 
 		return (
 			<div className="mt-4 space-y-2">
-				<h3 className="font-semibold">Events</h3>
+				<h3 className="font-semibold">{t('calendarPage.events')}</h3>
 				<ul className="space-y-2">
 					{dayClasses.map((c) => {
 						const startTime = toAmPm(
@@ -500,24 +533,30 @@ export default function CenterCalendar({
 
 								{c.kind !== 'reservation' && (
 									<div className="text-base ">
-										Location: {c.location}
-										{c.isCanceled && ' (Canceled)'}
+										{t('calendarPage.location')}: {c.location}
+										{c.isCanceled &&
+											` (${t('calendarPage.eventCanceled')})`}
 									</div>
 								)}
 								{c.kind === 'reservation' &&
 									c.reservationStatus === 'pending' && (
-										<div className="text-base ">(Pending)</div>
+										<div className="text-base ">
+											({t('reservation.statuses.pending')})
+										</div>
 									)}
 
 								{c.presenters.length > 0 && (
 									<div className="text-base ">
-										Presenter{c.presenters.length > 1 ? 's' : ''}:{' '}
+										{c.presenters.length > 1
+											? t('calendarPage.presenters')
+											: t('calendarPage.presenter')}
+										:{' '}
 										{c.presenters.join(', ')}
 									</div>
 								)}
 								{c.description && (
 									<div className="text-base text-wrap">
-										Description:{c.description}
+										{t('description')}: {c.description}
 									</div>
 								)}
 								{c.descriptionOverride && (
@@ -542,7 +581,9 @@ export default function CenterCalendar({
 			return (
 				<>
 					<p className="text-red-600 font-semibold">
-						{info.reason ? `Closed for ${info.reason}` : 'Closed'}
+						{info.reason
+							? t('calendarPage.closedFor', { reason: info.reason })
+							: t('calendarPage.closed')}
 					</p>
 					{renderClassesList(dayClasses)}
 				</>
@@ -553,15 +594,13 @@ export default function CenterCalendar({
 			return (
 				<>
 					<p className="text-neutral-700 font-semibold mb-4">
-						Open By Appointment Only
+						{t('reservation.byAppointmentOnly')}
 					</p>
 					<p className="text-neutral-700 mb-4 text-wrap">
-						Reservations outside of regular hours require us to find 2 staff
-						volunteers to assist, which we will be happy to do for groups of 5
-						or more.
+						{t('calendarPage.appointmentOnlyBody')}
 					</p>
 					<Link href={`/${locale}/reservation`}>
-						<Button>Make an appointment</Button>
+						<Button>{t('calendarPage.makeAppointment')}</Button>
 					</Link>
 					{renderClassesList(dayClasses)}
 				</>
@@ -571,8 +610,8 @@ export default function CenterCalendar({
 		return (
 			<>
 				<p>
-					Open: {toAmPm(info.opensAt)} <br />
-					Close: {toAmPm(info.closesAt)}
+					{t('calendarPage.open')}: {toAmPm(info.opensAt)} <br />
+					{t('calendarPage.close')}: {toAmPm(info.closesAt)}
 				</p>
 				{renderClassesList(dayClasses)}
 			</>
@@ -659,9 +698,9 @@ export default function CenterCalendar({
 		const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 0 })
 		const days = eachDayOfInterval({ start: gridStart, end: gridEnd })
 
-		const dayHeaders = isMobile
-			? ['Su', 'M', 'T', 'W', 'R', 'F', 'Sa']
-			: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+		const dayHeaders = days.slice(0, 7).map((date) =>
+			formatLocalized(date, { weekday: isMobile ? 'narrow' : 'short' })
+		)
 
 		return (
 			<div className="rounded-md border overflow-hidden bg-background">
@@ -738,7 +777,8 @@ export default function CenterCalendar({
 
 									{dayClasses.length > (isMobile ? 2 : 3) && (
 										<div className="text-[10px] text-muted-foreground ">
-											+{dayClasses.length - (isMobile ? 2 : 3)} more
+											+{dayClasses.length - (isMobile ? 2 : 3)}{' '}
+											{t('calendarPage.more')}
 										</div>
 									)}
 								</div>
@@ -813,7 +853,9 @@ export default function CenterCalendar({
 			<div className="rounded-md border bg-card overflow-hidden">
 				{/* header row */}
 				<div className="grid grid-cols-[56px_1fr] border-b bg-primary/70">
-					<div className="p-3 text-xs font-medium ">Time</div>
+					<div className="p-3 text-xs font-medium ">
+						{t('calendarPage.time')}
+					</div>
 
 					<div ref={headerScrollRef} className="overflow-x-hidden">
 						<div
@@ -838,10 +880,15 @@ export default function CenterCalendar({
 										<div className="flex items-center justify-between">
 											<div className="leading-tight">
 												<div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-													{format(d, isMobile ? 'EEE' : 'EEEE')}
+													{formatLocalized(d, {
+														weekday: isMobile ? 'short' : 'long',
+													})}
 												</div>
 												<div className="text-sm font-semibold">
-													{format(d, 'MMM d')}
+													{formatLocalized(d, {
+														month: 'short',
+														day: 'numeric',
+													})}
 												</div>
 											</div>
 
@@ -996,14 +1043,16 @@ export default function CenterCalendar({
 		return (
 			<div className="rounded-md border bg-card overflow-hidden ">
 				<div className="p-3 border-b flex items-center justify-between bg-primary/70">
-					<div className="font-medium">{format(day, 'EEEE, MMM d, yyyy')}</div>
+					<div className="font-medium">{formatLongLocalizedDate(day)}</div>
 
 					{info.isClosed && (
 						<Badge
 							variant={info.reason ? 'destructive' : 'secondary'}
 							className="h-5 px-2 text-[10px]"
 						>
-							{info.reason ? 'Closed' : 'Appointment Only'}
+							{info.reason
+								? t('calendarPage.closed')
+								: t('reservation.byAppointmentOnly')}
 						</Badge>
 					)}
 				</div>
@@ -1087,7 +1136,11 @@ export default function CenterCalendar({
 								>
 									<div className="font-medium truncate">{c.title}</div>
 									<div className="text-[11px] opacity-80 truncate">
-										{time} • {c.kind === 'reservation' ? 'Resource' : 'Location'}:{' '}
+										{time} •{' '}
+										{c.kind === 'reservation'
+											? t('resource.title')
+											: t('calendarPage.location')}
+										:{' '}
 										{c.location}
 									</div>
 								</button>
@@ -1112,7 +1165,7 @@ export default function CenterCalendar({
 				className="gap-2"
 			>
 				<CalendarIcon className="h-4 w-4" />
-				<span className="hidden sm:inline">Day</span>
+				<span className="hidden sm:inline">{t('calendarPage.day')}</span>
 			</Button>
 
 			<Button
@@ -1122,7 +1175,7 @@ export default function CenterCalendar({
 				className="gap-2"
 			>
 				<CalendarRange className="h-4 w-4" />
-				<span className="hidden sm:inline">Week</span>
+				<span className="hidden sm:inline">{t('calendarPage.week')}</span>
 			</Button>
 
 			<Button
@@ -1132,7 +1185,7 @@ export default function CenterCalendar({
 				className="gap-2"
 			>
 				<CalendarDays className="h-4 w-4" />
-				<span className="hidden sm:inline">Month</span>
+				<span className="hidden sm:inline">{t('calendarPage.month')}</span>
 			</Button>
 
 			{canPrint && (
@@ -1149,7 +1202,7 @@ export default function CenterCalendar({
 					className="gap-2"
 				>
 					<Printer className="h-4 w-4" />
-					<span className="hidden sm:inline">Print</span>
+					<span className="hidden sm:inline">{t('calendarPage.print')}</span>
 				</Button>
 			)}
 		</div>
@@ -1213,7 +1266,7 @@ export default function CenterCalendar({
 						onClick={goToday}
 						className="xl:hidden mr-2"
 					>
-						Today
+						{t('calendarPage.today')}
 					</Button>
 					<ViewSwitcher />
 				</div>
@@ -1222,7 +1275,7 @@ export default function CenterCalendar({
 						variant="ghost"
 						size="icon"
 						onClick={goPrev}
-						aria-label="Previous"
+						aria-label={t('calendarPage.previous')}
 					>
 						<ChevronLeft className="h-4 w-4" />
 					</Button>
@@ -1233,7 +1286,7 @@ export default function CenterCalendar({
 						variant="ghost"
 						size="icon"
 						onClick={goNext}
-						aria-label="Next"
+						aria-label={t('calendarPage.next')}
 					>
 						<ChevronRight className="h-4 w-4" />
 					</Button>
@@ -1241,7 +1294,7 @@ export default function CenterCalendar({
 
 				<div className="hidden xl:flex justify-end mx-auto xl:mx-0">
 					<Button variant="outline" size="sm" onClick={goToday}>
-						Today
+						{t('calendarPage.today')}
 					</Button>
 				</div>
 			</div>
@@ -1261,7 +1314,7 @@ export default function CenterCalendar({
 				<Dialog open onOpenChange={() => setSelectedDate(null)}>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>{formatLongDate(ymd(selectedDate))}</DialogTitle>
+							<DialogTitle>{formatLongLocalizedDate(selectedDate)}</DialogTitle>
 						</DialogHeader>
 						<DayDetails date={selectedDate} />
 					</DialogContent>
@@ -1272,13 +1325,13 @@ export default function CenterCalendar({
 				<Dialog open={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen}>
 					<DialogContent className="sm:max-w-xl">
 						<DialogHeader>
-							<DialogTitle>Print Calendar</DialogTitle>
+							<DialogTitle>{t('calendarPage.printCalendar')}</DialogTitle>
 						</DialogHeader>
 
 						<div className="space-y-4 text-sm">
 							<div className="space-y-1">
 								<label className="font-medium" htmlFor="print-month">
-									Month
+									{t('calendarPage.month')}
 								</label>
 								<input
 									id="print-month"
@@ -1295,7 +1348,7 @@ export default function CenterCalendar({
 							</div>
 
 							<div className="space-y-2">
-								<div className="font-medium">Include</div>
+								<div className="font-medium">{t('calendarPage.include')}</div>
 								<label className="flex items-center gap-2">
 									<input
 										type="checkbox"
@@ -1307,7 +1360,7 @@ export default function CenterCalendar({
 											}))
 										}
 									/>
-									<span>Classes</span>
+									<span>{t('classes.title')}</span>
 								</label>
 								<label className="flex items-center gap-2">
 									<input
@@ -1320,7 +1373,7 @@ export default function CenterCalendar({
 											}))
 										}
 									/>
-									<span>Reservations</span>
+									<span>{t('reservation.titles')}</span>
 								</label>
 							</div>
 
@@ -1328,7 +1381,7 @@ export default function CenterCalendar({
 								<div className="grid gap-3 sm:grid-cols-2">
 									<div className="space-y-1">
 										<label className="font-medium" htmlFor="class-location">
-											Class location
+											{t('calendarPage.classLocation')}
 										</label>
 										<select
 											id="class-location"
@@ -1341,7 +1394,7 @@ export default function CenterCalendar({
 												}))
 											}
 										>
-											<option value="all">All locations</option>
+											<option value="all">{t('calendarPage.allLocations')}</option>
 											{classLocationOptions.map((location) => (
 												<option key={location} value={location}>
 													{location}
@@ -1351,7 +1404,7 @@ export default function CenterCalendar({
 									</div>
 									<div className="space-y-1">
 										<label className="font-medium" htmlFor="class-presenter">
-											Class presenter
+											{t('calendarPage.classPresenter')}
 										</label>
 										<select
 											id="class-presenter"
@@ -1364,7 +1417,7 @@ export default function CenterCalendar({
 												}))
 											}
 										>
-											<option value="all">All presenters</option>
+											<option value="all">{t('calendarPage.allPresenters')}</option>
 											{classPresenterOptions.map((presenter) => (
 												<option key={presenter} value={presenter}>
 													{presenter}
@@ -1382,7 +1435,7 @@ export default function CenterCalendar({
 											className="font-medium"
 											htmlFor="reservation-resource"
 										>
-											Reservation resource
+											{t('calendarPage.reservationResource')}
 										</label>
 										<select
 											id="reservation-resource"
@@ -1395,7 +1448,7 @@ export default function CenterCalendar({
 												}))
 											}
 										>
-											<option value="all">All resources</option>
+											<option value="all">{t('calendarPage.allResources')}</option>
 											{reservationResourceOptions.map((resource) => (
 												<option key={resource} value={resource}>
 													{resource}
@@ -1405,14 +1458,16 @@ export default function CenterCalendar({
 									</div>
 
 									<div className="space-y-2">
-										<div className="font-medium">Reservation status</div>
+										<div className="font-medium">
+											{t('calendarPage.reservationStatus')}
+										</div>
 										{canSeeUnconfirmedReservations ? (
 											<div className="grid grid-cols-2 gap-2">
 												{([
-													['confirmed', 'Confirmed'],
-													['pending', 'Tentative'],
-													['denied', 'Denied'],
-													['cancelled', 'Cancelled'],
+													['confirmed', t('reservation.statuses.confirmed')],
+													['pending', t('reservation.statuses.pending')],
+													['denied', t('reservation.statuses.denied')],
+													['cancelled', t('reservation.statuses.cancelled')],
 												] as [ReservationStatus, string][]).map(
 													([status, label]) => (
 														<label
@@ -1446,8 +1501,7 @@ export default function CenterCalendar({
 											</div>
 										) : (
 											<p className="text-muted-foreground">
-												Only confirmed reservations are available for your
-												role.
+												{t('calendarPage.onlyConfirmedForRole')}
 											</p>
 										)}
 									</div>
@@ -1459,10 +1513,10 @@ export default function CenterCalendar({
 									variant="outline"
 									onClick={() => setIsPrintDialogOpen(false)}
 								>
-									Cancel
+									{t('cancel')}
 								</Button>
 								<Button onClick={openPrintView} disabled={printDisabled}>
-									Open Print View
+									{t('calendarPage.openPrintView')}
 								</Button>
 							</div>
 						</div>

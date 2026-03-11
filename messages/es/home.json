@@ -1,0 +1,83 @@
+{
+	"subscribed": {
+		"title": "Ya estás suscrito a nuestro boletín.",
+		"body": "Mantente atento hacia el final del mes. Mientras tanto, puedes ver boletines anteriores abajo."
+	},
+	"hero": {
+		"imageAlt": "Edificio del Burley FamilySearch Center",
+		"callAriaLabel": "Llamar a {centerName}"
+	},
+	"hours": {
+		"title": "Horario de atención",
+		"sunday": "Domingo: 2 p. m. - 6 p. m.",
+		"monday": "Lunes: 12 p. m. - 4 p. m.",
+		"tuesday": "Martes: 10 a. m. - 6 p. m.",
+		"wednesday": "Miércoles: 10 a. m. - 6 p. m.",
+		"thursday": "Jueves: 10 a. m. - 8 p. m.",
+		"friday": "Viernes: Solo con cita",
+		"saturday": "Sábado: Solo con cita"
+	},
+	"appointments": {
+		"title": "Citas",
+		"bodyOne": "Podemos abrir el centro para personas o grupos con cita fuera de nuestro horario habitual.",
+		"bodyTwo": "Muchos grupos de jóvenes programan actividades guiadas y clases los miércoles por la noche, de 6 p. m. a 8 p. m.",
+		"cta": "Hacer una reservación",
+		"requiresLogin": "Requiere iniciar sesión"
+	},
+	"about": {
+		"title": "Acerca de este centro",
+		"body": "El Burley FamilySearch Center ayuda a las personas a investigar su historia familiar y preservar recuerdos para las futuras generaciones. El personal está disponible para ayuda individual, y ofrecemos clases para todas las edades y niveles de experiencia. También podemos digitalizar la mayoría de los tipos de medios, incluidos VHS y VHS-C, mini DV, películas de casete de 8 mm, casetes de audio, carretes de audio, películas en carrete de 8 mm, diapositivas, negativos, fotografías, documentos y recortes de periódico."
+	},
+	"cards": {
+		"calendar": {
+			"title": "Calendario",
+			"description": "Planifica una visita para asistir a una clase o reunirte individualmente con un consultor."
+		},
+		"groups": {
+			"title": "Visitas grupales",
+			"description": "Planifica y administra visitas grupales al centro."
+		},
+		"research": {
+			"title": "Especialistas en investigación",
+			"description": "Recibe ayuda de especialistas capacitados en investigación."
+		},
+		"projects": {
+			"title": "Proyectos comunitarios",
+			"description": "Explora y contribuye a proyectos de historia local."
+		},
+		"memoryLane": {
+			"title": "Memory Lane",
+			"description": "Historias, fotos y recuerdos compartidos."
+		},
+		"newsletters": {
+			"title": "Boletines",
+			"description": "Lee novedades, destacados y noticias del centro."
+		}
+	},
+	"latest": {
+		"label": "Boletín más reciente",
+		"cta": "Leer ahora"
+	},
+	"recent": {
+		"title": "Boletines recientes",
+		"viewAll": "Ver todos",
+		"readMore": "Leer más"
+	},
+	"connect": {
+		"title": "Mantente conectado",
+		"body": "Suscríbete, síguenos o visítanos con frecuencia para recibir novedades.",
+		"facebookAriaLabel": "Visítanos en Facebook",
+		"instagramAriaLabel": "Visítanos en Instagram"
+	},
+	"subscribe": {
+		"cta": "Suscríbete a nuestro boletín mensual",
+		"title": "Suscríbete a nuestro boletín mensual",
+		"success": "Revisa tu correo para confirmar tu suscripción.",
+		"alreadySubscribed": "Este correo ya está suscrito al boletín.",
+		"emailPlaceholder": "tu@ejemplo.com",
+		"submitting": "Suscribiendo...",
+		"submit": "Suscribirse",
+		"invalidEmail": "Ingresa un correo electrónico válido.",
+		"genericError": "Algo salió mal. Inténtalo de nuevo."
+	}
+}

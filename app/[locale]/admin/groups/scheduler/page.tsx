@@ -19,7 +19,7 @@ export default async function GroupSchedulerPage({
 	const filters = await searchParams
 	const user = await requireRole(
 		locale,
-		['Admin', 'Director', 'Assistant Director'],
+		['Admin', 'Director'],
 		`/${locale}`
 	)
 
@@ -30,7 +30,7 @@ export default async function GroupSchedulerPage({
 			<div>
 				<h1 className="text-3xl font-bold">Stake/Ward Scheduling</h1>
 				<p className="text-sm text-muted-foreground max-w-3xl">
-					Collaborative planning workspace for assistant directors. Create and
+					Collaborative planning workspace for center leadership. Create and
 					adjust events and track outreach status for stake and ward visits.
 				</p>
 				<p className="text-sm mt-2">

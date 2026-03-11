@@ -30,7 +30,7 @@ export default async function Page({ params }: Props) {
 				</p>
 			</div>
 			<Link href={`/${locale}/reservation`}>
-				<Button>Create another reservation</Button>
+				<Button>{t('reservation.createAnother')}</Button>
 			</Link>
 		</div>
 	)

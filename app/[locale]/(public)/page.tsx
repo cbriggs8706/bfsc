@@ -6,18 +6,7 @@ import { NewsletterLocale } from '@/types/newsletters'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import {
-	BadgeQuestionMark,
-	Calendar,
-	Camera,
-	MapIcon,
-	Newspaper,
-	Pencil,
-	Search,
-	Users2,
-	Facebook,
-	Instagram,
-} from 'lucide-react'
+import { Calendar, Camera, MapIcon, Newspaper, Search, Users2, Facebook, Instagram } from 'lucide-react'
 import { SubscribeNewsletterCTA } from '@/components/newsletters/SubscribeNewsletterCTA'
 import { SidebarCalendar } from '@/components/nav/SidebarCalendar'
 import { db, operatingHours, specialHours } from '@/db'
@@ -31,6 +20,7 @@ import { getCenterTimeConfig } from '@/lib/time/center-time'
 import { getFaithTree } from '@/db/queries/faiths'
 import type { Resource } from '@/types/resource'
 import { ReservationDialog } from '@/components/resource/ReservationDialog'
+import { getTranslations } from 'next-intl/server'
 
 type Props = {
 	params: Promise<{ locale: NewsletterLocale }>
@@ -40,6 +30,7 @@ type Props = {
 export default async function HomePage({ params, searchParams }: Props) {
 	const { locale } = await params
 	const sp = (await searchParams) ?? {}
+	const t = await getTranslations({ locale, namespace: 'home' })
 
 	const subscribed = sp.subscribed === '1'
 	const posts = await getPublicNewsletters(locale)
@@ -66,43 +57,42 @@ export default async function HomePage({ params, searchParams }: Props) {
 
 	const homeCards = [
 		{
-			title: 'Calendar',
+			title: t('cards.calendar.title'),
 			url: `/${locale}/calendar`,
 			icon: Calendar,
-			description:
-				'Plan a visit to attend a class or meet with a worker 1-on-1.',
+			description: t('cards.calendar.description'),
 		},
 		{
-			title: 'Group Visits',
+			title: t('cards.groups.title'),
 			url: `/${locale}/groups`,
 			icon: Users2,
-			description: 'Plan and manage group visits to the center.',
+			description: t('cards.groups.description'),
 		},
 		{
-			title: 'Research Specialists',
+			title: t('cards.research.title'),
 			url: `/${locale}/research-specialists`,
 			icon: Search,
-			description: 'Get help from trained research specialists.',
+			description: t('cards.research.description'),
 		},
 
 		{
-			title: 'Community Projects',
+			title: t('cards.projects.title'),
 			url: `/${locale}/projects`,
 			icon: MapIcon,
-			description: 'Explore and contribute to local history projects.',
+			description: t('cards.projects.description'),
 		},
 		{
-			title: 'Memory Lane',
+			title: t('cards.memoryLane.title'),
 			url: `/${locale}/memory-lane`,
 			icon: Camera,
-			description: 'Stories, photos, and shared memories.',
+			description: t('cards.memoryLane.description'),
 		},
 
 		{
-			title: 'Newsletters',
+			title: t('cards.newsletters.title'),
 			url: `/${locale}/newsletters`,
 			icon: Newspaper,
-			description: 'Read updates, highlights, and center news.',
+			description: t('cards.newsletters.description'),
 		},
 	]
 
@@ -111,6 +101,11 @@ export default async function HomePage({ params, searchParams }: Props) {
 		type: r.type as Resource['type'],
 	}))
 	const canReserve = Boolean(session)
+	const newsletterDateFormatter = new Intl.DateTimeFormat(locale, {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric',
+	})
 
 	return (
 		<div className="space-y-20">
@@ -120,9 +115,8 @@ export default async function HomePage({ params, searchParams }: Props) {
 						<div className="flex items-start gap-3">
 							<span className="text-lg">✅</span>
 							<p className="text-sm">
-								<strong>You&apos;re subscribed to our newsletter!</strong> Stay
-								tuned towards the end of the month. In the meantime, previous
-								newsletters can be found below.
+								<strong>{t('subscribed.title')}</strong>{' '}
+								{t('subscribed.body')}
 							</p>
 						</div>
 					</div>
@@ -135,7 +129,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 					<div className="relative w-full aspect-video rounded-xl overflow-hidden">
 						<Image
 							src={heroImageSrc}
-							alt="Burley FamilySearch Center building"
+							alt={t('hero.imageAlt')}
 							fill
 							className="object-cover"
 							priority
@@ -157,9 +151,8 @@ export default async function HomePage({ params, searchParams }: Props) {
 								asChild
 								size="lg"
 								className="text-2xl px-8 py-6"
-								aria-label="Call the Burley FamilySearch Center"
+								aria-label={t('hero.callAriaLabel', { centerName: center.name })}
 							>
-								{/* TODO make this world friendly */}
 								<a href={`tel:${center.phoneNumber}`}>
 									{formatPhoneInternational(center.phoneNumber)}
 								</a>
@@ -169,17 +162,17 @@ export default async function HomePage({ params, searchParams }: Props) {
 						<div className="flex flex-col md:flex-row gap-2">
 							<Card className="flex w-full md:w-1/2">
 								<CardHeader className="font-semibold text-lg md:text-xl">
-									Hours of Operation
+									{t('hours.title')}
 								</CardHeader>
 								<CardContent>
 									<ul className="text-base lg:text-lg">
-										<li>Sunday: 2pm – 6pm</li>
-										<li>Monday: 12pm – 4pm</li>
-										<li>Tuesday: 10am – 6pm</li>
-										<li>Wednesday: 10am – 6pm</li>
-										<li>Thursday: 10am – 8pm</li>
-										<li>Friday: By Appointment</li>
-										<li>Saturday: By Appointment</li>
+										<li>{t('hours.sunday')}</li>
+										<li>{t('hours.monday')}</li>
+										<li>{t('hours.tuesday')}</li>
+										<li>{t('hours.wednesday')}</li>
+										<li>{t('hours.thursday')}</li>
+										<li>{t('hours.friday')}</li>
+										<li>{t('hours.saturday')}</li>
 									</ul>
 									<div className="mt-2">
 										<SidebarCalendar
@@ -193,19 +186,16 @@ export default async function HomePage({ params, searchParams }: Props) {
 							</Card>
 							<Card className="flex w-full md:w-1/2">
 								<CardHeader className="font-semibold text-lg md:text-xl">
-									Appointments
+									{t('appointments.title')}
 								</CardHeader>
 								<CardContent className="space-y-2">
 									<p className="text-base lg:text-lg">
-										We can open the center for individuals or groups by
-										appointment outside of our normal operating hours.
-									</p>{' '}
+										{t('appointments.bodyOne')}
+									</p>
 									<p className="text-base lg:text-lg">
-										Many youth groups schedule for Wednesday evenings from 6-8pm
-										for guided activities and classes.
-									</p>{' '}
+										{t('appointments.bodyTwo')}
+									</p>
 									<div className="flex flex-col mt-10 text-center justify-center">
-										{/* TODO replace with group reservations */}
 										{canReserve ? (
 											<ReservationDialog
 												locale={locale}
@@ -214,16 +204,18 @@ export default async function HomePage({ params, searchParams }: Props) {
 													faithTree,
 													timeFormat: centerTime.timeFormat,
 												}}
-												buttonLabel="Make a reservation"
+												buttonLabel={t('appointments.cta')}
 											/>
 										) : (
 											<Link href={`/${locale}/login?redirect=/${locale}`}>
 												<Button variant="default" size="lg">
-													Make a reservation
+													{t('appointments.cta')}
 												</Button>
 											</Link>
 										)}
-										<span className="text-xs">Requires login</span>
+										<span className="text-xs">
+											{t('appointments.requiresLogin')}
+										</span>
 									</div>
 								</CardContent>
 							</Card>
@@ -236,16 +228,9 @@ export default async function HomePage({ params, searchParams }: Props) {
 			   ABOUT
 			============================= */}
 			<section className="max-w-5xl mx-auto px-4 space-y-4">
-				<h2 className="text-2xl font-semibold">About This Center</h2>
+				<h2 className="text-2xl font-semibold">{t('about.title')}</h2>
 				<p className="text-muted-foreground w-full">
-					The Burley FamilySearch Center is dedicated to assisting people in
-					researching their family and preserving their memories for future
-					generations. Staff are available for one-on-one assistance. We offer
-					classes for all ages and skills. Additionally, we have the capability
-					of digitizing most media types. VHS and VHS-C tapes, mini DV, 8 mm
-					cassette movies, audio cassettes, audio reels, 8 mm reel movies,
-					slides, negatives, pictures, documents, newspaper clippings, etc. Come
-					see what we can do for you!
+					{t('about.body')}
 				</p>
 			</section>
 
@@ -294,7 +279,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 						className={`space-y-4 p-6 md:p-10 ${latestCoverImageUrl ? 'max-w-3xl' : 'mx-auto max-w-4xl'}`}
 					>
 						<div className="text-sm text-muted-foreground">
-							Latest Newsletter
+							{t('latest.label')}
 						</div>
 
 						<h1 className="text-3xl md:text-5xl font-bold leading-tight">
@@ -307,7 +292,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 
 						<Button asChild size="lg">
 							<Link href={`/${locale}/newsletters/${latest.slug}`}>
-								Read Now
+								{t('latest.cta')}
 							</Link>
 						</Button>
 					</div>
@@ -319,15 +304,15 @@ export default async function HomePage({ params, searchParams }: Props) {
 			============================= */}
 			<section className="max-w-6xl mx-auto px-4 space-y-6">
 				<div className="flex items-center justify-between">
-					<h2 className="text-2xl font-semibold">Recent Newsletters</h2>
+					<h2 className="text-2xl font-semibold">{t('recent.title')}</h2>
 					<Link href={`/${locale}/newsletters`}>
-						<Button variant="default">View All</Button>
+						<Button variant="default">{t('recent.viewAll')}</Button>
 					</Link>
 				</div>
 
 				<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 					{rest.slice(0, 6).map((post) => (
-						<Link key={post.id} href={`/${locale}/newsletter/${post.slug}`}>
+						<Link key={post.id} href={`/${locale}/newsletters/${post.slug}`}>
 							<Card className="overflow-hidden">
 								{post.coverImageUrl && (
 									<div className="relative aspect-video">
@@ -342,7 +327,9 @@ export default async function HomePage({ params, searchParams }: Props) {
 
 								<CardContent className="p-4 space-y-2">
 									<div className="text-xs text-muted-foreground">
-										{post.publishedAt?.toLocaleDateString()}
+										{post.publishedAt
+											? newsletterDateFormatter.format(post.publishedAt)
+											: ''}
 									</div>
 
 									<h3 className="font-semibold leading-tight line-clamp-2">
@@ -356,7 +343,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 									)}
 
 									<Button variant="link" className="px-0">
-										Read →
+										{t('recent.readMore')}
 									</Button>
 								</CardContent>
 							</Card>
@@ -371,10 +358,10 @@ export default async function HomePage({ params, searchParams }: Props) {
 			   CTA
 			============================= */}
 			<section className="text-center space-y-6 px-4 pb-20">
-				<h2 className="text-2xl font-semibold">Stay Connected</h2>
+				<h2 className="text-2xl font-semibold">{t('connect.title')}</h2>
 
 				<p className="text-muted-foreground">
-					Subscribe, follow, or visit regularly for updates.
+					{t('connect.body')}
 				</p>
 
 				<div className="flex flex-col items-center gap-4">
@@ -389,7 +376,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 							<Button
 								variant="outline"
 								size="icon"
-								aria-label="Visit us on Facebook"
+								aria-label={t('connect.facebookAriaLabel')}
 							>
 								<Facebook className="h-5 w-5" />
 							</Button>
@@ -403,7 +390,7 @@ export default async function HomePage({ params, searchParams }: Props) {
 							<Button
 								variant="outline"
 								size="icon"
-								aria-label="Visit us on Instagram"
+								aria-label={t('connect.instagramAriaLabel')}
 							>
 								<Instagram className="h-5 w-5" />
 							</Button>

@@ -4,7 +4,6 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-	format,
 	startOfMonth,
 	endOfMonth,
 	eachDayOfInterval,
@@ -17,15 +16,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
 	getDayInfo,
-	getStatusLine,
 	type Weekly,
 	type Special,
 	getCenterStatus,
 } from '@/lib/calendar/day-info'
 import { Button } from '../ui/button'
 import { toZonedTime } from 'date-fns-tz'
-
-const DAY_HEADERS = ['S', 'M', 'T', 'W', 'R', 'F', 'Sa']
 
 export function SidebarCalendar({
 	specials,
@@ -40,9 +36,51 @@ export function SidebarCalendar({
 }) {
 	const router = useRouter()
 	const today = toZonedTime(new Date(), centerTimeZone)
-
 	const [expanded, setExpanded] = useState(false)
 	const [viewDate, setViewDate] = useState(startOfMonth(today))
+	const calendarLocale = useMemo(
+		() => (['en', 'es', 'pt'].includes(locale) ? locale : 'en'),
+		[locale]
+	)
+	const dayHeaders = useMemo(() => {
+		const formatter = new Intl.DateTimeFormat(calendarLocale, {
+			weekday: 'narrow',
+			timeZone: centerTimeZone,
+		})
+
+		return Array.from({ length: 7 }, (_, index) =>
+			formatter.format(new Date(Date.UTC(2024, 8, 1 + index)))
+		)
+	}, [calendarLocale, centerTimeZone])
+	const monthLabel = useMemo(
+		() =>
+			new Intl.DateTimeFormat(calendarLocale, {
+				month: 'long',
+				year: 'numeric',
+				timeZone: centerTimeZone,
+			}).format(viewDate),
+		[calendarLocale, centerTimeZone, viewDate]
+	)
+	const dayNumberFormatter = useMemo(
+		() =>
+			new Intl.DateTimeFormat(calendarLocale, {
+				day: 'numeric',
+				timeZone: centerTimeZone,
+			}),
+		[calendarLocale, centerTimeZone]
+	)
+	const previousMonthLabel =
+		calendarLocale === 'es'
+			? 'Mes anterior'
+			: calendarLocale === 'pt'
+				? 'Mes anterior'
+				: 'Previous month'
+	const nextMonthLabel =
+		calendarLocale === 'es'
+			? 'Mes siguiente'
+			: calendarLocale === 'pt'
+				? 'Próximo mês'
+				: 'Next month'
 
 	/* ============================
 	   STATUS LINE (shared logic)
@@ -75,6 +113,7 @@ export function SidebarCalendar({
 	})
 
 	const leadingBlanks = Array(getDay(monthStart)).fill(null)
+	const todayKey = today.toISOString().slice(0, 10)
 
 	/* ============================
 	   RENDER
@@ -115,13 +154,13 @@ export function SidebarCalendar({
 								setViewDate((d) => subMonths(d, 1))
 							}}
 							className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted"
-							aria-label="Previous month"
+							aria-label={previousMonthLabel}
 						>
 							<ChevronLeft className="h-3 w-3" />
 						</button>
 
 						<div className="text-xs font-medium text-muted-foreground">
-							{format(viewDate, 'MMMM yyyy')}
+							{monthLabel}
 						</div>
 
 						<button
@@ -130,7 +169,7 @@ export function SidebarCalendar({
 								setViewDate((d) => addMonths(d, 1))
 							}}
 							className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted"
-							aria-label="Next month"
+							aria-label={nextMonthLabel}
 						>
 							<ChevronRight className="h-3 w-3" />
 						</button>
@@ -138,7 +177,7 @@ export function SidebarCalendar({
 
 					{/* Day headers */}
 					<div className="grid grid-cols-7 gap-1 mb-1 text-[10px] text-muted-foreground text-center">
-						{DAY_HEADERS.map((d) => (
+						{dayHeaders.map((d) => (
 							<div key={d}>{d}</div>
 						))}
 					</div>
@@ -151,8 +190,7 @@ export function SidebarCalendar({
 
 						{days.map((day) => {
 							const info = getDayInfo(day, specials, weekly)
-							const isToday =
-								format(day, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')
+							const isToday = day.toISOString().slice(0, 10) === todayKey
 
 							return (
 								<div
@@ -165,7 +203,7 @@ export function SidebarCalendar({
 										isToday && 'ring-2 ring-primary'
 									)}
 								>
-									{format(day, 'd')}
+									{dayNumberFormatter.format(day)}
 								</div>
 							)
 						})}

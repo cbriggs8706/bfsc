@@ -9,9 +9,15 @@ type Props = {
 	person: PersonSummary
 	purposes: Purpose[]
 	onSubmit: (purposeId: number) => void
+	isSubmitting?: boolean
 }
 
-export function VisitStep({ person, purposes, onSubmit }: Props) {
+export function VisitStep({
+	person,
+	purposes,
+	onSubmit,
+	isSubmitting = false,
+}: Props) {
 	return (
 		<div className="space-y-4">
 			<div>
@@ -25,6 +31,7 @@ export function VisitStep({ person, purposes, onSubmit }: Props) {
 							<KioskButton
 								key={p.id}
 								className="h-14 text-lg justify-start"
+								disabled={isSubmitting}
 								onClick={() => onSubmit(p.id)}
 							>
 								{p.name}

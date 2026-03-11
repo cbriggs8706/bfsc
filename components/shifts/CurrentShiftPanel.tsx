@@ -400,9 +400,9 @@ export function CurrentShiftPanel({
 										)}
 									</span>
 
-										<div className="md:text-right">
+										<div className="min-w-0 md:text-right">
 											{c.actualDepartureAt ? (
-												<div className="flex items-center gap-3 md:justify-end">
+												<div className="flex flex-wrap items-center gap-x-3 gap-y-1 md:justify-end">
 													<span className="text-sm text-muted-foreground">
 														Departed{' '}
 														{formatInTz(
@@ -423,7 +423,7 @@ export function CurrentShiftPanel({
 													</Button>
 												</div>
 											) : (
-												<div className="flex items-center gap-3 md:justify-end">
+												<div className="flex flex-wrap items-center gap-x-3 gap-y-1 md:justify-end">
 													<Button
 														variant="link"
 														size="sm"
@@ -495,9 +495,9 @@ export function CurrentShiftPanel({
 											)}
 										</span>
 
-										<div className="md:text-right">
+										<div className="min-w-0 md:text-right">
 											{p.departedAt ? (
-												<div className="flex items-center gap-3 md:justify-end">
+												<div className="flex flex-wrap items-center gap-x-3 gap-y-1 md:justify-end">
 													<span className="text-sm text-muted-foreground">
 														Departed{' '}
 														{formatInTz(
@@ -518,7 +518,7 @@ export function CurrentShiftPanel({
 													</Button>
 												</div>
 											) : (
-												<div className="flex items-center gap-3 md:justify-end">
+												<div className="flex flex-wrap items-center gap-x-3 gap-y-1 md:justify-end">
 													<Button
 														variant="link"
 														size="sm"
