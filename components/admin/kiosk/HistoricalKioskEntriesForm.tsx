@@ -32,7 +32,7 @@ type EntryRow = {
 	selectedPerson: SearchPerson | null
 }
 
-const INITIAL_ROWS = 5
+const INITIAL_ROWS = 15
 
 function createEmptyRow(): EntryRow {
 	return {
@@ -75,6 +75,8 @@ export function HistoricalKioskEntriesForm({
 	const [rows, setRows] = useState<EntryRow[]>(() => createInitialRows())
 	const [activeRowId, setActiveRowId] = useState<string | null>(null)
 	const [suggestions, setSuggestions] = useState<SearchPerson[]>([])
+	const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] =
+		useState(0)
 	const [searching, setSearching] = useState(false)
 	const [submitting, setSubmitting] = useState(false)
 	const activeRequest = useRef<AbortController | null>(null)
@@ -84,6 +86,7 @@ export function HistoricalKioskEntriesForm({
 	useEffect(() => {
 		if (!activeRow || activeRow.selectedPerson || activeRow.name.trim().length < 2) {
 			setSuggestions([])
+			setHighlightedSuggestionIndex(0)
 			setSearching(false)
 			activeRequest.current?.abort()
 			return
@@ -103,9 +106,11 @@ export function HistoricalKioskEntriesForm({
 				if (!res.ok) throw new Error('Search failed')
 				const data = (await res.json()) as { people?: SearchPerson[] }
 				setSuggestions(data.people ?? [])
+				setHighlightedSuggestionIndex(0)
 			} catch (error) {
 				if ((error as Error).name !== 'AbortError') {
 					setSuggestions([])
+					setHighlightedSuggestionIndex(0)
 				}
 			} finally {
 				setSearching(false)
@@ -155,6 +160,7 @@ export function HistoricalKioskEntriesForm({
 			)
 		)
 		setSuggestions([])
+		setHighlightedSuggestionIndex(0)
 	}
 
 	const addRow = () => {
@@ -169,7 +175,19 @@ export function HistoricalKioskEntriesForm({
 		if (activeRowId === rowId) {
 			setActiveRowId(null)
 			setSuggestions([])
+			setHighlightedSuggestionIndex(0)
 		}
+	}
+
+	const moveHighlight = (direction: 1 | -1) => {
+		if (suggestions.length === 0) return
+
+		setHighlightedSuggestionIndex((current) => {
+			const next = current + direction
+			if (next < 0) return suggestions.length - 1
+			if (next >= suggestions.length) return 0
+			return next
+		})
 	}
 
 	const submit = async () => {
@@ -214,6 +232,7 @@ export function HistoricalKioskEntriesForm({
 			)
 			setRows(createInitialRows())
 			setSuggestions([])
+			setHighlightedSuggestionIndex(0)
 			setActiveRowId(null)
 		} catch (error) {
 			toast.error(
@@ -291,17 +310,50 @@ export function HistoricalKioskEntriesForm({
 											<Input
 												value={row.name}
 												className="pl-9"
-												placeholder="Start typing a patron name"
-												onFocus={() => setActiveRowId(row.id)}
-												onChange={(event) =>
-													updateRow(row.id, { name: event.target.value })
-												}
-												onBlur={() => {
-													window.setTimeout(() => {
-														setSuggestions([])
-														setActiveRowId((current) =>
-															current === row.id ? null : current
-														)
+													placeholder="Start typing a patron name"
+													onFocus={() => setActiveRowId(row.id)}
+													onChange={(event) =>
+														updateRow(row.id, { name: event.target.value })
+													}
+													onKeyDown={(event) => {
+														if (
+															event.key === 'ArrowDown' &&
+															showSuggestionPanel
+														) {
+															event.preventDefault()
+															moveHighlight(1)
+														}
+
+														if (
+															event.key === 'ArrowUp' &&
+															showSuggestionPanel
+														) {
+															event.preventDefault()
+															moveHighlight(-1)
+														}
+
+														if (event.key === 'Enter' && showSuggestionPanel) {
+															const person =
+																suggestions[highlightedSuggestionIndex]
+															if (person) {
+																event.preventDefault()
+																selectPerson(row.id, person)
+															}
+														}
+
+														if (event.key === 'Escape' && showSuggestionPanel) {
+															event.preventDefault()
+															setSuggestions([])
+															setHighlightedSuggestionIndex(0)
+														}
+													}}
+													onBlur={() => {
+														window.setTimeout(() => {
+															setSuggestions([])
+															setHighlightedSuggestionIndex(0)
+															setActiveRowId((current) =>
+																current === row.id ? null : current
+															)
 													}, 150)
 												}}
 											/>
@@ -326,12 +378,20 @@ export function HistoricalKioskEntriesForm({
 													</div>
 												)}
 												{!searching &&
-													suggestions.map((person) => (
+													suggestions.map((person, suggestionIndex) => (
 														<button
 															key={person.id}
 															type="button"
-															className="flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-accent/60"
+															className={cn(
+																'flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-accent/60',
+																suggestionIndex ===
+																	highlightedSuggestionIndex &&
+																	'bg-accent/60'
+															)}
 															onMouseDown={(event) => event.preventDefault()}
+															onMouseEnter={() =>
+																setHighlightedSuggestionIndex(suggestionIndex)
+															}
 															onClick={() => selectPerson(row.id, person)}
 														>
 															<div>
