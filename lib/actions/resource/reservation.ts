@@ -5,7 +5,7 @@ import { unstable_noStore as noStore, revalidatePath } from 'next/cache'
 import { eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { reservations } from '@/db'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 
@@ -15,6 +15,7 @@ import { normalizePhoneToE164 } from '@/utils/phone'
 import { notifyReservationChanged } from '@/lib/notifications/reservation-notify'
 import { getCenterProfile } from '../center/center'
 import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { can } from '@/lib/permissions/can'
 
 /* ------------------------------------------------------------------ */
 /* Types */
@@ -174,7 +175,15 @@ export async function saveReservation(
 	if (!session) return { ok: false, message: 'Unauthorized' }
 
 	const userId = session.user.id
-	const isAdmin = session.user.role === 'Admin'
+	const role = session.user.role ?? 'Patron'
+	const canManageReservations =
+		['Admin', 'Director', 'Assistant Director', 'Shift Lead'].includes(role) ||
+		(await can(userId, role, 'reservations.edit'))
+	const isAdmin = role === 'Admin'
+
+	if (mode === 'update' && !canManageReservations) {
+		return { ok: false, message: 'Unauthorized' }
+	}
 
 	const parsed = ReservationInputSchema.safeParse(raw)
 	if (!parsed.success) {
@@ -324,6 +333,14 @@ export async function deleteReservation(
 ): Promise<{ ok: true } | { ok: false; message: string }> {
 	const session = await getServerSession(authOptions)
 	if (!session) return { ok: false, message: 'Unauthorized' }
+
+	const role = session.user.role ?? 'Patron'
+	const canManageReservations =
+		['Admin', 'Director', 'Assistant Director', 'Shift Lead'].includes(role) ||
+		(await can(session.user.id, role, 'reservations.edit'))
+	if (!canManageReservations) {
+		return { ok: false, message: 'Unauthorized' }
+	}
 
 	if (!reservationId) {
 		return { ok: false, message: 'Missing reservation id' }

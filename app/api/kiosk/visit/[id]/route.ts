@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { kioskVisitLogs, kioskPeople } from '@/db/schema'
 import { eq } from 'drizzle-orm'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 
 export async function DELETE(

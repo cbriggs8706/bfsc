@@ -9,6 +9,7 @@ type Props = {
 	input: string
 	suggestions: PersonSummary[]
 	searching: boolean
+	isEditingName?: boolean
 	onInputChange: (value: string) => void
 	onSelectSuggestion: (p: PersonSummary) => void
 }
@@ -17,6 +18,7 @@ export function IdentifyStep({
 	input,
 	suggestions,
 	searching,
+	isEditingName = false,
 	onInputChange,
 	onSelectSuggestion,
 }: Props) {
@@ -27,6 +29,15 @@ export function IdentifyStep({
 				onChange={(e) => onInputChange(e.target.value)}
 			/>
 
+			{isEditingName && (
+				<div className="rounded-xl border bg-background px-4 py-3 text-center">
+					<p className="text-2xl font-semibold">Editing name spelling</p>
+					<p className="text-lg text-muted-foreground">
+						Type the correct spelling, then tap Continue to save it.
+					</p>
+				</div>
+			)}
+
 			<div className="h-44 md:h-48 rounded-xl border bg-background overflow-hidden">
 				<div className="h-full overflow-y-auto p-2 space-y-2">
 					{searching && (
@@ -36,10 +47,14 @@ export function IdentifyStep({
 					{!searching && suggestions.length === 0 && (
 						<div className="mt-6 text-center space-y-3 px-2">
 							<p className="text-2xl font-semibold">
-								Burley FamilySearch Center Login
+								{isEditingName
+									? 'Update your name spelling'
+									: 'Burley FamilySearch Center Login'}
 							</p>
 							<p className="text-2xl">
-								{input.trim().length < 2
+								{isEditingName
+									? 'Keep typing your corrected name, then tap Continue to save it.'
+									: input.trim().length < 2
 									? 'Start typing your name'
 									: 'No record found yet. Finish typing your full name, then tap Continue.'}
 							</p>

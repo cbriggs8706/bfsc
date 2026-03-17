@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { getTranslations } from 'next-intl/server'
 import { announcement, appSettings, db, kioskPeople, user as userTable } from '@/db'

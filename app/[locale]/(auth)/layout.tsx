@@ -1,5 +1,5 @@
 // app/[locale]/(auth)/layout.tsx
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 
 import {
@@ -15,6 +15,7 @@ import FSHeader from '@/components/nav/FSHeader'
 import MobileFooter from '@/components/nav/MobileFooterMenu'
 import { getCenterTimeConfig } from '@/lib/time/center-time'
 import { getCmsMenuGroups } from '@/db/queries/cms'
+import { getEffectivePermissions } from '@/lib/permissions/get-effective-permissions'
 
 export default async function Layout({
 	children,
@@ -33,6 +34,8 @@ export default async function Layout({
 		.where(eq(specialHours.isClosed, true))
 	const centerTime = await getCenterTimeConfig()
 	const cmsMenuGroups = await getCmsMenuGroups(locale, role)
+	const effectivePermissions =
+		session?.user?.id ? await getEffectivePermissions(session.user.id, role) : []
 
 	return (
 		<SidebarProvider>
@@ -40,6 +43,7 @@ export default async function Layout({
 				session={session}
 				role={role}
 				locale={locale}
+				effectivePermissions={effectivePermissions}
 				weekly={weekly}
 				specials={specials}
 				centerTimeZone={centerTime.timeZone}

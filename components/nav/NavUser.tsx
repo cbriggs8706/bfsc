@@ -6,6 +6,7 @@ import {
 	ChevronsUpDown,
 	LayoutDashboard,
 	LogOut,
+	ShieldOff,
 } from 'lucide-react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -25,11 +26,13 @@ import {
 	useSidebar,
 } from '@/components/ui/sidebar'
 import { Session } from 'next-auth'
-import { signOut } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useUserProfile } from '@/hooks/use-user-profile'
 import { useNotificationCount } from '@/hooks/use-notification-count'
 import { CountBadge } from './CountBadge'
+import { toast } from 'sonner'
 
 export function NavUser({
 	session,
@@ -51,6 +54,8 @@ export function NavUser({
 	dashboard: string
 }) {
 	const { isMobile } = useSidebar()
+	const router = useRouter()
+	const { update } = useSession()
 	const { profile } = useUserProfile()
 	const userId = session?.user?.id
 	const { count: notificationCount } = useNotificationCount(userId)
@@ -118,6 +123,20 @@ export function NavUser({
 	const resolvedImageUrl =
 		profile?.profileImageUrl ?? session?.user?.image ?? undefined
 
+	async function handleStopImpersonation() {
+		try {
+			const updatedSession = await update({ impersonationAction: 'stop' })
+			if (updatedSession?.user?.isImpersonating) {
+				throw new Error('Impersonation is still active')
+			}
+			toast.success('Returned to your admin account.')
+			router.refresh()
+		} catch (error) {
+			console.error(error)
+			toast.error('Unable to stop impersonation.')
+		}
+	}
+
 	return (
 		<SidebarMenu>
 			<SidebarMenuItem>
@@ -175,6 +194,12 @@ export function NavUser({
 						</DropdownMenuGroup> */}
 						<DropdownMenuSeparator />
 						<DropdownMenuGroup>
+							{session.user.isImpersonating ? (
+								<DropdownMenuItem onClick={handleStopImpersonation}>
+									<ShieldOff />
+									Stop Viewing As User
+								</DropdownMenuItem>
+							) : null}
 							<Link href={`/${locale}/dashboard`}>
 								<DropdownMenuItem>
 									<LayoutDashboard />

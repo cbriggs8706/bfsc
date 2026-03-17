@@ -16,7 +16,7 @@ import {
 import { authOptions } from '@/lib/auth'
 import { getRoleTemplatesForScope } from '@/lib/group-directory-role-templates'
 import { and, eq } from 'drizzle-orm'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 

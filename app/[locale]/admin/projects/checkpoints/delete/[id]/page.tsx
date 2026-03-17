@@ -1,7 +1,7 @@
 import { CheckpointForm } from '@/components/admin/projects/CheckpointForm'
 import { readCheckpointForForm } from '@/lib/actions/projects/checkpoints'
 import { authOptions } from '@/lib/auth'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
 

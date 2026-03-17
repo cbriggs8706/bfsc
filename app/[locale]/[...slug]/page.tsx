@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { redirect, notFound } from 'next/navigation'
 
 import { CmsPageRenderer } from '@/components/cms/CmsPageRenderer'

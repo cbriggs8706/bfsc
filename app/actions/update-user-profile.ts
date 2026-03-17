@@ -2,7 +2,7 @@
 //Answer: no but should eventually rename updateUserProfile → updatePublicUserProfile
 'use server'
 
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { db, user } from '@/db'
 import { eq } from 'drizzle-orm'

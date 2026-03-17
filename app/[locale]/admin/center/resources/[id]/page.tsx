@@ -1,6 +1,6 @@
 // app/[locale]/admin/center/resources/update/[id]/page.tsx
 import { notFound, redirect } from 'next/navigation'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { readResource } from '@/lib/actions/resource/resource'
 import { ResourceForm } from '@/components/resource/ResourceForm'

@@ -1,7 +1,7 @@
 import { ProjectForm } from '@/components/admin/projects/ProjectForm'
 import { readProjectForForm } from '@/lib/actions/projects/projects'
 import { authOptions } from '@/lib/auth'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
 

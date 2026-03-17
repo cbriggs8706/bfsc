@@ -6,7 +6,7 @@ import { and, gte, lte } from 'drizzle-orm'
 import { listCalendarEvents } from '@/db/queries/calendar-classes'
 import { getTranslations } from 'next-intl/server'
 import { getCenterTimeConfig } from '@/lib/time/center-time'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 
 type Props = {

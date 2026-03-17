@@ -16,10 +16,11 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { and, ilike, inArray, or, sql } from 'drizzle-orm'
 import { requireRole } from '@/utils/require-role'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { GenerateResetCodeButton } from '@/components/auth/GenerateResetCodeButton'
 import { sendAdminUsersEmail } from '@/app/actions/admin-users-email'
+import { ImpersonateUserButton } from '@/components/admin/user/ImpersonateUserButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -68,6 +69,7 @@ export default async function AdminUsersPage({
 	const session = await getServerSession(authOptions)
 	const userRole = session?.user.role
 	const canSendBulkUsersEmail = userRole === 'Admin' || userRole === 'Director'
+	const canImpersonateUsers = userRole === 'Admin'
 
 	// if (!['Admin', 'Director', 'Assistant Director'].includes(userRole)) {
 	// 	return redirect(`/${locale}`)
@@ -196,6 +198,14 @@ export default async function AdminUsersPage({
 		}
 		if (page > 1) params.set('page', String(page))
 		return `/${locale}/admin/users${params.toString() ? `?${params.toString()}` : ''}`
+	}
+
+	function getUserLabel(u: {
+		name: string | null
+		email: string | null
+		username: string | null
+	}) {
+		return u.name ?? u.email ?? u.username ?? 'this user'
 	}
 
 	return (
@@ -378,6 +388,15 @@ export default async function AdminUsersPage({
 										<TableCell className="text-right">
 											{canEditUser(userRole, u.role) ? (
 												<div className="flex gap-2 justify-end">
+													{canImpersonateUsers ? (
+														<ImpersonateUserButton
+															userId={u.id}
+															userLabel={getUserLabel(u)}
+															locale={locale}
+															disabled={session?.user?.id === u.id}
+														/>
+													) : null}
+
 													<Link href={`/${locale}/admin/users/${u.id}/update`}>
 														<Button size="sm" variant="outline">
 															Edit

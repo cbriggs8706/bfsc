@@ -13,7 +13,9 @@ import { MentionAlerts } from '@/components/cases/MentionAlerts'
 import { WorkerAlerts } from '@/components/worker/WorkerAlerts'
 import FSHeader from '@/components/nav/FSHeader'
 import MobileFooter from '@/components/nav/MobileFooterMenu'
+import { ImpersonationBanner } from '@/components/admin/user/ImpersonationBanner'
 import { db, operatingHours, specialHours } from '@/db'
+import { getEffectivePermissions } from '@/lib/permissions/get-effective-permissions'
 import { getCenterTimeConfig } from '@/lib/time/center-time'
 import type { CmsMenuGroups } from '@/types/cms'
 
@@ -36,10 +38,13 @@ export async function AppFrame({
 		.from(specialHours)
 		.where(eq(specialHours.isClosed, true))
 	const centerTime = await getCenterTimeConfig()
+	const effectivePermissions =
+		session?.user?.id ? await getEffectivePermissions(session.user.id, role) : []
 
 	return (
 		<SidebarProvider>
 			<AppSidebar
+				effectivePermissions={effectivePermissions}
 				session={session}
 				role={role}
 				locale={locale}
@@ -50,6 +55,7 @@ export async function AppFrame({
 			/>
 			<SidebarInset>
 				<FSHeader />
+				<ImpersonationBanner />
 				<MentionAlerts />
 				{session?.user?.role !== 'Patron' ? <WorkerAlerts /> : null}
 				<header className="flex h-16 shrink-0 items-center gap-2">

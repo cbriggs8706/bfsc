@@ -3,7 +3,7 @@ import { MemoryLaneResources } from '@/components/resource/MemoryLaneResources'
 import { readAllResources } from '@/lib/actions/resource/resource'
 import { getFaithTree } from '@/db/queries/faiths'
 import { getCenterTimeConfig } from '@/lib/time/center-time'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import type { Resource } from '@/types/resource'
 

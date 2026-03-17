@@ -4,7 +4,7 @@ import { db } from '@/db'
 import { user, account } from '@/db/schema/tables/auth'
 import { kioskPeople } from '@/db'
 import { eq } from 'drizzle-orm'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { UserDetailsData } from '@/components/auth/AuthUserDetails'
 

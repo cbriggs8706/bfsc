@@ -1,6 +1,6 @@
 // app/[locale]/admin/center/hours/page.tsx
 import { Card, CardContent } from '@/components/ui/card'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { CenterHoursForm } from '@/components/admin/hours/CenterHoursForm'

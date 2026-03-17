@@ -1,7 +1,7 @@
 // app/actions/notifications/mark-read.ts
 'use server'
 
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/db'
 import { notifications } from '@/db/schema/tables/notifications'

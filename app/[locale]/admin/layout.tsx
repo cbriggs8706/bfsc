@@ -1,5 +1,5 @@
 // app/[locale]/admin/layout.tsx
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { getCmsMenuGroups } from '@/db/queries/cms'
 import { AppFrame } from '@/components/nav/AppFrame'

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { eq, ilike } from 'drizzle-orm'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/db'
@@ -27,6 +27,14 @@ type EntryInput = {
 	name: string
 	onShift?: boolean
 	selectedId?: string | null
+	visitMeta?: {
+		visitReason?: 'patron' | 'training' | 'group'
+		partOfFaithGroup?: boolean | null
+		faithGroupName?: string | null
+		stakeName?: string | null
+		wardName?: string | null
+		peopleCameWithVisitor?: number | null
+	} | null
 }
 
 type RequestBody = {
@@ -203,6 +211,39 @@ export async function POST(request: Request) {
 				onShift: Boolean(entry.onShift),
 				selectedId:
 					typeof entry.selectedId === 'string' ? entry.selectedId.trim() : null,
+				visitMeta:
+					entry.visitMeta && typeof entry.visitMeta === 'object'
+						? {
+								visitReason:
+									entry.visitMeta.visitReason === 'group' ||
+									entry.visitMeta.visitReason === 'training'
+										? entry.visitMeta.visitReason
+										: 'patron',
+								partOfFaithGroup:
+									typeof entry.visitMeta.partOfFaithGroup === 'boolean'
+										? entry.visitMeta.partOfFaithGroup
+										: null,
+								faithGroupName:
+									typeof entry.visitMeta.faithGroupName === 'string'
+										? entry.visitMeta.faithGroupName.trim() || null
+										: null,
+								stakeName:
+									typeof entry.visitMeta.stakeName === 'string'
+										? entry.visitMeta.stakeName.trim() || null
+										: null,
+								wardName:
+									typeof entry.visitMeta.wardName === 'string'
+										? entry.visitMeta.wardName.trim() || null
+										: null,
+								peopleCameWithVisitor:
+									typeof entry.visitMeta.peopleCameWithVisitor === 'number'
+										? Math.max(
+												0,
+												Math.floor(entry.visitMeta.peopleCameWithVisitor)
+											)
+										: 0,
+							}
+						: null,
 			}))
 			.filter((entry) => entry.time && entry.name)
 
@@ -242,6 +283,18 @@ export async function POST(request: Request) {
 			}
 
 			const occurredAt = toUtcDateTimeInTz(date, entry.time, centerTime.timeZone)
+			const notes =
+				entry.visitMeta && entry.visitMeta.visitReason !== 'patron'
+					? JSON.stringify({
+							visitReason: entry.visitMeta.visitReason,
+							partOfFaithGroup: entry.visitMeta.partOfFaithGroup ?? null,
+							faithGroupName: entry.visitMeta.faithGroupName ?? null,
+							stakeName: entry.visitMeta.stakeName ?? null,
+							wardName: entry.visitMeta.wardName ?? null,
+							peopleCameWithVisitor:
+								entry.visitMeta.peopleCameWithVisitor ?? 0,
+					  })
+					: null
 
 			if (entry.onShift) {
 				if (!resolvedPerson.userId) {
@@ -286,6 +339,7 @@ export async function POST(request: Request) {
 					mailingListOptIn: false,
 					createdAt: occurredAt,
 					departedAt: occurredAt,
+					notes,
 				})
 				.returning({
 					id: kioskVisitLogs.id,

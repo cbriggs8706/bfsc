@@ -4,7 +4,7 @@
 import { db, notifications } from '@/db'
 import { authOptions } from '@/lib/auth'
 import { and, eq, isNull } from 'drizzle-orm'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 
 export async function markAllNotificationsRead() {
 	const session = await getServerSession(authOptions)

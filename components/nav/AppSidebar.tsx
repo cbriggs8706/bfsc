@@ -48,6 +48,7 @@ export function AppSidebar({
 	session,
 	role,
 	locale,
+	effectivePermissions,
 	weekly,
 	specials,
 	centerTimeZone,
@@ -57,6 +58,7 @@ export function AppSidebar({
 	session: Session | null
 	role: string
 	locale: string
+	effectivePermissions: string[]
 	weekly: Weekly[]
 	specials: Specials[]
 	centerTimeZone: string
@@ -64,12 +66,23 @@ export function AppSidebar({
 } & React.ComponentProps<typeof Sidebar>) {
 	const t = useTranslations()
 	const data = mergeCmsMenuGroups(buildSidebarData(t, locale), cmsMenuGroups)
-	const adminItems =
+	const hasAdminRole = ['Admin', 'Director', 'Assistant Director'].includes(role)
+	const canAccessReservations =
+		effectivePermissions.includes('reservations.view') ||
+		effectivePermissions.includes('reservations.edit')
+	const baseAdminItems =
 		role === 'Assistant Director'
 			? data.admin.filter(
 					(item) => item.url !== `/${locale}/admin/groups/scheduler`
 				)
 			: data.admin
+	const adminItems = hasAdminRole
+		? baseAdminItems
+		: canAccessReservations
+			? baseAdminItems.filter(
+					(item) => item.url === `/${locale}/admin/reservation`
+				)
+			: []
 	return (
 		<Sidebar variant="inset" {...props}>
 			<SidebarHeader>
@@ -120,7 +133,7 @@ export function AppSidebar({
 						<Separator className="my-0" />
 					</>
 				)}
-				{['Admin', 'Director', 'Assistant Director'].includes(role) && (
+				{adminItems.length > 0 && (
 					<>
 						<NavAdmin items={adminItems} label={t('sidebar.admin.title')} />
 						<Separator className="my-0" />

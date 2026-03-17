@@ -1,5 +1,5 @@
 // app/[locale]/(workers)/substitute/availability/page.tsx
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { getAvailabilityData } from '@/db/queries/shifts'
 import { AvailabilityDashboardClient } from '@/components/shifts/AvailabilityDashboardClient'

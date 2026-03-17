@@ -17,6 +17,50 @@ import {
 import { eq, or } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
 
+type AuthUserSnapshot = {
+	id: string
+	email: string | null
+	name: string | null
+	role: string | null
+	username: string | null
+	image: string | null
+}
+
+type ImpersonationSessionUpdate = {
+	impersonationAction?: 'start' | 'stop'
+	impersonationUserId?: string
+}
+
+async function getAuthUserSnapshot(
+	userId: string
+): Promise<AuthUserSnapshot | null> {
+	const user = await db.query.user.findFirst({
+		where: eq(userTable.id, userId),
+		columns: {
+			id: true,
+			email: true,
+			name: true,
+			role: true,
+			username: true,
+			image: true,
+		},
+	})
+
+	return user ?? null
+}
+
+function applySnapshotToToken(
+	token: Record<string, unknown>,
+	user: AuthUserSnapshot
+) {
+	token.id = user.id
+	token.email = user.email
+	token.name = user.name ?? user.username ?? user.email ?? 'User'
+	token.username = user.username ?? null
+	token.role = user.role ?? 'Patron'
+	token.image = user.image ?? null
+}
+
 export const authOptions: NextAuthOptions = {
 	session: {
 		strategy: 'jwt',
@@ -97,10 +141,59 @@ export const authOptions: NextAuthOptions = {
 			return true
 		},
 
-		async jwt({ token, user, account }) {
+		async jwt({ token, user, account, trigger, session }) {
 			// console.log('💠 JWT CALLBACK — user:', user)
 			// console.log('💠 JWT CALLBACK — token BEFORE:', token)
 			// console.log('💠 JWT CALLBACK — account:', account)
+
+			if (trigger === 'update') {
+				const update = session as ImpersonationSessionUpdate | undefined
+				const actorId =
+					(typeof token.impersonatorId === 'string' && token.impersonatorId) ||
+					(typeof token.id === 'string' && token.id) ||
+					null
+
+				if (
+					update?.impersonationAction === 'start' &&
+					typeof update.impersonationUserId === 'string' &&
+					actorId
+				) {
+					const [actorUser, targetUser] = await Promise.all([
+						getAuthUserSnapshot(actorId),
+						getAuthUserSnapshot(update.impersonationUserId),
+					])
+
+					if (actorUser?.role === 'Admin' && targetUser) {
+						token.impersonatorId = actorUser.id
+						token.impersonatorRole = actorUser.role ?? 'Admin'
+						token.impersonatorName =
+							actorUser.name ?? actorUser.username ?? actorUser.email ?? 'Admin'
+						token.impersonatorEmail = actorUser.email
+						applySnapshotToToken(token, targetUser)
+					}
+
+					return token
+				}
+
+				if (update?.impersonationAction === 'stop') {
+					const originalActorId =
+						typeof token.impersonatorId === 'string' ? token.impersonatorId : null
+
+					if (originalActorId) {
+						const actorUser = await getAuthUserSnapshot(originalActorId)
+						if (actorUser) {
+							applySnapshotToToken(token, actorUser)
+						}
+					}
+
+					delete token.impersonatorId
+					delete token.impersonatorRole
+					delete token.impersonatorName
+					delete token.impersonatorEmail
+
+					return token
+				}
+			}
 
 			// On first login (credentials OR google), user is defined
 			if (user) {
@@ -120,24 +213,45 @@ export const authOptions: NextAuthOptions = {
 				token.role = u.role ?? token.role ?? 'Patron'
 				token.image = u.image ?? token.image
 				token.authProvider = account?.provider ?? token.authProvider
+				delete token.impersonatorId
+				delete token.impersonatorRole
+				delete token.impersonatorName
+				delete token.impersonatorEmail
 
 				// console.log('💠 JWT CALLBACK — token AFTER (with user):', token)
 				return token
 			}
-			if (token.id) {
-				const dbUser = await db.query.user.findFirst({
-					where: eq(userTable.id, token.id as string),
-					columns: {
-						role: true,
-						username: true,
-						image: true,
-					},
-				})
+
+			const effectiveUserId = typeof token.id === 'string' ? token.id : null
+			const impersonatorId =
+				typeof token.impersonatorId === 'string' ? token.impersonatorId : null
+
+			if (effectiveUserId && impersonatorId) {
+				const [effectiveUser, actorUser] = await Promise.all([
+					getAuthUserSnapshot(effectiveUserId),
+					getAuthUserSnapshot(impersonatorId),
+				])
+
+				if (effectiveUser) {
+					applySnapshotToToken(token, effectiveUser)
+				}
+
+				if (actorUser) {
+					token.impersonatorId = actorUser.id
+					token.impersonatorRole = actorUser.role ?? token.impersonatorRole
+					token.impersonatorName =
+						actorUser.name ??
+						actorUser.username ??
+						actorUser.email ??
+						token.impersonatorName
+					token.impersonatorEmail =
+						actorUser.email ?? (token.impersonatorEmail as string | undefined)
+				}
+			} else if (effectiveUserId) {
+				const dbUser = await getAuthUserSnapshot(effectiveUserId)
 
 				if (dbUser) {
-					token.role = dbUser.role ?? 'Patron'
-					token.username = dbUser.username ?? token.username
-					token.image = dbUser.image ?? token.image
+					applySnapshotToToken(token, dbUser)
 				}
 			}
 			// Subsequent calls (no `user`) → just keep token as-is
@@ -154,6 +268,18 @@ export const authOptions: NextAuthOptions = {
 				session.user.name = token.name as string
 				session.user.image = token.image as string
 				session.user.authProvider = token.authProvider as string
+				session.user.isImpersonating = Boolean(token.impersonatorId)
+				session.user.impersonatedBy =
+					typeof token.impersonatorId === 'string'
+						? {
+								id: token.impersonatorId,
+								role: (token.impersonatorRole as string | undefined) ?? 'Admin',
+								name:
+									(token.impersonatorName as string | undefined) ??
+									'Administrator',
+								email: (token.impersonatorEmail as string | null | undefined) ?? null,
+							}
+						: undefined
 			}
 			return session
 		},
@@ -202,5 +328,7 @@ export const getCurrentUser = async () => {
 		email: session.user.email ?? '',
 		username: session.user.username ?? null,
 		image: session.user.image ?? null,
+		isImpersonating: session.user.isImpersonating ?? false,
+		impersonatedBy: session.user.impersonatedBy ?? null,
 	}
 }

@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import { db } from '@/db'
 import { user } from '@/db/schema/tables/auth'
 import { eq } from 'drizzle-orm'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 
 export async function changePassword({

@@ -11,7 +11,7 @@ import {
 } from '@/db/schema/tables/shifts'
 import { user } from '@/db/schema/tables/auth'
 import { ShiftScheduler } from '@/components/admin/shift/ShiftScheduler'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { getTranslations } from 'next-intl/server'
 import { requireRole } from '@/utils/require-role'

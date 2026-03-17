@@ -1,6 +1,6 @@
 // app/api/notifications/unread-count/route.ts
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/db'
 import { notifications } from '@/db'

@@ -1,6 +1,6 @@
 //TODO investigate why this is sometimes giving an error about exceeded db conncections
 // app/[locale]/(patron)/layout.tsx
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { getCmsMenuGroups } from '@/db/queries/cms'
 import { AppFrame } from '@/components/nav/AppFrame'

@@ -10,6 +10,7 @@ type Props = {
 	onTraining: () => void
 	onGroup: () => void
 	onShift?: () => void
+	onEditName?: () => void
 }
 
 export function RoleChoiceStep({
@@ -18,12 +19,19 @@ export function RoleChoiceStep({
 	onTraining,
 	onGroup,
 	onShift,
+	onEditName,
 }: Props) {
 	return (
 		<div className="space-y-4 text-center">
 			<p className="text-xl font-semibold">Hi {person.fullName}!</p>
 
 			<p className="text-lg">What brings you in today?</p>
+
+			{onEditName && (
+				<KioskButton variant="secondary" onClick={onEditName}>
+					Edit name spelling
+				</KioskButton>
+			)}
 
 			<KioskButton onClick={onVisit}>I’m visiting as a patron</KioskButton>
 

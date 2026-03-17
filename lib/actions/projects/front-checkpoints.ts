@@ -4,7 +4,7 @@ import { db } from '@/db'
 import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { revalidatePath, unstable_noStore as noStore } from 'next/cache'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import {
 	projectCheckpoints,

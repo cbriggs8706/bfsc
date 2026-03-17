@@ -1,6 +1,6 @@
 // app/[locale]/admin/center/resourcess/create/page.tsx
 import { redirect } from 'next/navigation'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { ResourceForm } from '@/components/resource/ResourceForm'
 import { getTranslations } from 'next-intl/server'

@@ -1,5 +1,5 @@
 // app/[locale]/(patron)/notifications/page.tsx
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { getUserNotifications } from '@/db/queries/notifications'

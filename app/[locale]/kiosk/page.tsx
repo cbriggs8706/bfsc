@@ -72,6 +72,7 @@ export default function KioskPage() {
 	const [selectedPerson, setSelectedPerson] = useState<PersonSummary | null>(
 		null
 	)
+	const [editingPersonId, setEditingPersonId] = useState<string | null>(null)
 	const [visitReason, setVisitReason] = useState<VisitReason>('patron')
 	const [purposes, setPurposes] = useState<Purpose[]>([])
 	const [mailingOptIn, setMailingOptIn] = useState(false)
@@ -124,7 +125,9 @@ export default function KioskPage() {
 
 	const handleInputChange = (value: string) => {
 		setInput(value)
-		setSelectedPerson(null)
+		if (!editingPersonId) {
+			setSelectedPerson(null)
+		}
 		setServerMessage(null)
 
 		if (searchTimeout.current) {
@@ -141,6 +144,67 @@ export default function KioskPage() {
 			await performSearch(value)
 			setSearching(false)
 		}, 250)
+	}
+
+	const handleEditName = async () => {
+		const currentName =
+			selectedPerson?.fullName || newName.trim() || input.trim()
+		if (!currentName) {
+			setStep('identify')
+			return
+		}
+
+		if (searchTimeout.current) {
+			clearTimeout(searchTimeout.current)
+		}
+
+		setSelectedPerson(null)
+		setNewName('')
+		setEditingPersonId(selectedPerson?.id ?? null)
+		setSuggestions([])
+		setServerMessage(null)
+		setInput(currentName)
+		setStep('identify')
+
+		if (currentName.length < 2) return
+
+		setSearching(true)
+		try {
+			await performSearch(currentName)
+		} finally {
+			setSearching(false)
+		}
+	}
+
+	const handleContinueFromIdentify = async () => {
+		if (!editingPersonId) {
+			await handleIdentify()
+			return
+		}
+
+		const editedName = input.trim()
+		if (!editedName) return
+
+		setServerMessage(null)
+
+		const res = await fetch(`/api/kiosk/people/${editingPersonId}`, {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ fullName: editedName }),
+		})
+
+		if (!res.ok) {
+			setServerMessage('Sorry, we could not update the spelling just now.')
+			return
+		}
+
+		const data: { person: PersonSummary } = await res.json()
+		setSelectedPerson(data.person)
+		setInput(data.person.fullName)
+		setNewName(data.person.fullName)
+		setEditingPersonId(null)
+		setSuggestions([])
+		setStep('roleChoice')
 	}
 
 	const handleHardRefresh = async () => {
@@ -425,6 +489,7 @@ export default function KioskPage() {
 		setInput('')
 		setSuggestions([])
 		setSelectedPerson(null)
+		setEditingPersonId(null)
 		setVisitReason('patron')
 		setMailingOptIn(false)
 		setExpectedDeparture('')
@@ -619,8 +684,10 @@ export default function KioskPage() {
 							input={input}
 							suggestions={suggestions}
 							searching={searching}
+							isEditingName={editingPersonId !== null}
 							onInputChange={handleInputChange}
 							onSelectSuggestion={(p) => {
+								setEditingPersonId(null)
 								setSelectedPerson(p)
 								setInput(p.fullName)
 								setSuggestions([])
@@ -679,7 +746,9 @@ export default function KioskPage() {
 							onBackspace={() => handleInputChange(input.slice(0, -1))}
 							onClear={() => handleInputChange('')}
 							onSpace={() => handleInputChange(`${input} `)}
-							onContinue={() => handleIdentify()}
+							onContinue={() => {
+								void handleContinueFromIdentify()
+							}}
 							canContinue={input.trim().length >= 2}
 						/>
 					)}
@@ -727,6 +796,9 @@ export default function KioskPage() {
 									hasPasscode: false,
 								}
 							}
+							onEditName={() => {
+								void handleEditName()
+							}}
 							onVisit={async () => {
 								setVisitReason('patron')
 								await loadPurposes()

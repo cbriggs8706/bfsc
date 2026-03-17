@@ -4,8 +4,8 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { requireRoleOrPermission } from '@/lib/permissions/require-role-or-permission'
 import { formatInTz } from '@/utils/time'
-import { requireRole } from '@/utils/require-role'
 import { getCenterTimeConfig } from '@/lib/time/center-time'
 
 type Props = {
@@ -18,11 +18,11 @@ export default async function ReservationsPage({ params }: Props) {
 	const { locale } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
 
-	await requireRole(
-		locale,
-		['Admin', 'Director', 'Assistant Director', 'Shift Lead'],
-		`/${locale}/dashboard`
-	)
+	await requireRoleOrPermission(locale, {
+		allowedRoles: ['Admin', 'Director', 'Assistant Director', 'Shift Lead'],
+		allowedPermissions: ['reservations.view', 'reservations.edit'],
+		redirectTo: `/${locale}/dashboard`,
+	})
 
 	const reservations = await readReservations()
 

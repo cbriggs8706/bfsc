@@ -1,6 +1,6 @@
 // app/[locale]/(patron)/reservation/page.tsx
 import { redirect } from 'next/navigation'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import type { Resource } from '@/types/resource'
 import { getTranslations } from 'next-intl/server'

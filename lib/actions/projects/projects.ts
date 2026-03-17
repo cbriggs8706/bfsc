@@ -9,7 +9,7 @@ import {
 	projects,
 } from '@/db'
 import { z } from 'zod'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import {
 	ProjectFormValues,

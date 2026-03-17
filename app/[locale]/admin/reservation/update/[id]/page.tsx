@@ -6,7 +6,7 @@ import { getTranslations } from 'next-intl/server'
 import { readAllResources } from '@/lib/actions/resource/resource'
 import type { Resource } from '@/types/resource'
 import { getFaithTree } from '@/db/queries/faiths'
-import { requireRole } from '@/utils/require-role'
+import { requireRoleOrPermission } from '@/lib/permissions/require-role-or-permission'
 import { getCenterTimeConfig } from '@/lib/time/center-time'
 
 type Props = {
@@ -17,11 +17,11 @@ export default async function Page({ params }: Props) {
 	const { locale, id } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
 
-	await requireRole(
-		locale,
-		['Admin', 'Director', 'Assistant Director', 'Shift Lead'],
-		`/${locale}/dashboard`
-	)
+	await requireRoleOrPermission(locale, {
+		allowedRoles: ['Admin', 'Director', 'Assistant Director', 'Shift Lead'],
+		allowedPermissions: ['reservations.edit'],
+		redirectTo: `/${locale}/dashboard`,
+	})
 
 	// ✅ FORM-SHAPED READ
 	const reservation = await readReservationForForm(id)

@@ -20,7 +20,7 @@ import {
 import { getAvailability } from '@/lib/actions/resource/availability'
 import { Resource } from '@/types/resource'
 import { ShiftType, TimeFormat } from '@/types/shifts'
-import { formatTimeRange } from '@/utils/time'
+import { formatTimeRange, weekdayFromYYYYMMDD } from '@/utils/time'
 import { Mode } from '@/types/crud'
 import z from 'zod'
 import { Controller, useForm, useWatch } from 'react-hook-form'
@@ -302,6 +302,22 @@ export function ReservationForm({
 
 	const isAppointmentSlot = selectedSlot?.shiftType === 'appointment'
 
+	function getAppointmentSlotLabel(slot: {
+		startTime: string
+		shiftType: ShiftType
+	}) {
+		if (
+			slot.shiftType === 'appointment' &&
+			date &&
+			weekdayFromYYYYMMDD(date) === 3 &&
+			slot.startTime === '19:00'
+		) {
+			return 'Youth Groups Only'
+		}
+
+		return t('reservation.byAppointmentOnly')
+	}
+
 	/* ---------------- submit ---------------- */
 
 	async function onSubmit(values: ReservationFormUIValues) {
@@ -497,7 +513,7 @@ export function ReservationForm({
 														)}
 														{s.shiftType === 'appointment' && (
 															<span className="ml-2 text-xs text-muted-foreground">
-																({t('reservation.byAppointmentOnly')})
+																({getAppointmentSlotLabel(s)})
 															</span>
 														)}
 													</SelectItem>
