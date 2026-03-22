@@ -4,19 +4,8 @@ import { db } from '@/db'
 import { kioskPeople, KioskPeopleInsert } from '@/db/schema/tables/kiosk'
 import { user } from '@/db/schema/tables/auth'
 import { eq, ilike } from 'drizzle-orm'
+import { isWorkerRole } from '@/lib/is-worker-role'
 import { normalizeFullNameForStorage } from '@/lib/names'
-
-const WORKER_ROLES = [
-	'Worker',
-	'Shift Lead',
-	'Assistant Director',
-	'Director',
-	'Admin',
-]
-
-function isWorkerRole(role: string | null): boolean {
-	return role !== null && WORKER_ROLES.includes(role)
-}
 
 type PersonSummary = {
 	id: string
@@ -24,6 +13,15 @@ type PersonSummary = {
 	userId: string | null
 	isWorker: boolean
 	hasPasscode: boolean
+}
+
+type KioskRow = {
+	id: string
+	fullName: string
+	userId: string | null
+	passcode: string | null
+	role: string | null
+	isWorkerCached: boolean
 }
 
 type IdentifyNotFound = {
@@ -83,6 +81,67 @@ async function createKioskPersonFromUserRow(u: {
 		userId: created.userId,
 		isWorker,
 		hasPasscode: Boolean(created.passcode),
+	}
+}
+
+async function reconcileKioskRow(row: KioskRow): Promise<PersonSummary> {
+	let nextRow = row
+	let linkedRole = row.role
+
+	if (!row.userId) {
+		const normalizedFullName = normalizeFullNameForStorage(row.fullName)
+		const userRows = await db
+			.select({
+				id: user.id,
+				role: user.role,
+			})
+			.from(user)
+			.where(eq(user.name, normalizedFullName))
+			.limit(2)
+
+		if (userRows.length === 1) {
+			const matchedUser = userRows[0]
+			const nextIsWorker = isWorkerRole(matchedUser.role)
+
+			const [updated] = await db
+				.update(kioskPeople)
+				.set({
+					userId: matchedUser.id,
+					isWorkerCached: nextIsWorker,
+					updatedAt: new Date(),
+				})
+				.where(eq(kioskPeople.id, row.id))
+				.returning({
+					id: kioskPeople.id,
+					fullName: kioskPeople.fullName,
+					userId: kioskPeople.userId,
+					passcode: kioskPeople.passcode,
+					isWorkerCached: kioskPeople.isWorkerCached,
+				})
+
+			if (updated) {
+				nextRow = {
+					...row,
+					id: updated.id,
+					fullName: updated.fullName,
+					userId: updated.userId,
+					passcode: updated.passcode,
+					isWorkerCached: updated.isWorkerCached,
+				}
+				linkedRole = matchedUser.role
+			}
+		}
+	}
+
+	const isWorker =
+		linkedRole !== null ? isWorkerRole(linkedRole) : nextRow.isWorkerCached
+
+	return {
+		id: nextRow.id,
+		fullName: nextRow.fullName,
+		userId: nextRow.userId,
+		isWorker,
+		hasPasscode: Boolean(nextRow.passcode),
 	}
 }
 
@@ -181,16 +240,7 @@ export async function POST(req: Request) {
 		}
 
 		const row = rows[0]
-		const isWorker =
-			row.role !== null ? isWorkerRole(row.role) : row.isWorkerCached
-
-		const person: PersonSummary = {
-			id: row.id,
-			fullName: row.fullName,
-			userId: row.userId,
-			isWorker,
-			hasPasscode: Boolean(row.passcode),
-		}
+		const person = await reconcileKioskRow(row)
 
 		return NextResponse.json<IdentifyResponse>({
 			status: 'foundSingle',
@@ -224,17 +274,7 @@ export async function POST(req: Request) {
 		.where(ilike(kioskPeople.fullName, `%${trimmed}%`))
 
 	if (kioskRows.length === 1) {
-		const row = kioskRows[0]
-		const isWorker =
-			row.role !== null ? isWorkerRole(row.role) : row.isWorkerCached
-
-		const person: PersonSummary = {
-			id: row.id,
-			fullName: row.fullName,
-			userId: row.userId,
-			isWorker,
-			hasPasscode: Boolean(row.passcode),
-		}
+		const person = await reconcileKioskRow(kioskRows[0])
 
 		return NextResponse.json<IdentifyResponse>({
 			status: 'foundSingle',
@@ -243,18 +283,7 @@ export async function POST(req: Request) {
 	}
 
 	if (kioskRows.length > 1) {
-		const people: PersonSummary[] = kioskRows.map((row) => {
-			const isWorker =
-				row.role !== null ? isWorkerRole(row.role) : row.isWorkerCached
-
-			return {
-				id: row.id,
-				fullName: row.fullName,
-				userId: row.userId,
-				isWorker,
-				hasPasscode: Boolean(row.passcode),
-			}
-		})
+		const people = await Promise.all(kioskRows.map(reconcileKioskRow))
 
 		return NextResponse.json<IdentifyResponse>({
 			status: 'multipleMatches',

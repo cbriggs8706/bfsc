@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { user } from '@/db/schema/tables/auth'
+import { account, user } from '@/db/schema/tables/auth'
+import bcrypt from 'bcryptjs'
+
+const TEMP_PASSWORD = 'Password1234'
 
 const ROLES = [
 	'Admin',
@@ -31,12 +34,16 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
 		}
 
+		const passwordHash = await bcrypt.hash(TEMP_PASSWORD, 10)
+
 		const [created] = await db
 			.insert(user)
 			.values({
 				name: name || null,
 				email: email || null,
 				username: username || null,
+				passwordHash,
+				mustResetPassword: true,
 				role: role ?? 'Patron',
 			})
 			.returning({
@@ -46,6 +53,13 @@ export async function POST(request: Request) {
 				username: user.username,
 				role: user.role,
 			})
+
+		await db.insert(account).values({
+			userId: created.id,
+			provider: 'credentials',
+			providerAccountId: created.id,
+			type: 'credentials',
+		})
 
 		return NextResponse.json(created)
 	} catch (err) {

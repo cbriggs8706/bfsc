@@ -23,6 +23,7 @@ export const user = pgTable(
 		image: text(),
 		username: varchar({ length: 100 }),
 		passwordHash: text('password_hash'),
+		mustResetPassword: boolean('must_reset_password').notNull().default(false),
 		role: varchar({ length: 50 }).default('Patron').notNull(),
 		isActiveWorker: boolean('is_active_worker').notNull().default(true),
 		lastLoginAt: timestamp('last_login_at', { withTimezone: true }),

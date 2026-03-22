@@ -24,6 +24,7 @@ type AuthUserSnapshot = {
 	role: string | null
 	username: string | null
 	image: string | null
+	mustResetPassword: boolean
 }
 
 type ImpersonationSessionUpdate = {
@@ -43,6 +44,7 @@ async function getAuthUserSnapshot(
 			role: true,
 			username: true,
 			image: true,
+			mustResetPassword: true,
 		},
 	})
 
@@ -59,6 +61,7 @@ function applySnapshotToToken(
 	token.username = user.username ?? null
 	token.role = user.role ?? 'Patron'
 	token.image = user.image ?? null
+	token.mustResetPassword = user.mustResetPassword
 }
 
 export const authOptions: NextAuthOptions = {
@@ -112,6 +115,7 @@ export const authOptions: NextAuthOptions = {
 					role: dbUser.role ?? 'Patron',
 					username: dbUser.username ?? 'dummy',
 					image: dbUser.image ?? null,
+					mustResetPassword: dbUser.mustResetPassword,
 					authProvider: 'credentials',
 				}
 			},
@@ -204,6 +208,7 @@ export const authOptions: NextAuthOptions = {
 					username?: string | null
 					role?: string | null
 					image?: string | null
+					mustResetPassword?: boolean
 				}
 
 				token.id = u.id
@@ -212,6 +217,8 @@ export const authOptions: NextAuthOptions = {
 				token.username = u.username ?? token.username ?? null
 				token.role = u.role ?? token.role ?? 'Patron'
 				token.image = u.image ?? token.image
+				token.mustResetPassword =
+					u.mustResetPassword ?? Boolean(token.mustResetPassword)
 				token.authProvider = account?.provider ?? token.authProvider
 				delete token.impersonatorId
 				delete token.impersonatorRole
@@ -268,6 +275,7 @@ export const authOptions: NextAuthOptions = {
 				session.user.name = token.name as string
 				session.user.image = token.image as string
 				session.user.authProvider = token.authProvider as string
+				session.user.mustResetPassword = Boolean(token.mustResetPassword)
 				session.user.isImpersonating = Boolean(token.impersonatorId)
 				session.user.impersonatedBy =
 					typeof token.impersonatorId === 'string'
@@ -329,6 +337,7 @@ export const getCurrentUser = async () => {
 		username: session.user.username ?? null,
 		image: session.user.image ?? null,
 		isImpersonating: session.user.isImpersonating ?? false,
+		mustResetPassword: session.user.mustResetPassword ?? false,
 		impersonatedBy: session.user.impersonatedBy ?? null,
 	}
 }

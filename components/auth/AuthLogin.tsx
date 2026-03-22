@@ -81,6 +81,12 @@ export function LoginForm({ redirectTo }: Props) {
 				return
 			}
 
+			const session = await getSession()
+			if (session?.user?.mustResetPassword) {
+				router.replace(`/${locale}/reset-required`)
+				return
+			}
+
 			toast.success(t('success') || '✅ Logged in!')
 
 			// const session = await getSession()

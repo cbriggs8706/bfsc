@@ -150,6 +150,13 @@ export function UserForm({ locale, user }: UserFormProps) {
 					onChange={(e) => setUsername(e.target.value)}
 					placeholder="optional username"
 				/>
+				{!isEditing && (
+					<p className="text-sm text-muted-foreground">
+						New admin-created users can sign in with this username or their email
+						using the temporary password <span className="font-medium">Password1234</span>.
+						They&apos;ll be required to change it on first login.
+					</p>
+				)}
 			</div>
 
 			<div className="space-y-2">

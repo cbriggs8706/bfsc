@@ -101,7 +101,11 @@ export default async function HomePage({ params, searchParams }: Props) {
 		type: r.type as Resource['type'],
 	}))
 	const canReserve = Boolean(session)
-	const newsletterDateFormatter = new Intl.DateTimeFormat(locale, {
+	const resolvedDateLocale =
+		Intl.DateTimeFormat.supportedLocalesOf(
+			typeof locale === 'string' ? [locale] : []
+		)[0] ?? 'en'
+	const newsletterDateFormatter = new Intl.DateTimeFormat(resolvedDateLocale, {
 		year: 'numeric',
 		month: 'long',
 		day: 'numeric',

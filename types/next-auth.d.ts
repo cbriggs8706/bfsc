@@ -8,6 +8,7 @@ declare module 'next-auth' {
 			role: string
 			username: string
 			authProvider?: string
+			mustResetPassword?: boolean
 			isImpersonating?: boolean
 			impersonatedBy?: {
 				id: string

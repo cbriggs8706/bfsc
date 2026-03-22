@@ -22,7 +22,7 @@ export async function createPassword(newPassword: string) {
 	// ✅ Drizzle-style "affected rows" check
 	const updated = await db
 		.update(user)
-		.set({ passwordHash: hashed })
+		.set({ passwordHash: hashed, mustResetPassword: false })
 		.where(and(eq(user.id, session.user.id), isNull(user.passwordHash)))
 		.returning({ id: user.id })
 

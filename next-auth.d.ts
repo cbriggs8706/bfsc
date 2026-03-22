@@ -8,6 +8,7 @@ declare module 'next-auth' {
 			role?: string
 			username?: string | null
 			authProvider?: string
+			mustResetPassword?: boolean
 			isImpersonating?: boolean
 			impersonatedBy?: {
 				id: string
@@ -22,6 +23,7 @@ declare module 'next-auth' {
 		id: string
 		role?: string
 		username?: string | null
+		mustResetPassword?: boolean
 	}
 }
 
@@ -34,6 +36,7 @@ declare module 'next-auth/jwt' {
 		name?: string | null
 		image?: string | null
 		authProvider?: string
+		mustResetPassword?: boolean
 		impersonatorId?: string
 		impersonatorRole?: string
 		impersonatorName?: string

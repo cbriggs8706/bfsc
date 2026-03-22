@@ -30,7 +30,7 @@ export async function changePassword({
 
 	await db
 		.update(user)
-		.set({ passwordHash: hashed })
+		.set({ passwordHash: hashed, mustResetPassword: false })
 		.where(eq(user.id, session.user.id))
 
 	return { success: true }

@@ -4,18 +4,7 @@ import { db } from '@/db'
 import { kioskPeople } from '@/db/schema/tables/kiosk'
 import { user } from '@/db/schema/tables/auth'
 import { ilike, eq } from 'drizzle-orm'
-
-const WORKER_ROLES = [
-	'Worker',
-	'Shift Lead',
-	'Assistant Director',
-	'Director',
-	'Admin',
-]
-
-function isWorkerRole(role: string | null): boolean {
-	return role !== null && WORKER_ROLES.includes(role)
-}
+import { isWorkerRole } from '@/lib/is-worker-role'
 
 type SearchPerson = {
 	id: string
@@ -45,7 +34,7 @@ export async function GET(request: Request) {
 		})
 		.from(kioskPeople)
 		.leftJoin(user, eq(kioskPeople.userId, user.id))
-		.where(ilike(kioskPeople.fullName, `${q}%`))
+		.where(ilike(kioskPeople.fullName, `%${q}%`))
 		.limit(10)
 
 	const kioskPeopleSummaries: SearchPerson[] = kioskRows.map((row) => ({
@@ -74,7 +63,7 @@ export async function GET(request: Request) {
 			role: user.role,
 		})
 		.from(user)
-		.where(ilike(user.name, `${q}%`))
+		.where(ilike(user.name, `%${q}%`))
 		.limit(10)
 
 	const userOnlyRows = userRows.filter((u) => {
