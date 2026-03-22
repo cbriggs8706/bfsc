@@ -21,6 +21,7 @@ import { getCenterTimeConfig } from '@/lib/time/center-time'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { lookupMicroskillStatusesByEmail } from '@/lib/genieGreenieClient'
+import { getFaithTree } from '@/db/queries/faiths'
 
 interface DashboardPageProps {
 	params: Promise<{ locale: string }>
@@ -35,6 +36,13 @@ export default async function Page({ params }: DashboardPageProps) {
 	const centerTime = await getCenterTimeConfig()
 
 	const role = session.user.role ?? 'Patron'
+	const canEditVisitFaithGroup = [
+		'Admin',
+		'Director',
+		'Assistant Director',
+		'Shift Lead',
+		'Worker',
+	].includes(role)
 	const user = session.user.id
 	// Fetch announcements visible to the user role and not expired
 	const announcements = await db
@@ -146,6 +154,7 @@ export default async function Page({ params }: DashboardPageProps) {
 	const openRequests = requests.filter((r) => !r.hasVolunteeredByMe)
 	const projects = await readProjectSummaries()
 	const currentProjects = projects.slice(0, 6)
+	const faithTree = canEditVisitFaithGroup ? await getFaithTree() : []
 	return (
 		<div className="p-4 space-y-4">
 			<div className="space-y-8">
@@ -212,6 +221,8 @@ export default async function Page({ params }: DashboardPageProps) {
 					title="Today in the Center"
 					locale={locale}
 					centerTime={centerTime}
+					canEditVisitFaithGroup={canEditVisitFaithGroup}
+					faithTree={faithTree}
 				/>
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<h2 className="text-2xl font-semibold">

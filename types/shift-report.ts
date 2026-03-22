@@ -89,6 +89,12 @@ export type TodayShift = {
 		purposeName?: string | null
 		arrivedAt: Date
 		departedAt: Date | null
+		visitReason?: 'patron' | 'training' | 'group'
+		partOfFaithGroup?: boolean | null
+		faithGroupName?: string | null
+		stakeName?: string | null
+		wardName?: string | null
+		peopleCameWithVisitor?: number
 	}[]
 	reservations: ShiftReservation[]
 	centerTimeZone: string

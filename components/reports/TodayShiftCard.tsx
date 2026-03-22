@@ -2,15 +2,35 @@
 
 'use client'
 
+import { useState } from 'react'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { TodayShift } from '@/types/shift-report'
+import type { Faith } from '@/types/faiths'
 import { formatInTz, toAmPm } from '@/utils/time'
+import { Button } from '@/components/ui/button'
+import {
+	EditVisitFaithGroupDialog,
+	formatVisitFaithSummary,
+} from '@/components/shifts/EditVisitFaithGroupDialog'
 
 //CORRECTED TIMEZONES
 
-export function TodayShiftCard({ shift }: { shift: TodayShift }) {
+export function TodayShiftCard({
+	shift,
+	canEditVisitFaithGroup = false,
+	faithTree = [],
+	onVisitUpdated,
+}: {
+	shift: TodayShift
+	canEditVisitFaithGroup?: boolean
+	faithTree?: Faith[]
+	onVisitUpdated?: () => void
+}) {
 	const hasTimes = shift.startTime !== '—' && shift.endTime !== '—'
+	const [editingPatron, setEditingPatron] = useState<
+		TodayShift['patrons'][number] | null
+	>(null)
 
 	const sortedReservations = [...shift.reservations].sort((a, b) =>
 		a.startTime.localeCompare(b.startTime)
@@ -86,7 +106,19 @@ export function TodayShiftCard({ shift }: { shift: TodayShift }) {
 										"
 								>
 									<span>{p.fullName}</span>
-									<span>{p.purposeName}</span>
+									<div className="min-w-0">
+										<span className="block truncate">{p.purposeName}</span>
+										{(p.peopleCameWithVisitor ?? 0) > 0 ? (
+											<span className="block text-xs text-muted-foreground">
+												{p.peopleCameWithVisitor} came with them
+											</span>
+										) : null}
+										{formatVisitFaithSummary(p) ? (
+											<span className="block truncate text-xs text-muted-foreground">
+												{formatVisitFaithSummary(p)}
+											</span>
+										) : null}
+									</div>
 									<span className="text-muted-foreground">
 										{formatInTz(
 											new Date(p.arrivedAt),
@@ -94,10 +126,35 @@ export function TodayShiftCard({ shift }: { shift: TodayShift }) {
 											'hh:mm a'
 										)}
 									</span>
+									<div className="text-right">
+										{canEditVisitFaithGroup ? (
+											<Button
+												variant="link"
+												size="sm"
+												onClick={() => setEditingPatron(p)}
+											>
+												Edit Faith Group
+											</Button>
+										) : null}
+									</div>
 								</li>
 							))}
 						</ul>
 					)}
+					{editingPatron && canEditVisitFaithGroup ? (
+						<EditVisitFaithGroupDialog
+							open
+							onOpenChange={(open) => {
+								if (!open) setEditingPatron(null)
+							}}
+							patron={editingPatron}
+							faithTree={faithTree}
+							onSaved={() => {
+								setEditingPatron(null)
+								onVisitUpdated?.()
+							}}
+						/>
+					) : null}
 				</div>
 
 				{/* Reservations */}

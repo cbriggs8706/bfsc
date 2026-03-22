@@ -1,18 +1,4 @@
-type VisitMeta = {
-	visitReason?: 'patron' | 'training' | 'group'
-	peopleCameWithVisitor?: number | null
-}
-
-function parseVisitMeta(notes: string | null | undefined): VisitMeta | null {
-	if (!notes) return null
-
-	try {
-		const parsed = JSON.parse(notes) as VisitMeta
-		return parsed && typeof parsed === 'object' ? parsed : null
-	} catch {
-		return null
-	}
-}
+import { parseVisitMeta } from '@/lib/kiosk/visit-meta'
 
 export function getVisitReportReason(input: {
 	fullName: string

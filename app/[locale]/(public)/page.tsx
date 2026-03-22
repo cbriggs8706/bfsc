@@ -27,6 +27,16 @@ type Props = {
 	searchParams?: Promise<{ subscribed?: string }>
 }
 
+function resolveDateLocale(locale: string | undefined) {
+	if (!locale) return 'en'
+
+	try {
+		return Intl.DateTimeFormat.supportedLocalesOf([locale])[0] ?? 'en'
+	} catch {
+		return 'en'
+	}
+}
+
 export default async function HomePage({ params, searchParams }: Props) {
 	const { locale } = await params
 	const sp = (await searchParams) ?? {}
@@ -101,10 +111,9 @@ export default async function HomePage({ params, searchParams }: Props) {
 		type: r.type as Resource['type'],
 	}))
 	const canReserve = Boolean(session)
-	const resolvedDateLocale =
-		Intl.DateTimeFormat.supportedLocalesOf(
-			typeof locale === 'string' ? [locale] : []
-		)[0] ?? 'en'
+	const resolvedDateLocale = resolveDateLocale(
+		typeof locale === 'string' ? locale : undefined
+	)
 	const newsletterDateFormatter = new Intl.DateTimeFormat(resolvedDateLocale, {
 		year: 'numeric',
 		month: 'long',

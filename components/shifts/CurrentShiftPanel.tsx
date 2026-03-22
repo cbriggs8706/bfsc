@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase-client'
 import type { TodayShift } from '@/types/shift-report'
+import type { Faith } from '@/types/faiths'
 import {
 	formatInTz,
 	toLocalDateTime,
@@ -26,6 +27,10 @@ import { Input } from '../ui/input'
 import Link from 'next/link'
 import { CenterTimeConfig } from '@/lib/time/center-time'
 import { toDisplayFullName } from '@/lib/names'
+import {
+	EditVisitFaithGroupDialog,
+	formatVisitFaithSummary,
+} from '@/components/shifts/EditVisitFaithGroupDialog'
 
 type Props = {
 	title?: string
@@ -33,6 +38,8 @@ type Props = {
 	showPatrons?: boolean
 	locale: string
 	centerTime: CenterTimeConfig
+	canEditVisitFaithGroup?: boolean
+	faithTree?: Faith[]
 }
 
 type DisplayCard =
@@ -94,6 +101,8 @@ export function CurrentShiftPanel({
 	showPatrons = true,
 	locale,
 	centerTime,
+	canEditVisitFaithGroup = false,
+	faithTree = [],
 }: Props) {
 	const [loading, setLoading] = useState(true)
 	const [shifts, setShifts] = useState<TodayShift[]>([])
@@ -109,6 +118,9 @@ export function CurrentShiftPanel({
 	const todayStr = ymdInTz(new Date(), centerTime.timeZone)
 
 	const [departing, setDeparting] = useState<Departing | null>(null)
+	const [editingPatron, setEditingPatron] = useState<
+		TodayShift['patrons'][number] | null
+	>(null)
 
 	const refetch = useCallback(async () => {
 		setLoading(true)
@@ -482,9 +494,21 @@ export function CurrentShiftPanel({
 											{toDisplayFullName(p.fullName)}
 										</span>
 
-										<span className="text-sm text-muted-foreground truncate">
-											{p.purposeName ?? '—'}
-										</span>
+										<div className="min-w-0">
+											<span className="text-sm text-muted-foreground truncate block">
+												{p.purposeName ?? '—'}
+											</span>
+											{(p.peopleCameWithVisitor ?? 0) > 0 ? (
+												<span className="text-xs text-muted-foreground block">
+													{p.peopleCameWithVisitor} came with them
+												</span>
+											) : null}
+											{formatVisitFaithSummary(p) ? (
+												<span className="text-xs text-muted-foreground block truncate">
+													{formatVisitFaithSummary(p)}
+												</span>
+											) : null}
+										</div>
 
 										<span className="text-sm">
 											Arrived{' '}
@@ -506,6 +530,15 @@ export function CurrentShiftPanel({
 															centerTime.timeFormat
 														)}
 													</span>
+													{canEditVisitFaithGroup ? (
+														<Button
+															variant="link"
+															size="sm"
+															onClick={() => setEditingPatron(p)}
+														>
+															Edit Faith Group
+														</Button>
+													) : null}
 													<Button
 														variant="link"
 														size="sm"
@@ -519,6 +552,15 @@ export function CurrentShiftPanel({
 												</div>
 											) : (
 												<div className="flex flex-wrap items-center gap-x-3 gap-y-1 md:justify-end">
+													{canEditVisitFaithGroup ? (
+														<Button
+															variant="link"
+															size="sm"
+															onClick={() => setEditingPatron(p)}
+														>
+															Edit Faith Group
+														</Button>
+													) : null}
 													<Button
 														variant="link"
 														size="sm"
@@ -563,6 +605,20 @@ export function CurrentShiftPanel({
 						)}
 					</div>
 				)}
+				{editingPatron && canEditVisitFaithGroup ? (
+					<EditVisitFaithGroupDialog
+						open
+						onOpenChange={(open) => {
+							if (!open) setEditingPatron(null)
+						}}
+						patron={editingPatron}
+						faithTree={faithTree}
+						onSaved={() => {
+							setEditingPatron(null)
+							refetch()
+						}}
+					/>
+				) : null}
 				{departing && (
 					<MarkDepartureDialog
 						key={departing.id}

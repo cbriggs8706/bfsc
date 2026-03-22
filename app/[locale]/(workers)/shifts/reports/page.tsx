@@ -1,9 +1,12 @@
 // app/[locale]/(workers)/shifts/reports/page.tsx
 
 import { headers } from 'next/headers'
+import { getServerSession } from 'next-auth/next'
 import { ShiftReport } from '@/components/reports/ShiftReport'
 import { getTranslations } from 'next-intl/server'
 import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { authOptions } from '@/lib/auth'
+import { getFaithTree } from '@/db/queries/faiths'
 interface Props {
 	params: Promise<{ locale: string }>
 }
@@ -11,6 +14,15 @@ interface Props {
 export default async function ShiftReportPage({ params }: Props) {
 	const { locale } = await params
 	const t = await getTranslations({ locale, namespace: 'common' })
+	const session = await getServerSession(authOptions)
+	const role = session?.user?.role ?? 'Patron'
+	const canEditVisitFaithGroup = [
+		'Admin',
+		'Director',
+		'Assistant Director',
+		'Shift Lead',
+		'Worker',
+	].includes(role)
 
 	const headersList = await headers()
 
@@ -31,6 +43,7 @@ export default async function ShiftReportPage({ params }: Props) {
 
 	const data = await res.json()
 	const centerTime = await getCenterTimeConfig()
+	const faithTree = canEditVisitFaithGroup ? await getFaithTree() : []
 
 	return (
 		<div className="p-4 space-y-4">
@@ -42,7 +55,8 @@ export default async function ShiftReportPage({ params }: Props) {
 				initialShifts={data.shifts}
 				centerTime={centerTime}
 				initialOffShift={data.offShift}
-				locale={locale}
+				canEditVisitFaithGroup={canEditVisitFaithGroup}
+				faithTree={faithTree}
 			/>
 		</div>
 	)

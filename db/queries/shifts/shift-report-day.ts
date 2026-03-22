@@ -15,6 +15,7 @@ import { TodayShift } from '@/types/shift-report'
 import { ReservationStatus } from '@/types/resource'
 import { formatInTz } from '@/utils/time'
 import { getVisitReportReason } from '@/lib/kiosk/visit-report-reason'
+import { parseVisitMeta } from '@/lib/kiosk/visit-meta'
 
 //CORRECTED TIMEZONES
 
@@ -216,13 +217,13 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 			const shiftPatrons = patronsByShift.get(shiftIndex) ?? []
 
 			return {
-			shiftId: shift.id,
-			weekday,
-			startTime: shift.startTime,
-			endTime: shift.endTime,
-			centerTimeZone: timeZone,
+				shiftId: shift.id,
+				weekday,
+				startTime: shift.startTime,
+				endTime: shift.endTime,
+				centerTimeZone: timeZone,
 
-			workers: shiftWorkers.map((w) => ({
+				workers: shiftWorkers.map((w) => ({
 					shiftLogId: w.shiftLogId,
 					userId: w.userId,
 					fullName: w.fullName,
@@ -231,31 +232,41 @@ export async function getShiftReportDay(dateStr: string, timeZone: string) {
 					actualDepartureAt: w.actualDepartureAt,
 				})),
 
-			patrons: shiftPatrons.map((p) => ({
-					visitId: p.visitId,
-					fullName: p.fullName,
-					purposeName: getVisitReportReason({
-						fullName: p.fullName,
-						purposeName: p.purposeName,
-						notes: p.notes,
-					}),
-					arrivedAt: p.arrivedAt,
-					departedAt: p.departedAt,
-				})),
+				patrons: shiftPatrons.map((p) => {
+					const visitMeta = parseVisitMeta(p.notes)
 
-			reservations: allReservations
-				.filter(
-					(r) => r.startTime >= shiftStartUtc && r.startTime < shiftEndUtc
-				)
-				.map((r) => ({
-					id: r.id,
-					resourceName: r.resourceName,
-					startTime: formatInTz(r.startTime, timeZone, 'HH:mm'),
-					endTime: formatInTz(r.endTime, timeZone, 'HH:mm'),
-					status: toReservationStatus(r.status),
-					patronName: r.patronName ?? r.patronEmail ?? 'Unknown',
-				})),
-		}
+					return {
+						visitId: p.visitId,
+						fullName: p.fullName,
+						purposeName: getVisitReportReason({
+							fullName: p.fullName,
+							purposeName: p.purposeName,
+							notes: p.notes,
+						}),
+						arrivedAt: p.arrivedAt,
+						departedAt: p.departedAt,
+						visitReason: visitMeta?.visitReason ?? 'patron',
+						partOfFaithGroup: visitMeta?.partOfFaithGroup ?? null,
+						faithGroupName: visitMeta?.faithGroupName ?? null,
+						stakeName: visitMeta?.stakeName ?? null,
+						wardName: visitMeta?.wardName ?? null,
+						peopleCameWithVisitor: visitMeta?.peopleCameWithVisitor ?? 0,
+					}
+				}),
+
+				reservations: allReservations
+					.filter(
+						(r) => r.startTime >= shiftStartUtc && r.startTime < shiftEndUtc
+					)
+					.map((r) => ({
+						id: r.id,
+						resourceName: r.resourceName,
+						startTime: formatInTz(r.startTime, timeZone, 'HH:mm'),
+						endTime: formatInTz(r.endTime, timeZone, 'HH:mm'),
+						status: toReservationStatus(r.status),
+						patronName: r.patronName ?? r.patronEmail ?? 'Unknown',
+					})),
+			}
 		}
 	)
 

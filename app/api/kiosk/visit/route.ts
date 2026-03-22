@@ -9,6 +9,9 @@ import {
 } from '@/db/schema/tables/kiosk'
 import { and, eq, gt, isNull } from 'drizzle-orm'
 import { createClient } from '@supabase/supabase-js'
+import { serializeVisitMeta } from '@/lib/kiosk/visit-meta'
+import { getCenterTimeConfig } from '@/lib/time/center-time'
+import { ymdInTz } from '@/utils/time'
 
 const supabase = createClient(
 	process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,22 +35,7 @@ export async function POST(req: Request) {
 			}
 		}
 
-	const normalizedPeopleCameWithVisitor = Math.max(
-		0,
-		Math.floor(visitMeta?.peopleCameWithVisitor ?? 0)
-	)
-
-	const notes =
-		visitMeta && visitMeta.visitReason !== 'patron'
-			? JSON.stringify({
-					visitReason: visitMeta.visitReason,
-					partOfFaithGroup: visitMeta.partOfFaithGroup ?? null,
-					faithGroupName: visitMeta.faithGroupName ?? null,
-					stakeName: visitMeta.stakeName ?? null,
-					wardName: visitMeta.wardName ?? null,
-					peopleCameWithVisitor: normalizedPeopleCameWithVisitor,
-				})
-			: null
+	const notes = serializeVisitMeta(visitMeta)
 
 	const [existingOpenVisit] = await db
 		.select({
@@ -64,10 +52,24 @@ export async function POST(req: Request) {
 		.limit(1)
 
 	if (existingOpenVisit) {
-		return NextResponse.json({
-			visit: existingOpenVisit,
-			alreadyCheckedIn: true,
-		})
+		const centerTime = await getCenterTimeConfig()
+		const existingVisitDay = ymdInTz(
+			existingOpenVisit.createdAt,
+			centerTime.timeZone
+		)
+		const todayInCenter = ymdInTz(new Date(), centerTime.timeZone)
+
+		if (existingVisitDay === todayInCenter) {
+			return NextResponse.json({
+				visit: existingOpenVisit,
+				alreadyCheckedIn: true,
+			})
+		}
+
+		await db
+			.update(kioskVisitLogs)
+			.set({ departedAt: new Date() })
+			.where(eq(kioskVisitLogs.id, existingOpenVisit.id))
 	}
 
 	// 1️⃣ Record the visit

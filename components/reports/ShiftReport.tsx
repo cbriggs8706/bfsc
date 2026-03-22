@@ -12,13 +12,15 @@ import type {
 	ShiftSummaryPoint,
 	TodayShift,
 } from '@/types/shift-report'
+import type { Faith } from '@/types/faiths'
 import { supabase } from '@/lib/supabase-client'
 import { formatInTz, ymdInTz } from '@/utils/time'
 
 type Props = {
 	initialShifts: TodayShift[]
 	initialOffShift: TodayShift[]
-	locale: string
+	canEditVisitFaithGroup?: boolean
+	faithTree?: Faith[]
 	centerTime: {
 		timeZone: string
 		dateFormat: string
@@ -30,7 +32,8 @@ type Props = {
 export function ShiftReport({
 	initialShifts,
 	initialOffShift,
-	locale,
+	canEditVisitFaithGroup = false,
+	faithTree = [],
 	centerTime,
 }: Props) {
 	const todayYmd = ymdInTz(new Date(), centerTime.timeZone)
@@ -110,6 +113,11 @@ export function ShiftReport({
 				{ event: 'UPDATE', schema: 'public', table: 'kiosk_shift_logs' },
 				scheduleRefetch
 			)
+			.on(
+				'postgres_changes',
+				{ event: 'UPDATE', schema: 'public', table: 'kiosk_visit_logs' },
+				scheduleRefetch
+			)
 			.subscribe()
 
 		return () => {
@@ -170,7 +178,13 @@ export function ShiftReport({
 						</p>
 					) : (
 						shifts.map((shift) => (
-							<TodayShiftCard key={shift.shiftId} shift={shift} />
+							<TodayShiftCard
+								key={shift.shiftId}
+								shift={shift}
+								canEditVisitFaithGroup={canEditVisitFaithGroup}
+								faithTree={faithTree}
+								onVisitUpdated={() => refetchForDate(selectedDateStr)}
+							/>
 						))
 					)}
 
@@ -178,7 +192,13 @@ export function ShiftReport({
 					{offShift.length > 0 && (
 						<div className="space-y-4">
 							{offShift.map((shift) => (
-								<TodayShiftCard key={shift.shiftId} shift={shift} />
+								<TodayShiftCard
+									key={shift.shiftId}
+									shift={shift}
+									canEditVisitFaithGroup={canEditVisitFaithGroup}
+									faithTree={faithTree}
+									onVisitUpdated={() => refetchForDate(selectedDateStr)}
+								/>
 							))}
 						</div>
 					)}
