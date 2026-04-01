@@ -96,7 +96,7 @@ async function reconcileKioskRow(row: KioskRow): Promise<PersonSummary> {
 				role: user.role,
 			})
 			.from(user)
-			.where(eq(user.name, normalizedFullName))
+			.where(ilike(user.name, normalizedFullName))
 			.limit(2)
 
 		if (userRows.length === 1) {
@@ -135,6 +135,20 @@ async function reconcileKioskRow(row: KioskRow): Promise<PersonSummary> {
 
 	const isWorker =
 		linkedRole !== null ? isWorkerRole(linkedRole) : nextRow.isWorkerCached
+
+	if (nextRow.isWorkerCached !== isWorker) {
+		await db
+			.update(kioskPeople)
+			.set({
+				isWorkerCached: isWorker,
+				updatedAt: new Date(),
+			})
+			.where(eq(kioskPeople.id, nextRow.id))
+		nextRow = {
+			...nextRow,
+			isWorkerCached: isWorker,
+		}
+	}
 
 	return {
 		id: nextRow.id,

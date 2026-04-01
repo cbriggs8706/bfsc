@@ -31,6 +31,7 @@ export async function GET(request: Request) {
 			userId: kioskPeople.userId,
 			passcode: kioskPeople.passcode,
 			role: user.role,
+			isWorkerCached: kioskPeople.isWorkerCached,
 		})
 		.from(kioskPeople)
 		.leftJoin(user, eq(kioskPeople.userId, user.id))
@@ -41,7 +42,10 @@ export async function GET(request: Request) {
 		id: row.id,
 		fullName: row.fullName,
 		userId: row.userId,
-		isWorker: isWorkerRole(row.role),
+		isWorker:
+			row.role !== null && row.role !== undefined
+				? isWorkerRole(row.role)
+				: row.isWorkerCached,
 		hasPasscode: Boolean(row.passcode),
 		source: 'kiosk',
 	}))

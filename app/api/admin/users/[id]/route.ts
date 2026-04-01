@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { user } from '@/db/schema/tables/auth'
+import { kioskPeople } from '@/db/schema/tables/kiosk'
+import { isWorkerRole } from '@/lib/is-worker-role'
 
 const ALLOWED_ROLES = [
 	'Admin',
@@ -57,6 +59,14 @@ export async function PATCH(
 		if (!updated) {
 			return NextResponse.json({ error: 'User not found' }, { status: 404 })
 		}
+
+		await db
+			.update(kioskPeople)
+			.set({
+				isWorkerCached: isWorkerRole(updated.role),
+				updatedAt: new Date(),
+			})
+			.where(eq(kioskPeople.userId, updated.id))
 
 		return NextResponse.json(updated)
 	} catch (err) {

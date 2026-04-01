@@ -5,6 +5,8 @@ import { kioskVisitLogs, kioskPeople } from '@/db/schema'
 import { and, eq, isNull } from 'drizzle-orm'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { user } from '@/db/schema/tables/auth'
+import { isWorkerRole } from '@/lib/is-worker-role'
 
 export async function POST(
 	req: Request,
@@ -23,10 +25,35 @@ export async function POST(
 
 	// Verify requester is a worker
 	const person = await db.query.kioskPeople.findFirst({
+		columns: {
+			id: true,
+			userId: true,
+			isWorkerCached: true,
+		},
 		where: eq(kioskPeople.userId, session.user.id),
 	})
 
-	if (!person?.isWorkerCached) {
+	const linkedUser =
+		person?.userId === null || person?.userId === undefined
+			? null
+			: await db.query.user.findFirst({
+					where: eq(user.id, person.userId),
+					columns: { role: true },
+				})
+
+	const isWorker =
+		linkedUser?.role !== null && linkedUser?.role !== undefined
+			? isWorkerRole(linkedUser.role)
+			: (person?.isWorkerCached ?? false)
+
+	if (person && person.isWorkerCached !== isWorker) {
+		await db
+			.update(kioskPeople)
+			.set({ isWorkerCached: isWorker, updatedAt: new Date() })
+			.where(eq(kioskPeople.id, person.id))
+	}
+
+	if (!isWorker) {
 		return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 	}
 
